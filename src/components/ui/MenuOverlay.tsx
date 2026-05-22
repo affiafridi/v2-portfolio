@@ -1,0 +1,298 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { gsap } from 'gsap'
+import { useMenuStore }  from '@/store/useMenuStore'
+import { useCursorStore } from '@/store/useCursorStore'
+
+/* ─────────────────────────────────────────────────────────────────
+   MenuOverlay — Centered floating panel, same width as sticky header.
+
+   STRUCTURE
+   ─────────
+   • Full-screen backdrop  (z-299): blurs the hero behind, click = close
+   • Centered panel        (z-300): width = min(90vw, 500px), top-0
+     The centering wrapper is a plain div (translateX -50%).
+     GSAP animates only clipPath on the inner panel — no conflict.
+
+   OPEN  animation: clipPath bottom 100% → 0%  (sheet unrolls from top)
+   CLOSE animation: clipPath bottom 0%   → 100% (snaps back up)
+   ───────────────────────────────────────────────────────────────── */
+
+const NAV_ITEMS = [
+  { num: '01', label: 'Index',   href: '/',        note: 'Home'             },
+  { num: '02', label: 'Work',    href: '/work',    note: 'Selected projects'},
+  { num: '03', label: 'About',   href: '/about',   note: 'Who I am'         },
+  { num: '04', label: 'Process', href: '/process', note: 'How I work'       },
+  { num: '05', label: 'Contact', href: '/contact', note: 'Let\'s talk'      },
+]
+
+const BG      = '#0d0d0d'
+const CREAM   = '#f0eeea'
+const ACCENT  = '#ff4d00'
+const DIVIDER = 'rgba(240,238,234,0.07)'
+const MUTED   = 'rgba(240,238,234,0.32)'
+
+export default function MenuOverlay() {
+  const { isOpen, close } = useMenuStore()
+  const { setCursorType } = useCursorStore()
+
+  const panelRef = useRef<HTMLDivElement>(null)
+  const tlRef    = useRef<gsap.core.Timeline | null>(null)
+
+  /* ── Lock body scroll when open ──────────────────────────────── */
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
+  /* ── GSAP panel animation ────────────────────────────────────── */
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+
+    tlRef.current?.kill()
+
+    if (isOpen) {
+      /* Reset child elements so stagger is fresh each open */
+      gsap.set(['.mo-topbar', '.mo-logo', '.mo-item', '.mo-footer'], {
+        clearProps: 'opacity,y',
+      })
+
+      const tl = gsap.timeline()
+      tlRef.current = tl
+
+      /* Panel unrolls from top like opening a physical sheet */
+      tl.fromTo(
+        panel,
+        { clipPath: 'inset(0% 0% 100% 0% round 20px)' },
+        { clipPath: 'inset(0% 0% 0% 0% round 20px)',  duration: 0.68, ease: 'expo.inOut' }
+      )
+      .from('.mo-topbar', { y: -10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 0.10)
+      .from('.mo-logo',   { y: 18,  opacity: 0, duration: 0.45, ease: 'power3.out' }, 0.20)
+      .from('.mo-item',   { y: 28,  opacity: 0, duration: 0.5,  stagger: 0.065, ease: 'power3.out' }, 0.28)
+      .from('.mo-footer', { y: 14,  opacity: 0, duration: 0.4,  ease: 'power3.out' }, 0.50)
+
+    } else {
+      /* Content fades first, then panel snaps up */
+      const tl = gsap.timeline()
+      tlRef.current = tl
+      tl.to(['.mo-logo', '.mo-item', '.mo-footer'], {
+          opacity: 0, y: -10, duration: 0.18, stagger: 0.025, ease: 'power2.in',
+        })
+        .to(panel, {
+            clipPath: 'inset(0% 0% 100% 0% round 20px)',
+            duration: 0.50, ease: 'expo.inOut',
+          }, 0.06)
+    }
+  }, [isOpen])
+
+  return (
+    <>
+      {/* ── Full-screen backdrop — click outside to close ─────── */}
+      <div
+        className="fixed inset-0 z-[299]"
+        style={{
+          background:           'rgba(10,10,10,0.45)',
+          backdropFilter:       isOpen ? 'blur(6px)' : 'none',
+          WebkitBackdropFilter: isOpen ? 'blur(6px)' : 'none',
+          opacity:              isOpen ? 1 : 0,
+          pointerEvents:        isOpen ? 'auto' : 'none',
+          transition:           'opacity 0.4s ease, backdrop-filter 0.4s ease',
+        }}
+        onClick={close}
+        aria-hidden="true"
+      />
+
+      {/* ── Centering wrapper — NOT animated (owns translateX) ── */}
+      {/* top: 20px matches the sticky header's top-5 position   */}
+      <div
+        className="fixed z-[300]"
+        style={{
+          top:           '20px',
+          left:          '50%',
+          transform:     'translateX(-50%)',
+          width:         'min(90vw, 500px)',
+          pointerEvents: isOpen ? 'auto' : 'none',
+        }}
+      >
+        {/* ── Animated panel (GSAP owns clipPath only) ────────── */}
+        <div
+          ref={panelRef}
+          className="flex flex-col overflow-hidden"
+          style={{
+            background:   BG,
+            clipPath:     'inset(0% 0% 100% 0% round 20px)',
+            borderRadius: '20px',
+            maxHeight:    'calc(100dvh - 40px)',
+            overflow:     'hidden',   /* never show scrollbar — not even briefly during animation */
+          }}
+        >
+
+          {/* ── TOP BAR ────────────────────────────────────────── */}
+          <div
+            className="mo-topbar flex items-center justify-between px-6 py-5"
+            style={{ borderBottom: `1px solid ${DIVIDER}` }}
+          >
+            {/* Availability pulse */}
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-[7px] w-[7px]">
+                <span
+                  className="absolute inline-flex h-full w-full rounded-full animate-ping"
+                  style={{ background: '#22c55e', opacity: 0.55 }}
+                />
+                <span
+                  className="relative inline-flex h-[7px] w-[7px] rounded-full"
+                  style={{ background: '#22c55e' }}
+                />
+              </span>
+              <span
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ color: MUTED }}
+              >
+                Available for freelance
+              </span>
+            </div>
+
+            {/* Close */}
+            <button
+              onClick={close}
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em]
+                         transition-colors duration-200"
+              style={{ color: MUTED }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = CREAM; setCursorType('hover') }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = MUTED; setCursorType('default') }}
+              aria-label="Close menu"
+            >
+              Close
+              <span
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[13px]"
+                style={{ border: `1px solid rgba(240,238,234,0.15)` }}
+              >
+                ×
+              </span>
+            </button>
+          </div>
+
+          {/* ── LOGO ───────────────────────────────────────────── */}
+          <div
+            className="mo-logo flex flex-col items-center py-7"
+            style={{ borderBottom: `1px solid ${DIVIDER}` }}
+          >
+            <span
+              className="text-[28px] font-bold tracking-tight"
+              style={{ color: CREAM }}
+            >
+              Aftab.
+            </span>
+            <span
+              className="mt-1 text-[10px] uppercase tracking-[0.22em]"
+              style={{ color: 'rgba(240,238,234,0.25)' }}
+            >
+              Creative Developer
+            </span>
+          </div>
+
+          {/* ── NAV ITEMS ──────────────────────────────────────── */}
+          <nav className="flex flex-col">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={close}
+                className="mo-item group flex items-center justify-between px-6 py-4
+                           transition-colors duration-200"
+                style={{ borderBottom: `1px solid ${DIVIDER}` }}
+                onMouseEnter={() => setCursorType('hover')}
+                onMouseLeave={() => setCursorType('default')}
+              >
+                {/* Number + label */}
+                <div className="flex items-baseline gap-4">
+                  <span
+                    className="text-[10px] tabular-nums"
+                    style={{ color: ACCENT }}
+                  >
+                    {item.num}
+                  </span>
+                  <span
+                    className="text-[clamp(26px,5vw,40px)] font-bold leading-none tracking-tight
+                               transition-transform duration-300 group-hover:translate-x-1.5"
+                    style={{ color: CREAM }}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+
+                {/* Note + arrow */}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="text-[10px] uppercase tracking-[0.1em]
+                               opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{ color: MUTED }}
+                  >
+                    {item.note}
+                  </span>
+                  <span
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center
+                               rounded-full text-[12px]
+                               -translate-x-2 opacity-0
+                               transition-all duration-300
+                               group-hover:opacity-100 group-hover:translate-x-0"
+                    style={{
+                      border: `1px solid rgba(240,238,234,0.18)`,
+                      color:  CREAM,
+                    }}
+                  >
+                    →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </nav>
+
+          {/* ── FOOTER ─────────────────────────────────────────── */}
+          <div
+            className="mo-footer flex items-center justify-between gap-4 px-6 py-5"
+            style={{ borderTop: `1px solid ${DIVIDER}` }}
+          >
+            {/* Location + email */}
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span
+                className="text-[10px] uppercase tracking-[0.14em] truncate"
+                style={{ color: 'rgba(240,238,234,0.25)' }}
+              >
+                Dubai, UAE
+              </span>
+              <a
+                href="mailto:affiafridi.dev@gmail.com"
+                className="text-[11px] tracking-wide truncate transition-colors duration-200"
+                style={{ color: MUTED }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = CREAM; setCursorType('hover') }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = MUTED; setCursorType('default') }}
+              >
+                aftab@matildacake.com
+              </a>
+            </div>
+
+            {/* CTA */}
+            <Link
+              href="/contact"
+              onClick={close}
+              className="flex flex-shrink-0 items-center gap-2 rounded-full px-5 py-2.5
+                         text-[10px] font-medium uppercase tracking-[0.16em]
+                         transition-all duration-300 hover:gap-3"
+              style={{ background: CREAM, color: BG }}
+              onMouseEnter={() => setCursorType('hover')}
+              onMouseLeave={() => setCursorType('default')}
+            >
+              Let&apos;s work
+              <span>↗</span>
+            </Link>
+          </div>
+
+        </div>
+      </div>
+    </>
+  )
+}

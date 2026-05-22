@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Custom Properties ─────────────────────────────────────── */
+:root {
+  --color-bg: #0a0a0a;
+  --color-fg: #f0f0f0;
+  --color-accent: #ff4d00;
+  --color-muted: #333333;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background-color: #f0eeea; /* match HeroJerez bg — no dark flash on load */
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #f0eeea;
+  color: #1a1a1a;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  cursor: none;
+  overflow-x: hidden;
+  min-height: 100dvh;
+}
+
+/* ─── Custom Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-muted) var(--color-bg);
+}
+
+/* ─── Hide native cursor everywhere ─────────────────────────────── */
+*, *::before, *::after,
+a, button, input, textarea, select, label, [role='button'] {
+  cursor: none !important;
+}
+
+/* ─── Selection ──────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-fg);
+}
