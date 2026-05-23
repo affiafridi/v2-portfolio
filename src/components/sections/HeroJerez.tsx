@@ -51,12 +51,13 @@ export default function HeroJerez() {
   const time = useClock()
   const year = new Date().getFullYear()
 
-  const sectionRef  = useRef<HTMLElement>(null)
-  const imgWrapRef  = useRef<HTMLDivElement>(null)
-  const greenRef    = useRef<HTMLDivElement>(null)
-  const magentaRef  = useRef<HTMLDivElement>(null)
-  const marqueeRef  = useRef<HTMLDivElement>(null)
-  const glitchTlRef = useRef<gsap.core.Timeline | null>(null)
+  const sectionRef      = useRef<HTMLElement>(null)
+  const imgWrapRef      = useRef<HTMLDivElement>(null)
+  const greenRef        = useRef<HTMLDivElement>(null)
+  const magentaRef      = useRef<HTMLDivElement>(null)
+  const marqueeRef      = useRef<HTMLDivElement>(null)   // CSS-animated inner div
+  const outerMarqueeRef = useRef<HTMLDivElement>(null)   // GSAP scroll-skew wrapper
+  const glitchTlRef     = useRef<gsap.core.Timeline | null>(null)
 
   /* ── RGB glitch ──────────────────────────────────────────────── */
   const triggerGlitch = useCallback(() => {
@@ -80,14 +81,13 @@ export default function HeroJerez() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      tl.from('.hj-meta-item', { y: 14, opacity: 0, duration: 0.7, stagger: 0.1 })
+      tl.from('.hj-meta-item', { y: 14, opacity: 0, duration: 0.6, stagger: 0.09 })
         .from(imgWrapRef.current, {
             scale: 0.94, opacity: 0,
-            duration: 1.5, ease: 'expo.out', clearProps: 'scale,opacity',
-          }, '-=0.4')
-        .from('.hj-available', { y: 22, opacity: 0, duration: 0.85 }, '-=0.9')
-        .from('.hj-bio',       { y: 22, opacity: 0, duration: 0.85 }, '-=0.68')
-        .from('.hj-headline',  { opacity: 0, duration: 0.55 },         '-=0.35')
+            duration: 1.4, ease: 'expo.out', clearProps: 'scale,opacity',
+          }, '-=0.35')
+        .from('.hj-bio',       { y: 22, opacity: 0, duration: 0.75, stagger: 0.14 }, '-=1.0')
+        .from('.hj-headline',  { opacity: 0, duration: 0.55 },        '-=0.38')
         .call(triggerGlitch)
 
       /* No float tween here — waterTick in useEffect 2 owns y/rotation/skewY */
@@ -122,39 +122,82 @@ export default function HeroJerez() {
      Multiplier springs back to 0 over 2 s with power3 ease.
      ─────────────────────────────────────────────────────────── */
   useEffect(() => {
-    const marquee = marqueeRef.current
-    const imgWrap = imgWrapRef.current
-    if (!marquee || !imgWrap) return
+    const imgWrap  = imgWrapRef.current
+    const marquee  = marqueeRef.current
+    const outerMq  = outerMarqueeRef.current
+    if (!imgWrap || !marquee || !outerMq) return
 
-    /* ── Marquee — GSAP repeat:-1, always-forward ────────────────
-       CRITICAL: timeScale must NEVER go negative.
-       With repeat:-1, a negative timeScale plays backward and when
-       the tween reaches time=0 it restarts from the beginning —
-       that's the visible "jump back to Aftab" the user sees.
+    /* ── Seamless GSAP marquee ticker ─────────────────────────────────
+       CSS animation-iteration hard-resets the transform each loop,
+       causing a 1-frame jump that the eye catches as a "restart".
+       Instead we advance xPos every frame and wrap it modularly —
+       the value never resets, it just keeps counting, so the loop
+       is completely invisible.
+       4 identical spans → wrap boundary at 1 span-width = seamless.
+       ─────────────────────────────────────────────────────────────── */
+    const BASE_S  = 22   // target duration of one full cycle (seconds)
+    let   spanW   = (marquee.children[0] as HTMLElement).offsetWidth
+    let   basePpf = spanW / (BASE_S * 60)  // px per frame @ 60 fps
+    let   xPos    = 0
+    let   goingLeft = true
+    const spdProxy  = { mult: 1 }
 
-       Fix: always play forward (timeScale ≥ 0).
-       On scroll-down: boost to 2.5× so text visibly reacts.
-       Then gsap.to eases timeScale back to 1.0 over 1.2 s.
-       The loop itself (0% → -50%) is seamless because both ends
-       of the 4-copy container look identical.
-       ──────────────────────────────────────────────────────────── */
-    const tween = gsap.to(marquee, {
-      xPercent: -50,
-      duration: 20,
-      ease:     'none',
-      repeat:   -1,
-    })
+    const remeasure = () => {
+      spanW   = (marquee.children[0] as HTMLElement).offsetWidth
+      basePpf = spanW / (BASE_S * 60)
+    }
+    window.addEventListener('resize', remeasure, { passive: true })
 
-    /* ── Scroll: speed burst (forward only) + glitch ─────────── */
+    const marqueeTick = () => {
+      const px = basePpf * spdProxy.mult
+      xPos += goingLeft ? -px : px
+      /* modular wrap — both scroll directions handled, no reset */
+      if (xPos <= -spanW) xPos += spanW
+      if (xPos >   0)     xPos -= spanW
+      gsap.set(marquee, { x: xPos })
+    }
+
+    gsap.ticker.add(marqueeTick)
+
+    /* ── Scroll: direction flip + mild speed burst + skew + glitch ── */
     let lastScrollY  = window.scrollY
     let lastGlitchAt = 0
     const GLITCH_COOLDOWN = 600
 
     const onScroll = () => {
-      const y = window.scrollY
-      /* Boost speed on any scroll; ease back to 1× */
-      tween.timeScale(y > lastScrollY ? 2.5 : 1.2)
-      gsap.to(tween, { timeScale: 1, duration: 1.2, ease: 'power2.out', overwrite: true })
+      const y     = window.scrollY
+      const delta = Math.abs(y - lastScrollY)
+      const down  = y >= lastScrollY
+
+      /* direction flip */
+      goingLeft = down
+
+      /* mild speed burst — max 2× at fast scroll, springs back over 1.8 s */
+      const factor  = Math.min(delta / 22, 1)
+      spdProxy.mult = 1 + factor * 1.0   // cap at 2×
+
+      gsap.to(spdProxy, {
+        mult:      1,
+        duration:  1.8,
+        ease:      'power2.out',
+        overwrite: true,
+      })
+
+      /* Skew the outer wrapper slightly in scroll direction, spring back */
+      gsap.to(outerMq, {
+        skewX:    down ? -2 : 2,
+        duration: 0.12,
+        ease:     'none',
+        overwrite: true,
+      })
+      gsap.to(outerMq, {
+        skewX:    0,
+        duration: 1.1,
+        ease:     'power3.out',
+        delay:    0.12,
+        overwrite: false,
+      })
+
       lastScrollY = y
 
       const now = Date.now()
@@ -226,9 +269,10 @@ export default function HeroJerez() {
     })
 
     return () => {
-      tween.kill()
       gsap.ticker.remove(waterTick)
+      gsap.ticker.remove(marqueeTick)
       window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', remeasure)
       st.kill()
     }
   }, [triggerGlitch])
@@ -253,7 +297,7 @@ export default function HeroJerez() {
             Based in
           </span>
           <span className="text-[11px] tracking-[0.06em]" style={{ color: `${INK}55` }}>
-            New York City
+            Dubai, UAE
           </span>
         </div>
         <div className="hj-meta-item flex flex-col items-end gap-[3px]">
@@ -311,20 +355,41 @@ export default function HeroJerez() {
         </div>
       </div>
 
-      {/* ══ LEFT TEXT ══════════════════════════════════════════════ */}
-      <div className="absolute z-20" style={{ top: '40%', left: '5%', maxWidth: '260px' }}>
+      {/* ══ LEFT COLUMN ════════════════════════════════════════════ */}
+      <div className="absolute z-20" style={{ top: '32%', left: '5%', width: '44%' }}>
+
+        {/* ── Big headline ─────────────────────────────────────── */}
         <p
-          className="hj-available mb-10 text-[11px] leading-relaxed tracking-wide"
-          style={{ color: `${INK}40` }}
+          className="hj-bio"
+          style={{
+            fontSize: 'clamp(32px, 3.8vw, 56px)',
+            fontWeight: 700,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.12,
+            color: INK,
+            marginBottom: '1.6rem',
+          }}
         >
-          Currently available for freelance projects
+          Crafting digital<br />experiences.
         </p>
-        <p className="hj-bio text-[12px] leading-[1.9]" style={{ color: `${INK}60` }}>
-          Developer and designer drawing inspiration
-          <br />from the diverse culture of Queens, working
-          <br />as an independent creative crafting
-          <br />memorable experiences.
+
+        {/* ── Supporting text ──────────────────────────────────── */}
+        <p
+          className="hj-bio"
+          style={{
+            fontSize: '14px',
+            lineHeight: 1.9,
+            color: `${INK}50`,
+            borderLeft: `2px solid ${INK}14`,
+            paddingLeft: '16px',
+            maxWidth: '340px',
+          }}
+        >
+          Drawing inspiration from the diverse<br />
+          culture of Queens, working as an<br />
+          independent creative based in Dubai.
         </p>
+
       </div>
 
       {/* ══ OVERSIZED HEADLINE ════════════════════════════════════
@@ -353,25 +418,32 @@ export default function HeroJerez() {
                    left-0 right-0 select-none overflow-hidden"
         style={{ zIndex: 20, mixBlendMode: 'difference' }}
       >
-        <div
-          ref={marqueeRef}
-          className="flex whitespace-nowrap"
-          style={{ lineHeight: 0.84 }}
-        >
-          {Array.from({ length: 4 }).map((_, i) => (
-            <span
-              key={i}
-              style={{
-                fontSize:      'clamp(88px, 12.8vw, 200px)',
-                fontWeight:    800,
-                letterSpacing: '-0.03em',
-                color:         '#ffffff',   /* white + difference = dark on light, white on dark */
-                paddingRight:  '2.5rem',
-              }}
-            >
-              Creative Developer — Interaction Designer —&nbsp;
-            </span>
-          ))}
+        {/*
+          outerMarqueeRef — GSAP only touches skewX here on scroll.
+          marqueeRef      — CSS animation drives the infinite loop.
+          Keeping them on separate elements avoids any transform conflict.
+        */}
+        <div ref={outerMarqueeRef}>
+          <div
+            ref={marqueeRef}
+            className="flex whitespace-nowrap"
+            style={{ lineHeight: 0.84 }}
+          >
+            {Array.from({ length: 4 }).map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  fontSize:      'clamp(88px, 12.8vw, 200px)',
+                  fontWeight:    800,
+                  letterSpacing: '-0.03em',
+                  color:         '#ffffff',
+                  paddingRight:  '2.5rem',
+                }}
+              >
+                Creative Developer — Interaction Designer —&nbsp;
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

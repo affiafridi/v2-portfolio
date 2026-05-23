@@ -26,6 +26,15 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Preloader: server-side black — zero flash on reload ───────────
+   layout.tsx sets data-loading="" on <html> before JS runs.
+   Preloader removes it in onComplete so background snaps to cream.
+   ─────────────────────────────────────────────────────────────────── */
+html[data-loading],
+html[data-loading] body {
+  background-color: #0a0a0a !important;
+}
+
 body {
   background-color: #f0eeea;
   color: #1a1a1a;
@@ -70,4 +79,13 @@ a, button, input, textarea, select, label, [role='button'] {
 ::selection {
   background-color: var(--color-accent);
   color: var(--color-fg);
+}
+
+/* ─── Hero marquee ───────────────────────────────────────────────────
+   Browser compositor owns the loop — zero frame-gap at repeat boundary.
+   4 identical spans → moving 25% of the container = exactly 1 span width.
+   ─────────────────────────────────────────────────────────────────── */
+@keyframes hj-ticker {
+  from { transform: translateX(0%);   }
+  to   { transform: translateX(-25%); }
 }

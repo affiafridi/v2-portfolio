@@ -64,10 +64,9 @@ function NavItem({
   )
 }
 
-/* ─── DEFAULT header — light theme ──────────────────────────────── */
+/* ─── DEFAULT header — nav only (logo lives in root Header) ─────── */
 function DefaultHeader() {
   const [activeId, setActiveId] = useState<string | null>(null)
-  const { setCursorType } = useCursorStore()
 
   return (
     <motion.div
@@ -78,27 +77,10 @@ function DefaultHeader() {
       exit={{ opacity: 0, y: -14 }}
       transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      {/* Name — left anchor */}
-      <Link
-        href="/"
-        className="pointer-events-auto absolute left-8 top-7 text-[13px] font-medium tracking-wide"
-        style={{ color: 'rgba(26,26,26,0.70)', transition: 'color 0.2s ease' }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = '#1a1a1a'; setCursorType('hover') }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(26,26,26,0.70)'; setCursorType('default') }}
-      >
-        Aftab.
-      </Link>
-
-      {/* Pill nav — centered */}
+      {/* Nav — bare text, no pill container */}
       <div className="flex justify-center pt-7">
         <nav
-          className="pointer-events-auto flex items-center rounded-full px-1.5 py-1.5"
-          style={{
-            background:           'rgba(26,26,26,0.03)',
-            backdropFilter:       'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border:               '1px solid rgba(26,26,26,0.08)',
-          }}
+          className="pointer-events-auto flex items-center"
           onMouseLeave={() => setActiveId(null)}
         >
           {NAV_ITEMS.map((item) => (
@@ -188,6 +170,7 @@ function StickyHeader() {
 /* ─── Root export ────────────────────────────────────────────────── */
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
+  const { setCursorType } = useCursorStore()
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 80)
@@ -196,8 +179,35 @@ export default function Header() {
   }, [])
 
   return (
-    <AnimatePresence mode="wait">
-      {scrolled ? <StickyHeader key="sticky" /> : <DefaultHeader key="default" />}
-    </AnimatePresence>
+    <>
+      {/* ── Logo — standalone fixed, NEVER inside a Framer Motion parent.
+           An animated opacity/transform ancestor traps mix-blend-mode into
+           its own stacking context, breaking the inversion. This element
+           has no compositing ancestor so it blends directly against the page. */}
+      <Link
+        href="/"
+        style={{
+          position:      'fixed',
+          left:          '2rem',
+          top:           '1.75rem',
+          zIndex:        60,
+          fontSize:      'clamp(20px, 2vw, 26px)',
+          fontWeight:    700,
+          letterSpacing: '-0.02em',
+          color:         '#ffffff',
+          mixBlendMode:  'difference',
+          pointerEvents: 'auto',
+          transition:    'opacity 0.2s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.65'; setCursorType('hover') }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = '1';    setCursorType('default') }}
+      >
+        Aftab.
+      </Link>
+
+      <AnimatePresence mode="wait">
+        {scrolled ? <StickyHeader key="sticky" /> : <DefaultHeader key="default" />}
+      </AnimatePresence>
+    </>
   )
 }
