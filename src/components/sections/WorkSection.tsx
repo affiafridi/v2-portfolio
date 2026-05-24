@@ -167,9 +167,9 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
       }}>
 
         {/* ── LEFT column ──────────────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2.4rem' }}>
 
-          {/* Top: dynamic SVG progress ring */}
+          {/* Progress ring counter */}
           <div
             className="wk-content"
             style={{
@@ -184,31 +184,20 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
               width="68" height="68"
               style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}
             >
-              {/* Track */}
-              <circle
-                cx="34" cy="34" r={RING_R}
-                fill="none"
-                stroke="rgba(255,255,255,0.12)"
-                strokeWidth="1.5"
-              />
-              {/* Fill — driven by GSAP onUpdate via className */}
+              <circle cx="34" cy="34" r={RING_R} fill="none"
+                stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
               <circle
                 className={`wk-ring wk-ring-${idx}`}
                 cx="34" cy="34" r={RING_R}
-                fill="none"
-                stroke="rgba(255,255,255,0.80)"
-                strokeWidth="1.5"
+                fill="none" stroke="rgba(255,255,255,0.80)" strokeWidth="1.5"
                 strokeLinecap="round"
-                strokeDasharray={RING_CIRC}
-                strokeDashoffset={RING_CIRC}   /* starts empty */
+                strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC}
               />
             </svg>
             <span style={{
               fontSize: '7.5px', letterSpacing: '0.15em', textTransform: 'uppercase',
               color: 'rgba(255,255,255,0.38)', position: 'relative', zIndex: 1,
-            }}>
-              Project
-            </span>
+            }}>Project</span>
             <span style={{
               fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em',
               color: 'rgba(255,255,255,0.82)', position: 'relative', zIndex: 1,
@@ -217,7 +206,7 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
             </span>
           </div>
 
-          {/* Bottom: title + description + CTA */}
+          {/* Title + description + CTA — centred in column */}
           <div>
             <h3
               className="wk-content"
@@ -286,21 +275,42 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
         {/* ── RIGHT column ─────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 
-          {/* Top: project type + stack */}
-          <div className="wk-content" style={{ textAlign: 'right' }}>
+          {/* Top: project type + tech stack pills */}
+          <div className="wk-content">
             <p style={{
               fontSize: '11px', fontWeight: 600, letterSpacing: '0.14em',
-              textTransform: 'uppercase', color: 'rgba(255,255,255,0.70)', marginBottom: '9px',
+              textTransform: 'uppercase', color: 'rgba(255,255,255,0.70)',
+              marginBottom: '10px', textAlign: 'right',
             }}>
               {p.type}
             </p>
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.10)', marginBottom: '9px' }} />
-            <p style={{
-              fontSize: '10px', letterSpacing: '0.10em',
-              textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
+            {/* Pill tags — right-aligned */}
+            <div style={{
+              display:        'flex',
+              flexWrap:       'wrap',
+              gap:            '6px',
+              justifyContent: 'flex-end',
             }}>
-              {p.stack.join(' · ')}
-            </p>
+              {p.stack.map(tech => (
+                <span
+                  key={tech}
+                  style={{
+                    fontSize:      '9px',
+                    fontWeight:    600,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    color:         'rgba(255,255,255,0.65)',
+                    background:    'rgba(255,255,255,0.08)',
+                    border:        '1px solid rgba(255,255,255,0.14)',
+                    borderRadius:  '20px',
+                    padding:       '4px 10px',
+                    backdropFilter:'blur(4px)',
+                  }}
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Bottom: browser mockup */}
@@ -322,37 +332,48 @@ export default function WorkSection() {
     const ctx = gsap.context(() => {
       const panels = gsap.utils.toArray<HTMLElement>('.wk-panel')
 
-      /* All panels except the first start below the viewport */
-      panels.forEach((p, i) => { if (i > 0) gsap.set(p, { yPercent: 100 }) })
+      /* Panels 1+ start below viewport AND slightly scaled down */
+      panels.forEach((p, i) => { if (i > 0) gsap.set(p, { yPercent: 100, scale: 0.94 }) })
 
-      /* ── Entry animation ───────────────────────────────────────────
-         As the Work section scrolls over the About section, the sticky
-         container animates from a scaled-down rounded card to a full
-         viewport — feels like a panel launching forward off the page.
+      /* ── Entry: zoom-in as Work rises over the pinned About ──────
+         The sticky container starts at scale 0.86 (looks like a
+         small card below the viewport). As the user scrolls and
+         Work physically covers About, the card scales up to 1.
+         scrub: 1.2 ties it tightly to scroll speed so the zoom
+         feels physically connected to the hand.
+         The section background (CREAM) shows around the scaled
+         container — matches the 14px panel inset perfectly.
+         ─────────────────────────────────────────────────────────────── */
+      /* ── Entry: zoom-in as sticky container rises over About ──────
+         Section overlaps About by 120px (marginTop: -120px) so the
+         Work panel is already peeking when About ends.
+         As the user scrolls, the sticky zooms from 0.88 → 1 and
+         settles into its full-viewport position.
          ─────────────────────────────────────────────────────────────── */
       gsap.fromTo(
         '.wk-sticky',
-        { scale: 0.88, y: 72, borderRadius: '40px' },
+        { scale: 0.88, y: 60 },
         {
-          scale: 1, y: 0, borderRadius: '0px',
-          ease: 'power3.out',
+          scale: 1,
+          y:     0,
+          ease:  'power2.out',
           scrollTrigger: {
             trigger: sectionRef.current!,
-            start:   'top bottom',   /* section bottom enters viewport */
-            end:     'top top',      /* section top locks to top (pinned) */
-            scrub:   0.8,
+            start:   'top 90%',    /* fires as section enters near bottom */
+            end:     'top top',    /* fully in place when section pins */
+            scrub:   1.0,
           },
         }
       )
 
-      /* ── Panel 0: content animates in when section first enters ── */
+      /* ── Panel 0: content animates in as the section enters ── */
       gsap.from('.wk-panel-0 .wk-content', {
         y: 24, opacity: 0, duration: 0.9, stagger: 0.1, ease: 'power3.out',
-        scrollTrigger: { trigger: sectionRef.current!, start: 'top 65%', once: true },
+        scrollTrigger: { trigger: sectionRef.current!, start: 'top 60%', once: true },
       })
       gsap.from('.wk-panel-0 .wk-mockup', {
         x: 50, opacity: 0, duration: 1.0, ease: 'power3.out',
-        scrollTrigger: { trigger: sectionRef.current!, start: 'top 65%', once: true },
+        scrollTrigger: { trigger: sectionRef.current!, start: 'top 60%', once: true },
       })
 
       /* ── Scrubbed panel transition timeline ──────────────────────
@@ -370,9 +391,9 @@ export default function WorkSection() {
           duration: 1, ease: 'power2.inOut',
         }, t)
 
-        /* Incoming panel: rises from below */
+        /* Incoming panel: rises from below AND zooms in */
         tl.to(panels[i], {
-          yPercent: 0, duration: 1, ease: 'power2.inOut',
+          yPercent: 0, scale: 1, duration: 1, ease: 'power2.inOut',
         }, t)
 
         /* Content fades in during the second half of the slide */
@@ -407,18 +428,15 @@ export default function WorkSection() {
           })
 
           /* ── Ring fill ────────────────────────────────────────────
-             Each panel owns a 1/N slice of total progress [i/N, (i+1)/N].
-             Its ring fills 0→1 as you scroll through that slice only.
+             ONE unified progress arc across the entire section.
+             All panel rings mirror self.progress (0 → 1 total),
+             so the ring never resets — it just keeps filling as
+             you move from project 1 through to project 4.
              ─────────────────────────────────────────────────────── */
+          const offset = RING_CIRC * (1 - self.progress)
           for (let i = 0; i < N; i++) {
             const ring = document.querySelector<SVGCircleElement>(`.wk-ring-${i}`)
-            if (!ring) continue
-            const segStart  = i / N
-            const segEnd    = (i + 1) / N
-            const panelProg = Math.max(0, Math.min(1,
-              (self.progress - segStart) / (segEnd - segStart)
-            ))
-            ring.style.strokeDashoffset = `${RING_CIRC * (1 - panelProg)}`
+            if (ring) ring.style.strokeDashoffset = `${offset}`
           }
         },
       })
@@ -431,7 +449,13 @@ export default function WorkSection() {
   return (
     <section
       ref={sectionRef}
-      style={{ height: `${N * 100}vh`, background: CREAM }}
+      style={{
+        height:     `${N * 100}vh`,
+        background: CREAM,
+        position:   'relative',
+        zIndex:     2,               /* paints over About during overlap */
+        marginTop:  '-120px',        /* peek 120px below About's bottom */
+      }}
     >
       {/* Sticky viewport — also the entry animation target */}
       <div

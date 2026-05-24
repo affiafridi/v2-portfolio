@@ -1145,6 +1145,9 @@ video {
 .flex-shrink-0 {
   flex-shrink: 0;
 }
+.shrink {
+  flex-shrink: 1;
+}
 .origin-center {
   transform-origin: center;
 }

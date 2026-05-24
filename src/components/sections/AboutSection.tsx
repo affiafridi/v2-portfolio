@@ -124,8 +124,8 @@ export default function AboutSection() {
       style={{
         background: BG,
         minHeight:  '100vh',
-        /* ── Simple block layout — no flex on section.
-           This prevents the nested grid from collapsing. ── */
+        position:   'relative',
+        zIndex:     1,
         padding:    'clamp(64px, 8vw, 108px) clamp(32px, 6.5vw, 96px)',
       }}
     >
