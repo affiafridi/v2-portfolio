@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { gsap } from 'gsap'
 import { useMenuStore }  from '@/store/useMenuStore'
 import { useCursorStore } from '@/store/useCursorStore'
+import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
 
 /* ─────────────────────────────────────────────────────────────────
    MenuOverlay — Centered floating panel, same width as sticky header.
@@ -116,6 +117,8 @@ export default function MenuOverlay() {
           width:         'min(90vw, 500px)',
           pointerEvents: isOpen ? 'auto' : 'none',
         }}
+        onMouseEnter={cancelMenuClose}
+        onMouseLeave={() => scheduleMenuClose(close)}
       >
         {/* ── Animated panel (GSAP owns clipPath only) ────────── */}
         <div

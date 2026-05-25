@@ -3,133 +3,147 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 
-/* ─── Blob grid — 33 positions, covers full viewport + corners ────── */
-const BLOBS = [
-  { x: -2,  y: 5,   s: 0.24 }, { x: 17,  y: 3,   s: 0.21 },
-  { x: 35,  y: 7,   s: 0.23 }, { x: 53,  y: 2,   s: 0.20 },
-  { x: 71,  y: 6,   s: 0.22 }, { x: 89,  y: 4,   s: 0.21 },
-  { x: 103, y: 8,   s: 0.24 },
-  { x: 8,   y: 25,  s: 0.21 }, { x: 26,  y: 29,  s: 0.23 },
-  { x: 44,  y: 24,  s: 0.20 }, { x: 62,  y: 30,  s: 0.22 },
-  { x: 80,  y: 26,  s: 0.21 }, { x: 101, y: 28,  s: 0.23 },
-  { x: -3,  y: 48,  s: 0.24 }, { x: 15,  y: 52,  s: 0.22 },
-  { x: 34,  y: 46,  s: 0.21 }, { x: 51,  y: 51,  s: 0.25 },
-  { x: 69,  y: 49,  s: 0.21 }, { x: 87,  y: 53,  s: 0.23 },
-  { x: 104, y: 47,  s: 0.22 },
-  { x: 6,   y: 70,  s: 0.22 }, { x: 23,  y: 74,  s: 0.20 },
-  { x: 42,  y: 69,  s: 0.23 }, { x: 60,  y: 75,  s: 0.21 },
-  { x: 78,  y: 71,  s: 0.22 }, { x: 99,  y: 73,  s: 0.23 },
-  { x: -1,  y: 91,  s: 0.24 }, { x: 19,  y: 95,  s: 0.22 },
-  { x: 39,  y: 90,  s: 0.21 }, { x: 58,  y: 96,  s: 0.22 },
-  { x: 76,  y: 92,  s: 0.21 }, { x: 94,  y: 94,  s: 0.23 },
-  { x: 107, y: 89,  s: 0.24 },
+/* ─── Hole grid — organic blobs punched through dark canvas ─────── */
+/* Positions as fraction of viewport (0–1), seed drives waviness     */
+const HOLES = [
+  /* row 0 */
+  { x: 0.03, y: 0.05, seed: 1.2 },
+  { x: 0.20, y: 0.02, seed: 2.3 },
+  { x: 0.38, y: 0.08, seed: 3.7 },
+  { x: 0.57, y: 0.03, seed: 4.1 },
+  { x: 0.76, y: 0.07, seed: 5.5 },
+  { x: 0.96, y: 0.04, seed: 6.2 },
+  /* row 1 */
+  { x: 0.10, y: 0.22, seed: 7.8 },
+  { x: 0.28, y: 0.25, seed: 8.3 },
+  { x: 0.47, y: 0.20, seed: 9.1 },
+  { x: 0.65, y: 0.24, seed: 10.6 },
+  { x: 0.83, y: 0.21, seed: 11.4 },
+  /* row 2 */
+  { x: 0.02, y: 0.45, seed: 12.9 },
+  { x: 0.20, y: 0.48, seed: 13.2 },
+  { x: 0.38, y: 0.43, seed: 14.7 },
+  { x: 0.56, y: 0.47, seed: 15.1 },
+  { x: 0.74, y: 0.44, seed: 16.8 },
+  { x: 0.93, y: 0.46, seed: 17.3 },
+  /* row 3 */
+  { x: 0.12, y: 0.67, seed: 18.5 },
+  { x: 0.30, y: 0.70, seed: 19.2 },
+  { x: 0.48, y: 0.65, seed: 20.9 },
+  { x: 0.66, y: 0.68, seed: 21.4 },
+  { x: 0.84, y: 0.66, seed: 22.7 },
+  /* row 4 */
+  { x: 0.04, y: 0.88, seed: 23.1 },
+  { x: 0.22, y: 0.85, seed: 24.6 },
+  { x: 0.40, y: 0.90, seed: 25.3 },
+  { x: 0.58, y: 0.86, seed: 26.8 },
+  { x: 0.76, y: 0.89, seed: 27.2 },
+  { x: 0.95, y: 0.86, seed: 28.9 },
+  /* centre + gap-fillers */
+  { x: 0.50, y: 0.50, seed: 29.4 },
+  { x: 0.14, y: 0.38, seed: 30.7 },
+  { x: 0.86, y: 0.38, seed: 31.2 },
+  { x: 0.33, y: 0.58, seed: 32.5 },
+  { x: 0.68, y: 0.56, seed: 33.8 },
 ]
 
-const BG = '#0a0a0a'
+/* Draw an organic wavy circle via sine-wave radial perturbation */
+function drawOrganic(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  seed: number,
+) {
+  const pts = 48
+  ctx.beginPath()
+  for (let j = 0; j <= pts; j++) {
+    const angle = (j / pts) * Math.PI * 2
+    const wave =
+      1 +
+      Math.sin(angle * 3 + seed * 1.1) * 0.18 +
+      Math.sin(angle * 5 + seed * 0.7) * 0.11 +
+      Math.sin(angle * 7 + seed * 1.3) * 0.06
+    const pr = r * wave
+    const px = cx + pr * Math.cos(angle)
+    const py = cy + pr * Math.sin(angle)
+    if (j === 0) ctx.moveTo(px, py)
+    else         ctx.lineTo(px, py)
+  }
+  ctx.closePath()
+}
 
 export default function Preloader() {
-  const [mounted, setMounted]   = useState(true)
-  const canvasRef               = useRef<HTMLCanvasElement>(null)
-  const counterRef              = useRef<HTMLSpanElement>(null)
-  /* one proxy per blob — GSAP tweens {p:0→1} with stagger */
-  const proxies                 = useRef(BLOBS.map(() => ({ p: 0 })))
-  const active                  = useRef(true)
-  const raf                     = useRef(0)
-  /* store DPR so draw loop reads it without recalculating */
-  const dprRef                  = useRef(1)
+  const [mounted, setMounted] = useState(true)
+  const canvasRef  = useRef<HTMLCanvasElement>(null)
+  const counterRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    /* ── Strict Mode safety: reset on every mount ── */
-    active.current = true
-    proxies.current.forEach(px => { px.p = 0 })
-
     const canvas  = canvasRef.current
     const counter = counterRef.current
     if (!canvas || !counter) return
 
-    const ctx = canvas.getContext('2d')!
     document.body.style.overflow = 'hidden'
 
-    /* ── Size canvas — full resolution with DPR ── */
-    const resize = () => {
-      const dpr   = window.devicePixelRatio || 1
-      dprRef.current = dpr
-      const w     = window.innerWidth
-      const h     = window.innerHeight
-      canvas.width  = Math.round(w * dpr)
-      canvas.height = Math.round(h * dpr)
-      canvas.style.width  = w + 'px'
-      canvas.style.height = h + 'px'
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    }
-    resize()
-    window.addEventListener('resize', resize, { passive: true })
+    /* Size canvas to fill viewport exactly */
+    const W = window.innerWidth
+    const H = window.innerHeight
+    canvas.width  = W
+    canvas.height = H
 
-    /* ── Draw loop ──────────────────────────────────────────────────
-       Strategy: fill black each frame, then punch holes with radial
-       gradient + destination-out. Full viewport resolution — no
-       offscreen downscale, no getImageData, no pixelation.
-       ─────────────────────────────────────────────────────────────── */
+    /* R_MAX: 28% of viewport diagonal — enough for holes to fully overlap
+       and erase the entire dark overlay even with organic waviness.        */
+    const R_MAX = Math.hypot(W, H) * 0.28
+
+    const ctx = canvas.getContext('2d')!
+
+    /* Per-hole proxy objects — GSAP tweens `.r` on each */
+    const proxyArr = HOLES.map(() => ({ r: 0 }))
+
+    /* RAF draw loop — fills dark, then punches transparent holes */
+    let running = true
+    let raf     = 0
+
     const draw = () => {
-      if (!active.current) return
-      raf.current = requestAnimationFrame(draw)
+      if (!running) return
 
-      const W = window.innerWidth
-      const H = window.innerHeight
+      ctx.clearRect(0, 0, W, H)
 
-      /* solid black background */
+      /* Solid dark fill */
       ctx.globalCompositeOperation = 'source-over'
-      ctx.fillStyle = BG
+      ctx.fillStyle = '#0a0a0a'
       ctx.fillRect(0, 0, W, H)
 
-      /* punch transparent holes via destination-out radial gradients */
+      /* Punch organic transparent holes through the fill */
       ctx.globalCompositeOperation = 'destination-out'
-
-      for (let i = 0; i < proxies.current.length; i++) {
-        const p = proxies.current[i].p
-        if (p < 0.001) continue
-
-        const b  = BLOBS[i]
-        const cx = (b.x / 100) * W
-        const cy = (b.y / 100) * H
-        /* radius scales with both viewport width and progress */
-        const r  = b.s * W * p
-
-        /* soft-edged hole: opaque core → fully transparent edge */
-        const grad = ctx.createRadialGradient(cx, cy, r * 0.45, cx, cy, r)
-        grad.addColorStop(0,    'rgba(0,0,0,1)')
-        grad.addColorStop(0.72, 'rgba(0,0,0,0.96)')
-        grad.addColorStop(1,    'rgba(0,0,0,0)')
-
-        ctx.fillStyle = grad
-        ctx.beginPath()
-        ctx.arc(cx, cy, r, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(0,0,0,1)'
+      proxyArr.forEach((p, i) => {
+        if (p.r <= 0.5) return
+        drawOrganic(ctx, HOLES[i].x * W, HOLES[i].y * H, p.r, HOLES[i].seed)
         ctx.fill()
-      }
+      })
 
-      ctx.globalCompositeOperation = 'source-over'
+      raf = requestAnimationFrame(draw)
     }
-
     draw()
 
-    /* ── Reveal page content — called right before burn phase ── */
+    /* ── Helpers ─────────────────────────────────────────────────── */
     const revealPage = () => {
       const pc = document.getElementById('pc')
       if (pc) pc.style.visibility = ''
     }
 
-    /* ── Cleanup helper — used in onComplete AND in cleanup fn ── */
     const teardown = () => {
-      active.current = false
-      cancelAnimationFrame(raf.current)
+      running = false
+      cancelAnimationFrame(raf)
       document.body.style.overflow = ''
       document.documentElement.removeAttribute('data-loading')
-      revealPage()   /* safety: ensure page is always unblocked */
+      revealPage()
     }
 
-    /* ── GSAP timeline ─────────────────────────────────────────────
-       ~2.2 s total so Hero entrance overlaps the burn phase.
-       ──────────────────────────────────────────────────────────── */
+    /* ── Main timeline ───────────────────────────────────────────── */
+    const cProxy = { val: 0 }
+
     const tl = gsap.timeline({
       onComplete() {
         teardown()
@@ -137,40 +151,44 @@ export default function Preloader() {
       },
     })
 
-    const cProxy = { val: 0 }
-
     tl
       /* 1 — count 0 → 100 */
       .to(cProxy, {
         val: 100,
         duration: 1.2,
         ease: 'power2.inOut',
-        onUpdate() { if (counter) counter.textContent = `${Math.round(cProxy.val)}%` },
+        onUpdate() {
+          if (counter) counter.textContent = `${Math.round(cProxy.val)}%`
+        },
       })
-      /* 2 — counter out */
-      .to(counter, { y: -32, opacity: 0, duration: 0.22, ease: 'power2.in' }, '-=0.05')
-      /* 3 — reveal page content just before holes appear so Hero
-              animations are mid-play when burn holes expose them */
-      .call(revealPage)
-      /* 4 — burn holes: all 33 blobs staggered randomly */
-      .to(proxies.current, {
-        p:        1,
-        duration: 0.95,
-        ease:     'expo.inOut',
-        stagger:  { each: 0.012, from: 'random' },
-      }, '+=0.06')
-      /* 4 — fade canvas out (already mostly transparent by now) */
-      .to(canvas, { opacity: 0, duration: 0.18, ease: 'none' }, '-=0.1')
 
-    /* ── Safety valve: force-unmount if something blocks onComplete ── */
+      /* 2 — counter slides out upward */
+      .to(counter, { y: -28, opacity: 0, duration: 0.22, ease: 'power2.in' }, '-=0.05')
+
+      /* 3 — show page behind canvas so Hero starts mid-animation */
+      .call(revealPage)
+
+      /* 4 — organic holes grow from random positions → page shows through */
+      .to(proxyArr, {
+        r:        R_MAX,
+        duration: 1.10,
+        ease:     'expo.inOut',
+        stagger:  { each: 0.022, from: 'random' },
+      }, '+=0.04')
+
+      /* 5 — fade remaining dark fringe, then done */
+      .to(canvas, { opacity: 0, duration: 0.22, ease: 'power1.in' })
+
+    /* Safety unmount in case timeline stalls */
     const safety = window.setTimeout(() => {
       teardown()
       setMounted(false)
     }, 6000)
 
     return () => {
+      running = false
+      cancelAnimationFrame(raf)
       teardown()
-      window.removeEventListener('resize', resize)
       window.clearTimeout(safety)
       tl.kill()
     }
@@ -180,24 +198,24 @@ export default function Preloader() {
 
   return (
     <>
-      {/* canvas — transparent pixels reveal the page beneath */}
+      {/* Canvas — dark fill with transparent holes burned through it */}
       <canvas
         ref={canvasRef}
         style={{
           position:      'fixed',
           inset:         0,
-          zIndex:        9999,
+          zIndex:        9998,
+          pointerEvents: 'none',
           display:       'block',
-          pointerEvents: 'none',   /* CRITICAL: don't block mouse/touch */
         }}
       />
 
-      {/* counter — above canvas, no compositing side-effects */}
+      {/* Counter — above canvas, unaffected by composite ops */}
       <div
         style={{
           position:       'fixed',
           inset:          0,
-          zIndex:         10000,
+          zIndex:         9999,
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',

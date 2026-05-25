@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCursorStore } from '@/store/useCursorStore'
 import { useMenuStore }   from '@/store/useMenuStore'
+import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
 
 /* ─── Nav data ───────────────────────────────────────────────────── */
 const NAV_ITEMS = [
@@ -94,8 +95,8 @@ function DefaultHeader() {
 
 /* ─── STICKY header — dark pill ──────────────────────────────────── */
 function StickyHeader() {
-  const { setCursorType }  = useCursorStore()
-  const { toggle, isOpen } = useMenuStore()
+  const { setCursorType }        = useCursorStore()
+  const { open, close, isOpen }  = useMenuStore()
 
   return (
     <motion.div
@@ -138,15 +139,14 @@ function StickyHeader() {
           <LogoMark />
         </Link>
 
-        {/* Right: Menu toggle */}
+        {/* Right: Menu toggle — hover to open */}
         <button
-          onClick={toggle}
           className="flex items-center gap-2.5 text-[11px] font-medium uppercase tracking-[0.15em]"
           style={{ color: 'rgba(240,240,240,0.38)', transition: 'color 0.2s ease' }}
           aria-label="Toggle menu"
           aria-expanded={isOpen}
-          onMouseEnter={(e) => { e.currentTarget.style.color = '#f0f0f0'; setCursorType('hover') }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(240,240,240,0.38)'; setCursorType('default') }}
+          onMouseEnter={(e) => { cancelMenuClose(); open(); e.currentTarget.style.color = '#f0f0f0'; setCursorType('hover') }}
+          onMouseLeave={(e) => { scheduleMenuClose(close); e.currentTarget.style.color = 'rgba(240,240,240,0.38)'; setCursorType('default') }}
         >
           Menu
           <span className="flex flex-col gap-[4px]" aria-hidden="true">

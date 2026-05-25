@@ -84,7 +84,7 @@ export default function AboutSection() {
         scrollTrigger: {
           trigger: '.ab-statement',
           start:   'top 68%',
-          end:     'bottom 18%',
+          end:     'bottom 55%',
           scrub:   2,
         },
       })
