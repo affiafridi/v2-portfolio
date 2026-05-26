@@ -570,8 +570,6 @@ export default function WorkSection() {
         animatedPanels.current.clear()
         prevActiveIdx.current = -1
         panels.forEach((_, i) => {
-          if (i > 0) gsap.set(panels[i], { filter: 'blur(14px)' })
-          else        gsap.set(panels[i], { filter: 'blur(0px)' })
           gsap.set(`.wk-panel-${i} .wk-content`, { opacity: 0, y: 16 })
           gsap.set(`.wk-panel-${i} .wk-type`,    { opacity: 0, filter: 'blur(8px)', y: 8 })
           gsap.set(`.wk-panel-${i} .wk-tag`,     { opacity: 0, filter: 'blur(10px)', x: 6 })
@@ -582,7 +580,7 @@ export default function WorkSection() {
 
       panels.forEach((_, i) => {
         if (i > 0) {
-          gsap.set(`.wk-panel-${i}`, { yPercent:100, scale:0.94, filter:'blur(14px)' })
+          gsap.set(`.wk-panel-${i}`, { yPercent:100, scale:0.94 })
         }
         /* All panels — content starts hidden so there's no flash on load */
         gsap.set(`.wk-panel-${i} .wk-content`, { opacity:0, y:16 })
@@ -593,8 +591,8 @@ export default function WorkSection() {
       })
 
       gsap.fromTo('.wk-sticky',
-        { scale:0.88, y:60 },
-        { scale:1, y:0, ease:'power2.out', scrollTrigger:{ trigger:sectionRef.current!, start:'top 90%', end:'top top', scrub:1.0 } }
+        { y: 40 },
+        { y: 0, ease:'power2.out', scrollTrigger:{ trigger:sectionRef.current!, start:'top 90%', end:'top top', scrub:1.0 } }
       )
 
       ScrollTrigger.create({
@@ -606,8 +604,8 @@ export default function WorkSection() {
       const tl = gsap.timeline()
       for (let i = 1; i < N; i++) {
         const t = i - 1
-        tl.to(panels[i-1], { scale:0.90, yPercent:-4, opacity:0.12, filter:'blur(18px)', duration:1, ease:'power2.inOut' }, t)
-        tl.to(panels[i],   { yPercent:0, scale:1, filter:'blur(0px)', duration:1, ease:'power2.inOut' }, t)
+        tl.to(panels[i-1], { scale:0.92, yPercent:-3, opacity:0, duration:1, ease:'power2.inOut' }, t)
+        tl.to(panels[i],   { yPercent:0, scale:1, duration:1, ease:'power2.inOut' }, t)
       }
 
       ScrollTrigger.create({

@@ -1,6 +1,7 @@
-import HeroJerez    from '@/components/sections/HeroJerez'
-import AboutSection from '@/components/sections/AboutSection'
-import WorkSection  from '@/components/sections/WorkSection'
+import HeroJerez      from '@/components/sections/HeroJerez'
+import AboutSection   from '@/components/sections/AboutSection'
+import WorkSection    from '@/components/sections/WorkSection'
+import ServiceSection from '@/components/sections/ServiceSection'
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <HeroJerez />
       <AboutSection />
       <WorkSection />
+      <ServiceSection />
     </main>
   )
 }
