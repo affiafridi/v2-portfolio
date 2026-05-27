@@ -197,14 +197,15 @@ const PREVIEWS = [ImgWebDev, ImgUIUX, ImgGSAP, ImgBrand, ImgEcom, ImgCMS]
 
 /* ─── Component ──────────────────────────────────────────────────── */
 export default function ServiceSection() {
-  const sectionRef  = useRef<HTMLElement>(null)
-  const rowRefs     = useRef<(HTMLDivElement | null)[]>([])
-  const labelRefs   = useRef<(HTMLSpanElement | null)[]>([])
-  const tagRefs     = useRef<(HTMLSpanElement | null)[]>([])
-  const numRefs     = useRef<(HTMLSpanElement | null)[]>([])
-  const floatRef    = useRef<HTMLDivElement>(null)
-  const previewRefs = useRef<(HTMLDivElement | null)[]>([])
-  const prevIdx     = useRef(-1)
+  const sectionRef    = useRef<HTMLElement>(null)
+  const rowRefs       = useRef<(HTMLDivElement | null)[]>([])
+  const labelRefs     = useRef<(HTMLSpanElement | null)[]>([])
+  const tagRefs       = useRef<(HTMLSpanElement | null)[]>([])
+  const numRefs       = useRef<(HTMLSpanElement | null)[]>([])
+  const floatRef      = useRef<HTMLDivElement>(null)
+  const previewRefs   = useRef<(HTMLDivElement | null)[]>([])
+  const prevIdx       = useRef(-1)
+  const floatVisible  = useRef(false)
   const { setCursorType } = useCursorStore()
   const N = SERVICES.length
 
@@ -220,12 +221,28 @@ export default function ServiceSection() {
     const centerY = rect.top + rect.height / 2
 
     /* Position float — each service has its own left offset */
+    gsap.killTweensOf(floatRef.current)
     gsap.set(floatRef.current, {
       left: IMG_OFFSETS[idx].left,
       top:  centerY,
       y:    '-50%',
     })
-    gsap.to(floatRef.current, { opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out' })
+
+    if (!floatVisible.current) {
+      /* First appearance — zoom in from a shrunken state */
+      gsap.set(floatRef.current, { scale: 0.72, opacity: 0 })
+      gsap.to(floatRef.current, {
+        opacity:  1,
+        scale:    1,
+        duration: 0.55,
+        ease:     'back.out(1.4)',
+      })
+      floatVisible.current = true
+    } else {
+      /* Already showing — quick dip then snap back (cross-service zoom pop) */
+      gsap.to(floatRef.current, { scale: 0.88, duration: 0.10, ease: 'power2.in' })
+      gsap.to(floatRef.current, { scale: 1, duration: 0.42, ease: 'back.out(1.5)', delay: 0.10 })
+    }
 
     /* Swap preview image — kill stale tweens first so no leftover opacity
        from a skipped service, then drive every preview to its target state */
@@ -261,7 +278,10 @@ export default function ServiceSection() {
 
   const handleLeave = () => {
     if (!floatRef.current) return
-    gsap.to(floatRef.current, { opacity: 0, scale: 0.96, duration: 0.22, ease: 'power2.in' })
+    gsap.killTweensOf(floatRef.current)
+    gsap.to(floatRef.current, { opacity: 0, scale: 0.78, duration: 0.22, ease: 'power2.in' })
+    floatVisible.current = false
+    prevIdx.current = -1
 
     labelRefs.current.forEach(el =>
       el && gsap.to(el, { color: 'rgba(26,26,26,0.38)', duration: 0.28, ease: 'power2.out' }))
@@ -280,7 +300,7 @@ export default function ServiceSection() {
     tagRefs.current.forEach(el   => el && gsap.set(el, { opacity: 0, x: 6 }))
     numRefs.current.forEach(el   => el && gsap.set(el, { opacity: 0.18 }))
     previewRefs.current.forEach(el => el && gsap.set(el, { opacity: 0 }))
-    if (floatRef.current) gsap.set(floatRef.current, { opacity: 0, scale: 0.96 })
+    if (floatRef.current) gsap.set(floatRef.current, { opacity: 0, scale: 0.72 })
 
     const ctx = gsap.context(() => {
       /* Heading drops in */
