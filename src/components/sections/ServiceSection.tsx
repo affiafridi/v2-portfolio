@@ -198,10 +198,12 @@ const PREVIEWS = [ImgWebDev, ImgUIUX, ImgGSAP, ImgBrand, ImgEcom, ImgCMS]
 /* ─── Component ──────────────────────────────────────────────────── */
 export default function ServiceSection() {
   const sectionRef    = useRef<HTMLElement>(null)
+  const listRef       = useRef<HTMLDivElement>(null)   // the actual list container
   const rowRefs       = useRef<(HTMLDivElement | null)[]>([])
   const labelRefs     = useRef<(HTMLSpanElement | null)[]>([])
   const tagRefs       = useRef<(HTMLSpanElement | null)[]>([])
   const numRefs       = useRef<(HTMLSpanElement | null)[]>([])
+  const lineRefs      = useRef<(HTMLDivElement | null)[]>([])  // top + 1 per row
   const floatRef      = useRef<HTMLDivElement>(null)
   const previewRefs   = useRef<(HTMLDivElement | null)[]>([])
   const prevIdx       = useRef(-1)
@@ -295,32 +297,102 @@ export default function ServiceSection() {
 
   /* ── Setup & entrance animations ────────────────────────────── */
   useEffect(() => {
-    /* Initial states */
-    labelRefs.current.forEach(el => el && gsap.set(el, { color: 'rgba(26,26,26,0.38)' }))
-    tagRefs.current.forEach(el   => el && gsap.set(el, { opacity: 0, x: 6 }))
-    numRefs.current.forEach(el   => el && gsap.set(el, { opacity: 0.18 }))
-    previewRefs.current.forEach(el => el && gsap.set(el, { opacity: 0 }))
+
+    /* ── Initial hidden states — identical props to WorkSection ── */
+    /* Labels: same as wk-tag: blur(10px) + x:6, not y               */
+    labelRefs.current.forEach(el => el && gsap.set(el, {
+      color: 'rgba(26,26,26,0.38)', opacity: 0, filter: 'blur(10px)', x: 6,
+    }))
+    tagRefs.current.forEach(el     => el && gsap.set(el,  { opacity: 0, x: 6 }))
+    numRefs.current.forEach(el     => el && gsap.set(el,  { opacity: 0 }))
+    previewRefs.current.forEach(el => el && gsap.set(el,  { opacity: 0 }))
+    lineRefs.current.forEach(el    => el && gsap.set(el,  { scaleX: 0 }))
     if (floatRef.current) gsap.set(floatRef.current, { opacity: 0, scale: 0.72 })
 
     const ctx = gsap.context(() => {
-      /* Heading drops in */
+
+      /* Heading — same as other sections */
       gsap.from('.sv-title', {
         y: -28, opacity: 0, duration: 1.0, ease: 'power3.out',
-        scrollTrigger: { trigger: sectionRef.current!, start: 'top 80%' },
+        scrollTrigger: { trigger: sectionRef.current!, start: 'top 80%', once: true },
       })
-      /* Rows stagger in from left */
-      gsap.from('.sv-row', {
-        x: -24, opacity: 0, duration: 0.65, ease: 'power3.out', stagger: 0.055,
-        scrollTrigger: { trigger: '.sv-list', start: 'top 72%' },
+
+      /* ── Main list reveal — mirrors WorkSection revealPanel() exactly ──
+         Single timeline so everything is choreographed, not racing.
+         Trigger: listRef (the list element itself, not the section top).
+         start: 'top 60%' — list top must reach 60% down the viewport so
+         at least the first row is already visible when the sequence starts.  */
+      const lines  = lineRefs.current.filter(Boolean)  as HTMLDivElement[]
+      const labels = labelRefs.current.filter(Boolean) as HTMLSpanElement[]
+      const nums   = numRefs.current.filter(Boolean)   as HTMLSpanElement[]
+
+      /*  Step-by-step reveal — each cycle:
+          top line → label[0] → line[1] → label[1] → line[2] → … → label[5] → line[6]
+
+          The pattern: line wipes in, then immediately the service name
+          blurs clear, then the bottom line of THAT row wipes in, and so
+          on — giving visitors a clear read of each entry before the next. */
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: listRef.current!,
+          start:   'top 60%',
+          once:    true,
+        },
+        delay: 0.05,
       })
+
+      /* ① Top divider wipes in first */
+      tl.fromTo(lines[0],
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: 'power3.out' },
+      )
+
+      /* ② For each service: label blurs in, then its bottom line draws */
+      labels.forEach((label, i) => {
+        /* Label blurs clear — same values as wk-tag */
+        tl.fromTo(label,
+          { opacity: 0, filter: 'blur(10px)', x: 6 },
+          { opacity: 1, filter: 'blur(0px)',  x: 0,
+            duration: 0.38, ease: 'power2.out' },
+          '-=0.08',
+        )
+
+        /* Number fades in alongside label */
+        if (nums[i]) {
+          tl.fromTo(nums[i],
+            { opacity: 0 },
+            { opacity: 0.18, duration: 0.32, ease: 'power2.out' },
+            '<',
+          )
+        }
+
+        /* Bottom divider wipes in right after label settles */
+        if (lines[i + 1]) {
+          tl.fromTo(lines[i + 1],
+            { scaleX: 0 },
+            { scaleX: 1, duration: 0.45, ease: 'power3.out' },
+            '-=0.08',
+          )
+        }
+      })
+
       /* CTA fades up */
       gsap.from('.sv-cta-wrap', {
         y: 20, opacity: 0, duration: 0.70, ease: 'power3.out',
-        scrollTrigger: { trigger: '.sv-cta-wrap', start: 'top 92%' },
+        scrollTrigger: { trigger: '.sv-cta-wrap', start: 'top 92%', once: true },
       })
+
     }, sectionRef)
 
-    return () => ctx.revert()
+    /* Refresh after sticky WorkSection layout settles — prevents positions
+       being measured before that section's scroll context is fully painted. */
+    const refreshId = setTimeout(() => ScrollTrigger.refresh(), 400)
+
+    return () => {
+      ctx.revert()
+      clearTimeout(refreshId)
+    }
   }, [])
 
   return (
@@ -352,15 +424,22 @@ export default function ServiceSection() {
       {/* ══ SERVICE LIST ════════════════════════════════════════════ */}
       <div
         className="sv-list"
+        ref={listRef}
         style={{
           paddingLeft:  '34vw',
           paddingRight: 'clamp(32px, 6.5vw, 96px)',
         }}
       >
-        <div style={{ borderTop: `1px solid rgba(26,26,26,0.10)` }}>
-          {SERVICES.map((s, i) => (
+        {/* Top divider — animated */}
+        <div
+          className="sv-line"
+          ref={el => { lineRefs.current[0] = el }}
+          style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
+        />
+
+        {SERVICES.map((s, i) => (
+          <div key={s.num}>
             <div
-              key={s.num}
               className="sv-row"
               ref={el => { rowRefs.current[i] = el }}
               onMouseEnter={() => handleEnter(i)}
@@ -370,7 +449,6 @@ export default function ServiceSection() {
                 alignItems:     'center',
                 justifyContent: 'space-between',
                 padding:        'clamp(12px, 1.6vw, 22px) 0',
-                borderBottom:   `1px solid rgba(26,26,26,0.10)`,
                 cursor:         'none',
               }}
             >
@@ -398,7 +476,7 @@ export default function ServiceSection() {
                     fontWeight:    600,
                     letterSpacing: '0.20em',
                     textTransform: 'uppercase',
-                    color:         'rgba(26,26,26,0.38)',
+                    color:         ACC,       /* ← red/orange, matching nav */
                     opacity:       0,
                     whiteSpace:    'nowrap',
                     flexShrink:    0,
@@ -424,8 +502,15 @@ export default function ServiceSection() {
                 {s.num}
               </span>
             </div>
-          ))}
-        </div>
+
+            {/* Bottom divider for this row — animated */}
+            <div
+              className="sv-line"
+              ref={el => { lineRefs.current[i + 1] = el }}
+              style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
+            />
+          </div>
+        ))}
       </div>
 
       {/* ══ SEE ALL — same as About CTA ════════════════════════════ */}

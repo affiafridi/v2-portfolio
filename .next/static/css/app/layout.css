@@ -1521,6 +1521,13 @@ a, button, input, textarea, select, label, [role='button'] {
    Browser compositor owns the loop — zero frame-gap at repeat boundary.
    4 identical spans → moving 25% of the container = exactly 1 span width.
    ─────────────────────────────────────────────────────────────────── */
+/* ─── StackSection — ticker is GSAP-driven, no CSS animation needed */
+/*   willChange: 'transform' is set inline on the ticker div          */
+
+/* ─── Hero marquee ───────────────────────────────────────────────────
+   Browser compositor owns the loop — zero frame-gap at repeat boundary.
+   4 identical spans → moving 25% of the container = exactly 1 span width.
+   ─────────────────────────────────────────────────────────────────── */
 @keyframes hj-ticker {
   from { transform: translateX(0%);   }
   to   { transform: translateX(-25%); }

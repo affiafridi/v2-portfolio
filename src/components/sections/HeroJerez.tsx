@@ -97,6 +97,23 @@ export default function HeroJerez() {
     return () => { ctx.revert(); clearInterval(glitchId); glitchTlRef.current?.kill() }
   }, [triggerGlitch])
 
+  /* ── 3. Headline parallax — scrolls upward faster than the page ─ */
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.to('.hj-headline', {
+        y:    -260,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: sectionRef.current!,
+          start:   'top top',
+          end:     'bottom top',
+          scrub:   1.2,
+        },
+      })
+    }, sectionRef)
+    return () => ctx.revert()
+  }, [])
+
   /* ── 2. Marquee direction + water physics on portrait ───────────
 
      WATER PHYSICS  — how it works:
@@ -413,17 +430,19 @@ export default function HeroJerez() {
         isolates the blend and stops it from seeing siblings (portrait).
         Moving it here lets it composite against: cream bg + portrait (z:10).
       */}
+      {/*
+        overflow-hidden removed from hj-headline — it was clipping descenders
+        (g, p, y) of the big font. paddingBottom on the inner wrapper gives
+        those descenders room to show inside the section boundary.
+        bottom-0 instead of bottom-[-1%] keeps everything within the section
+        so the section's own overflow-hidden doesn't clip anything.
+      */}
       <div
-        className="hj-headline pointer-events-none absolute bottom-[-1%]
-                   left-0 right-0 select-none overflow-hidden"
+        className="hj-headline pointer-events-none absolute bottom-0
+                   left-0 right-0 select-none"
         style={{ zIndex: 20, mixBlendMode: 'difference' }}
       >
-        {/*
-          outerMarqueeRef — GSAP only touches skewX here on scroll.
-          marqueeRef      — CSS animation drives the infinite loop.
-          Keeping them on separate elements avoids any transform conflict.
-        */}
-        <div ref={outerMarqueeRef}>
+        <div ref={outerMarqueeRef} style={{ paddingBottom: '0.20em' }}>
           <div
             ref={marqueeRef}
             className="flex whitespace-nowrap"
