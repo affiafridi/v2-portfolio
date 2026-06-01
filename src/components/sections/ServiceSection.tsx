@@ -385,12 +385,36 @@ export default function ServiceSection() {
 
     }, sectionRef)
 
-    /* Refresh after sticky WorkSection layout settles — prevents positions
-       being measured before that section's scroll context is fully painted. */
+    /* ── Hide float when section is out of viewport ─────────────
+       The float uses position:fixed so it persists in the viewport
+       even after scrolling away. This ScrollTrigger force-hides it
+       the moment the section leaves in either direction.
+       ─────────────────────────────────────────────────────────── */
+    const hideFloat = () => {
+      if (!floatRef.current) return
+      gsap.killTweensOf(floatRef.current)
+      gsap.to(floatRef.current, { opacity: 0, scale: 0.78, duration: 0.20, ease: 'power2.in' })
+      floatVisible.current = false
+      prevIdx.current = -1
+      labelRefs.current.forEach(el => el && gsap.to(el, { color: 'rgba(26,26,26,0.38)', duration: 0.20 }))
+      tagRefs.current.forEach(el   => el && gsap.to(el, { opacity: 0, x: 6, duration: 0.15 }))
+      numRefs.current.forEach(el   => el && gsap.to(el, { opacity: 0.18, duration: 0.18 }))
+    }
+
+    const visibilityST = ScrollTrigger.create({
+      trigger:     sectionRef.current!,
+      start:       'top bottom',
+      end:         'bottom top',
+      onLeave:     hideFloat,
+      onLeaveBack: hideFloat,
+    })
+
+    /* Refresh after sticky WorkSection layout settles */
     const refreshId = setTimeout(() => ScrollTrigger.refresh(), 400)
 
     return () => {
       ctx.revert()
+      visibilityST.kill()
       clearTimeout(refreshId)
     }
   }, [])

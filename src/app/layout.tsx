@@ -2,10 +2,11 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
-import Header      from '@/components/layout/Header'
-import Cursor      from '@/components/ui/Cursor'
-import MenuOverlay from '@/components/ui/MenuOverlay'
-import Preloader   from '@/components/ui/Preloader'
+import Header               from '@/components/layout/Header'
+import Cursor               from '@/components/ui/Cursor'
+import MenuOverlay          from '@/components/ui/MenuOverlay'
+import Preloader            from '@/components/ui/Preloader'
+import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
 
 /* ─── Font ───────────────────────────────────────────────────────── */
 const inter = Inter({
@@ -37,10 +38,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             Preloader calls document.getElementById('pc').style.visibility=''
             right before the burn holes begin. */}
         <div id="pc" style={{ visibility: 'hidden' }}>
-          <Cursor />
-          <Header />
-          <MenuOverlay />
-          {children}
+          <SmoothScrollProvider>
+            <Cursor />
+            <Header />
+            <MenuOverlay />
+            {children}
+          </SmoothScrollProvider>
         </div>
       </body>
     </html>
