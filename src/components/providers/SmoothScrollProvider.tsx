@@ -57,6 +57,7 @@ export default function SmoothScrollProvider({
        fast sweep through all sections back to the top.
        ─────────────────────────────────────────────────────────── */
     ;(window as unknown as Record<string, unknown>).__lenis = lenis
+    ;(window as unknown as Record<string, unknown>).ScrollTrigger = ScrollTrigger
 
     /* ── Wire Lenis into GSAP ticker ────────────────────────────
        Calling lenis.raf() inside the GSAP ticker (rather than a

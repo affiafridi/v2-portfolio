@@ -83,8 +83,6 @@ export default function Preloader() {
     const counter = counterRef.current
     if (!canvas || !counter) return
 
-    document.body.style.overflow = 'hidden'
-
     /* Size canvas to fill viewport exactly */
     const W = window.innerWidth
     const H = window.innerHeight
@@ -136,9 +134,17 @@ export default function Preloader() {
     const teardown = () => {
       running = false
       cancelAnimationFrame(raf)
-      document.body.style.overflow = ''
       document.documentElement.removeAttribute('data-loading')
       revealPage()
+      /* Refresh ScrollTrigger after page becomes visible so all
+         trigger positions are recalculated against real layout    */
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const ST = (window as unknown as Record<string, unknown>).ScrollTrigger as
+            { refresh: () => void } | undefined
+          ST?.refresh()
+        })
+      })
     }
 
     /* ── Main timeline ───────────────────────────────────────────── */

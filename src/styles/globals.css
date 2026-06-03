@@ -26,6 +26,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+
 /* ─── Preloader: server-side black — zero flash on reload ───────────
    layout.tsx sets data-loading="" on <html> before JS runs.
    Preloader removes it in onComplete so background snaps to cream.
@@ -44,29 +45,32 @@ body {
   min-height: 100dvh;
 }
 
-/* ─── Custom Scrollbar ───────────────────────────────────────────── */
+/* ─── Hide Scrollbar ─────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 4px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-muted);
-  border-radius: 2px;
-  transition: background 0.2s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent);
-}
-
-/* Firefox */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-muted) var(--color-bg);
+  scrollbar-width: none;
+}
+
+/* ─── Contact Modal ──────────────────────────────────────────────── */
+.cm-panel::-webkit-scrollbar { display: none; }
+
+.cm-field input::placeholder,
+.cm-field textarea::placeholder {
+  color:          rgba(26,26,26,0.20);
+  font-weight:    700;
+  font-family:    var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  font-style:     italic;
+}
+
+.cm-required::after {
+  content:     ' *';
+  color:       #ff4d00;
+  font-size:   12px;
+  font-weight: 700;
 }
 
 /* ─── Hide native cursor everywhere ─────────────────────────────── */

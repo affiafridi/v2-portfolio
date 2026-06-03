@@ -58,34 +58,67 @@ export default function MenuOverlay() {
     if (isOpen) {
       /* Reset child elements so stagger is fresh each open */
       gsap.set(['.mo-topbar', '.mo-logo', '.mo-item', '.mo-footer'], {
-        clearProps: 'opacity,y',
+        clearProps: 'opacity,y,filter',
       })
+      gsap.set('.mo-line', { scaleX: 0 })
 
       const tl = gsap.timeline()
       tlRef.current = tl
 
-      /* Panel unrolls from top like opening a physical sheet */
-      tl.fromTo(
-        panel,
-        { clipPath: 'inset(0% 0% 100% 0% round 20px)' },
-        { clipPath: 'inset(0% 0% 0% 0% round 20px)',  duration: 0.68, ease: 'expo.inOut' }
-      )
-      .from('.mo-topbar', { y: -10, opacity: 0, duration: 0.3, ease: 'power2.out' }, 0.10)
-      .from('.mo-logo',   { y: 18,  opacity: 0, duration: 0.45, ease: 'power3.out' }, 0.20)
-      .from('.mo-item',   { y: 28,  opacity: 0, duration: 0.5,  stagger: 0.065, ease: 'power3.out' }, 0.28)
-      .from('.mo-footer', { y: 14,  opacity: 0, duration: 0.4,  ease: 'power3.out' }, 0.50)
+      const lines = gsap.utils.toArray<HTMLElement>('.mo-line')
+
+      /* Panel unrolls from top */
+      tl.fromTo(panel,
+          { clipPath: 'inset(0% 0% 100% 0% round 20px)' },
+          { clipPath: 'inset(0% 0% 0% 0% round 20px)', duration: 0.68, ease: 'expo.inOut' }
+        )
+        /* Topbar */
+        .from('.mo-topbar',
+          { y: -10, opacity: 0, duration: 0.28, ease: 'power2.out' },
+          0.10
+        )
+        /* Logo blurs in */
+        .fromTo('.mo-logo',
+          { opacity: 0, filter: 'blur(8px)', y: 8 },
+          { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.38, ease: 'power2.out' },
+          0.20
+        )
+        /* Line 1 wipes — starts with logo, doesn't block nav */
+        .fromTo(lines[0],
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.38, ease: 'power3.out' },
+          0.28
+        )
+        /* Nav items blur in — start right after line begins, no waiting */
+        .fromTo('.mo-item',
+          { opacity: 0, filter: 'blur(10px)', x: 6 },
+          { opacity: 1, filter: 'blur(0px)',  x: 0, duration: 0.38, stagger: { each: 0.07 }, ease: 'power2.out' },
+          0.34
+        )
+        /* Line 2 wipes as last item is coming in */
+        .fromTo(lines[1],
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.38, ease: 'power3.out' },
+          0.68
+        )
+        /* Footer blurs in */
+        .fromTo('.mo-footer',
+          { opacity: 0, filter: 'blur(8px)', y: 6 },
+          { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.32, ease: 'power2.out' },
+          0.72
+        )
 
     } else {
-      /* Content fades first, then panel snaps up */
       const tl = gsap.timeline()
       tlRef.current = tl
+
       tl.to(['.mo-logo', '.mo-item', '.mo-footer'], {
-          opacity: 0, y: -10, duration: 0.18, stagger: 0.025, ease: 'power2.in',
+          opacity: 0, filter: 'blur(6px)', y: -8, duration: 0.16, stagger: 0.02, ease: 'power2.in',
         })
         .to(panel, {
-            clipPath: 'inset(0% 0% 100% 0% round 20px)',
-            duration: 0.50, ease: 'expo.inOut',
-          }, 0.06)
+          clipPath: 'inset(0% 0% 100% 0% round 20px)',
+          duration: 0.50, ease: 'expo.inOut',
+        }, 0.06)
     }
   }, [isOpen])
 
@@ -181,7 +214,6 @@ export default function MenuOverlay() {
           {/* ── LOGO ───────────────────────────────────────────── */}
           <div
             className="mo-logo flex flex-col items-center py-7"
-            style={{ borderBottom: `1px solid ${DIVIDER}` }}
           >
             <span
               className="text-[28px] font-bold tracking-tight"
@@ -196,6 +228,9 @@ export default function MenuOverlay() {
               Creative Developer
             </span>
           </div>
+
+          {/* ── LINE 1 — wipes in after logo ───────────────────── */}
+          <div className="mo-line" style={{ height: '1px', background: DIVIDER, transformOrigin: 'left center', scaleX: 0 }} />
 
           {/* ── NAV ITEMS ──────────────────────────────────────── */}
           <nav className="flex flex-col">
@@ -254,10 +289,12 @@ export default function MenuOverlay() {
             ))}
           </nav>
 
+          {/* ── LINE 2 — wipes in after nav items ──────────────── */}
+          <div className="mo-line" style={{ height: '1px', background: DIVIDER, transformOrigin: 'left center', scaleX: 0 }} />
+
           {/* ── FOOTER ─────────────────────────────────────────── */}
           <div
             className="mo-footer flex items-center justify-between gap-4 px-6 py-5"
-            style={{ borderTop: `1px solid ${DIVIDER}` }}
           >
             {/* Location + email */}
             <div className="flex flex-col gap-0.5 min-w-0">

@@ -7,6 +7,7 @@ import Cursor               from '@/components/ui/Cursor'
 import MenuOverlay          from '@/components/ui/MenuOverlay'
 import Preloader            from '@/components/ui/Preloader'
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
+import ContactModal         from '@/components/ui/ContactModal'
 
 /* ─── Font ───────────────────────────────────────────────────────── */
 const inter = Inter({
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Cursor />
             <Header />
             <MenuOverlay />
+            <ContactModal />
             {children}
           </SmoothScrollProvider>
         </div>

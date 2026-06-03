@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useCursorStore } from '@/store/useCursorStore'
+import { useCursorStore }   from '@/store/useCursorStore'
+import { useContactStore }  from '@/store/useContactStore'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -58,6 +59,7 @@ export default function FooterSection() {
   const overlayRef  = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
   const { setCursorType } = useCursorStore()
+  const { open: openContact } = useContactStore()
   const year = new Date().getFullYear()
 
   /* Mount flag — portal needs document.body (client only) */
@@ -75,15 +77,20 @@ export default function FooterSection() {
         scrollTrigger: { trigger: sectionRef.current!, start: 'top 82%', once: true },
       })
 
-      /* ── Left body items stagger in from left ── */
-      gsap.from('.ft-left-item', {
-        x:        -28,
-        opacity:  0,
-        duration: 0.85,
-        ease:     'power3.out',
-        stagger:  0.14,
-        scrollTrigger: { trigger: '.ft-body', start: 'top 78%', once: true },
-      })
+      /* ── Left body items — blur + slide in, step by step ── */
+      gsap.fromTo('.ft-left-item',
+        { x: -18, opacity: 0, filter: 'blur(12px)' },
+        {
+          x:        0,
+          opacity:  1,
+          filter:   'blur(0px)',
+          duration: 1.1,
+          ease:     'power3.out',
+          stagger:  0.28,
+          delay:    0.4,
+          scrollTrigger: { trigger: '.ft-body', start: 'top 78%', once: true },
+        }
+      )
 
       /* ── Scroll-scrubbed word reveal — identical to About section ──
          Words start at opacity 0.07 and light up as you scroll.
@@ -100,15 +107,20 @@ export default function FooterSection() {
         },
       })
 
-      /* ── Right column items stagger in from right ── */
-      gsap.from('.ft-right-item', {
-        x:        18,
-        opacity:  0,
-        duration: 0.60,
-        ease:     'power3.out',
-        stagger:  0.055,
-        scrollTrigger: { trigger: '.ft-body', start: 'top 75%', once: true },
-      })
+      /* ── Right column items — blur + slide in, step by step ── */
+      gsap.fromTo('.ft-right-item',
+        { x: 14, opacity: 0, filter: 'blur(10px)' },
+        {
+          x:        0,
+          opacity:  1,
+          filter:   'blur(0px)',
+          duration: 0.85,
+          ease:     'power3.out',
+          stagger:  0.12,
+          delay:    0.6,
+          scrollTrigger: { trigger: '.ft-body', start: 'top 75%', once: true },
+        }
+      )
 
       /* ── Divider wipe ── */
       gsap.fromTo('.ft-divider',
@@ -236,8 +248,8 @@ export default function FooterSection() {
             </a>
           </div>
 
-          <Link
-            href="/contact"
+          <button
+            onClick={openContact}
             className="ft-left-item"
             style={{
               display:        'inline-flex',
@@ -248,10 +260,15 @@ export default function FooterSection() {
               letterSpacing:  '0.12em',
               textTransform:  'uppercase',
               color:          INK,
-              textDecoration: 'none',
+              background:     'none',
+              border:         'none',
               borderBottom:   `1px solid ${INK}28`,
               paddingBottom:  '4px',
+              paddingLeft:    0,
+              paddingRight:   0,
+              paddingTop:     0,
               width:          'fit-content',
+              cursor:         'none',
               transition:     'color 0.22s ease, border-color 0.22s ease',
             }}
             onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
@@ -262,7 +279,7 @@ export default function FooterSection() {
               <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5"
                 strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </Link>
+          </button>
 
         </div>
 
@@ -306,7 +323,7 @@ export default function FooterSection() {
         </div>
 
         {/* ── Col 3: social (top) + navigation (bottom) ────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem', alignItems: 'flex-end', alignSelf: 'end' }}>
 
           {/* Social */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCursorStore } from '@/store/useCursorStore'
-import { useMenuStore }   from '@/store/useMenuStore'
+import { useMenuStore }     from '@/store/useMenuStore'
 import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
+import { useContactStore }  from '@/store/useContactStore'
 
 /* ─── Nav data ───────────────────────────────────────────────────── */
 const NAV_ITEMS = [
@@ -95,8 +96,9 @@ function DefaultHeader() {
 
 /* ─── STICKY header — dark pill ──────────────────────────────────── */
 function StickyHeader() {
-  const { setCursorType }        = useCursorStore()
-  const { open, close, isOpen }  = useMenuStore()
+  const { setCursorType }                   = useCursorStore()
+  const { open, close, isOpen }             = useMenuStore()
+  const { open: openContact }               = useContactStore()
 
   return (
     <motion.div
@@ -117,16 +119,16 @@ function StickyHeader() {
           border:               '1px solid rgba(240,240,240,0.08)',
         }}
       >
-        {/* Left: Let's talk */}
-        <Link
-          href="/contact"
+        {/* Left: Let's talk → opens ContactModal */}
+        <button
+          onClick={openContact}
           className="text-[11px] font-medium uppercase tracking-[0.15em]"
-          style={{ color: 'rgba(240,240,240,0.38)', transition: 'color 0.2s ease' }}
+          style={{ color: 'rgba(240,240,240,0.38)', transition: 'color 0.2s ease', background: 'none', border: 'none', cursor: 'none', padding: 0 }}
           onMouseEnter={(e) => { e.currentTarget.style.color = '#f0f0f0'; setCursorType('hover') }}
           onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(240,240,240,0.38)'; setCursorType('default') }}
         >
           Let&apos;s talk
-        </Link>
+        </button>
 
         {/* Center: logo */}
         <Link

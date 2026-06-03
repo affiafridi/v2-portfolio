@@ -231,14 +231,14 @@ export default function StackSection() {
     const cards = grid.querySelectorAll<HTMLElement>('.sk-logo-card')
     if (!cards.length) return
 
-    gsap.killTweensOf([...cards])          /* ← cancel any running stagger */
+    gsap.killTweensOf([...cards])
     gsap.fromTo(
       [...cards],
-      { opacity: 0, y: 12, filter: 'blur(8px)', scale: 0.90 },
+      { opacity: 0, filter: 'blur(10px)', x: 8 },
       {
-        opacity: 1, y: 0, filter: 'blur(0px)', scale: 1,
-        duration: 0.36, stagger: { each: 0.05 }, ease: 'power2.out',
-        overwrite: true,                   /* ← GSAP also kills its own dupes */
+        opacity: 1, filter: 'blur(0px)', x: 0,
+        duration: 0.42, stagger: { each: 0.055, from: 'start' },
+        ease: 'power2.out', overwrite: true,
       },
     )
   }, [activeIdx])

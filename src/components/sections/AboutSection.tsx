@@ -89,18 +89,39 @@ export default function AboutSection() {
         },
       })
 
-      /* Footer stats + CTA fade up */
-      gsap.from('.ab-stat, .ab-cta', {
-        y:        20,
-        opacity:  0,
-        duration: 0.65,
-        ease:     'power3.out',
-        stagger:  0.08,
-        scrollTrigger: {
-          trigger: '.ab-footer',
-          start:   'top 90%',
-        },
-      })
+      /* Stats — sequential blur-in, same technique as WorkSection tags */
+      gsap.fromTo('.ab-stat',
+        { opacity: 0, filter: 'blur(10px)', x: 6 },
+        {
+          opacity:  1,
+          filter:   'blur(0px)',
+          x:        0,
+          duration: 0.45,
+          ease:     'power2.out',
+          stagger:  { each: 0.18, from: 'start' },
+          scrollTrigger: {
+            trigger: '.ab-footer',
+            start:   'top 90%',
+          },
+        }
+      )
+
+      /* CTA — same blur+x as stats, fires after all three settle */
+      gsap.fromTo('.ab-cta',
+        { opacity: 0, filter: 'blur(10px)', x: 6 },
+        {
+          opacity:  1,
+          filter:   'blur(0px)',
+          x:        0,
+          duration: 0.45,
+          ease:     'power2.out',
+          delay:    0.54,   /* 3 stats × 0.18s = 0.54s */
+          scrollTrigger: {
+            trigger: '.ab-footer',
+            start:   'top 90%',
+          },
+        }
+      )
 
     }, sectionRef)
 

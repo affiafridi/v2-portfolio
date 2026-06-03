@@ -306,15 +306,23 @@ export default function ServiceSection() {
     tagRefs.current.forEach(el     => el && gsap.set(el,  { opacity: 0, x: 6 }))
     numRefs.current.forEach(el     => el && gsap.set(el,  { opacity: 0 }))
     previewRefs.current.forEach(el => el && gsap.set(el,  { opacity: 0 }))
-    lineRefs.current.forEach(el    => el && gsap.set(el,  { scaleX: 0 }))
+    lineRefs.current.forEach(el    => el && gsap.set(el,  { scaleX: 0, transformOrigin: 'left center' }))
     if (floatRef.current) gsap.set(floatRef.current, { opacity: 0, scale: 0.72 })
 
     const ctx = gsap.context(() => {
 
-      /* Heading — same as other sections */
-      gsap.from('.sv-title', {
-        y: -28, opacity: 0, duration: 1.0, ease: 'power3.out',
-        scrollTrigger: { trigger: sectionRef.current!, start: 'top 80%', once: true },
+      /* Heading — duration scales with scroll velocity:
+         slow scroll → 1.0s, fast scroll → 0.30s          */
+      ScrollTrigger.create({
+        trigger: sectionRef.current!,
+        start:   'top 80%',
+        once:    true,
+        onEnter: (self) => {
+          const vel = Math.abs(self.getVelocity())
+          // vel ~300 = leisurely, ~2000+ = fast flick
+          const dur = gsap.utils.clamp(0.30, 1.0, 1.0 - (vel / 2200) * 0.70)
+          gsap.from('.sv-title', { y: -28, opacity: 0, duration: dur, ease: 'power3.out' })
+        },
       })
 
       /* ── Main list reveal — mirrors WorkSection revealPanel() exactly ──
@@ -326,13 +334,13 @@ export default function ServiceSection() {
       const labels = labelRefs.current.filter(Boolean) as HTMLSpanElement[]
       const nums   = numRefs.current.filter(Boolean)   as HTMLSpanElement[]
 
-      /*  Step-by-step reveal — each cycle:
-          top line → label[0] → line[1] → label[1] → line[2] → … → label[5] → line[6]
-
-          The pattern: line wipes in, then immediately the service name
-          blurs clear, then the bottom line of THAT row wipes in, and so
-          on — giving visitors a clear read of each entry before the next. */
-
+      /* ── Service list reveal: label blurs in → its line wipes ──────
+         Per-service sequence, fully sequential (no overlap):
+           1. Label blurs in left→right  (+ number fades alongside)
+           2. Its bottom divider wipes left→right
+           3. Next label… and so on.
+         Top divider fires first before the loop begins.
+         ─────────────────────────────────────────────────────────── */
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: listRef.current!,
@@ -342,23 +350,26 @@ export default function ServiceSection() {
         delay: 0.05,
       })
 
-      /* ① Top divider wipes in first */
+      /* Ensure all lines wipe strictly left → right */
+      gsap.set(lines, { transformOrigin: 'left center' })
+
+      /* Top divider wipes first */
       tl.fromTo(lines[0],
         { scaleX: 0 },
-        { scaleX: 1, duration: 0.45, ease: 'power3.out' },
+        { scaleX: 1, duration: 0.55, ease: 'power2.out' },
       )
 
-      /* ② For each service: label blurs in, then its bottom line draws */
+      /* Per-service: label → number → bottom line */
       labels.forEach((label, i) => {
-        /* Label blurs clear — same values as wk-tag */
+
+        /* Label blurs in */
         tl.fromTo(label,
           { opacity: 0, filter: 'blur(10px)', x: 6 },
           { opacity: 1, filter: 'blur(0px)',  x: 0,
-            duration: 0.38, ease: 'power2.out' },
-          '-=0.08',
+            duration: 0.40, ease: 'power2.out' },
         )
 
-        /* Number fades in alongside label */
+        /* Number fades alongside label */
         if (nums[i]) {
           tl.fromTo(nums[i],
             { opacity: 0 },
@@ -367,12 +378,11 @@ export default function ServiceSection() {
           )
         }
 
-        /* Bottom divider wipes in right after label settles */
+        /* Bottom line wipes left→right after label settles */
         if (lines[i + 1]) {
           tl.fromTo(lines[i + 1],
             { scaleX: 0 },
-            { scaleX: 1, duration: 0.45, ease: 'power3.out' },
-            '-=0.08',
+            { scaleX: 1, duration: 0.55, ease: 'power2.out' },
           )
         }
       })
@@ -527,12 +537,14 @@ export default function ServiceSection() {
               </span>
             </div>
 
-            {/* Bottom divider for this row — animated */}
-            <div
-              className="sv-line"
-              ref={el => { lineRefs.current[i + 1] = el }}
-              style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
-            />
+            {/* Bottom divider — not rendered for the last service */}
+            {i < SERVICES.length - 1 && (
+              <div
+                className="sv-line"
+                ref={el => { lineRefs.current[i + 1] = el }}
+                style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
+              />
+            )}
           </div>
         ))}
       </div>
