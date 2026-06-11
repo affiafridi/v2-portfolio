@@ -3,8 +3,9 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { gsap } from 'gsap'
-import { useMenuStore }  from '@/store/useMenuStore'
-import { useCursorStore } from '@/store/useCursorStore'
+import { useMenuStore }    from '@/store/useMenuStore'
+import { useCursorStore }  from '@/store/useCursorStore'
+import { useContactStore } from '@/store/useContactStore'
 import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
 
 /* ─────────────────────────────────────────────────────────────────
@@ -36,8 +37,9 @@ const DIVIDER = 'rgba(240,238,234,0.07)'
 const MUTED   = 'rgba(240,238,234,0.32)'
 
 export default function MenuOverlay() {
-  const { isOpen, close } = useMenuStore()
-  const { setCursorType } = useCursorStore()
+  const { isOpen, close }     = useMenuStore()
+  const { setCursorType }     = useCursorStore()
+  const { open: openContact } = useContactStore()
 
   const panelRef = useRef<HTMLDivElement>(null)
   const tlRef    = useRef<gsap.core.Timeline | null>(null)
@@ -234,59 +236,77 @@ export default function MenuOverlay() {
 
           {/* ── NAV ITEMS ──────────────────────────────────────── */}
           <nav className="flex flex-col">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={close}
-                className="mo-item group flex items-center justify-between px-6 py-4
-                           transition-colors duration-200"
-                style={{ borderBottom: `1px solid ${DIVIDER}` }}
-                onMouseEnter={() => setCursorType('hover')}
-                onMouseLeave={() => setCursorType('default')}
-              >
-                {/* Number + label */}
-                <div className="flex items-baseline gap-4">
-                  <span
-                    className="text-[10px] tabular-nums"
-                    style={{ color: ACCENT }}
-                  >
-                    {item.num}
-                  </span>
-                  <span
-                    className="text-[clamp(26px,5vw,40px)] font-bold leading-none tracking-tight
-                               transition-transform duration-300 group-hover:translate-x-1.5"
-                    style={{ color: CREAM }}
-                  >
-                    {item.label}
-                  </span>
-                </div>
+            {NAV_ITEMS.map((item) => {
+              const isContact = item.label === 'Contact'
+              const handleClick = () => {
+                close()
+                if (isContact) openContact()
+              }
+              const inner = (
+                <>
+                  {/* Number + label */}
+                  <div className="flex items-baseline gap-4">
+                    <span className="text-[10px] tabular-nums" style={{ color: ACCENT }}>
+                      {item.num}
+                    </span>
+                    <span
+                      className="text-[clamp(26px,5vw,40px)] font-bold leading-none tracking-tight
+                                 transition-transform duration-300 group-hover:translate-x-1.5"
+                      style={{ color: CREAM }}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                  {/* Note + arrow */}
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="text-[10px] uppercase tracking-[0.1em]
+                                 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{ color: MUTED }}
+                    >
+                      {item.note}
+                    </span>
+                    <span
+                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center
+                                 rounded-full text-[12px]
+                                 -translate-x-2 opacity-0
+                                 transition-all duration-300
+                                 group-hover:opacity-100 group-hover:translate-x-0"
+                      style={{ border: `1px solid rgba(240,238,234,0.18)`, color: CREAM }}
+                    >
+                      →
+                    </span>
+                  </div>
+                </>
+              )
 
-                {/* Note + arrow */}
-                <div className="flex items-center gap-3">
-                  <span
-                    className="text-[10px] uppercase tracking-[0.1em]
-                               opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    style={{ color: MUTED }}
-                  >
-                    {item.note}
-                  </span>
-                  <span
-                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center
-                               rounded-full text-[12px]
-                               -translate-x-2 opacity-0
-                               transition-all duration-300
-                               group-hover:opacity-100 group-hover:translate-x-0"
-                    style={{
-                      border: `1px solid rgba(240,238,234,0.18)`,
-                      color:  CREAM,
-                    }}
-                  >
-                    →
-                  </span>
-                </div>
-              </Link>
-            ))}
+              return isContact ? (
+                <button
+                  key={item.label}
+                  onClick={handleClick}
+                  className="mo-item group flex items-center justify-between px-6 py-4
+                             transition-colors duration-200 w-full text-left"
+                  style={{ borderBottom: `1px solid ${DIVIDER}`, background: 'none', border: `none`, borderBottom: `1px solid ${DIVIDER}`, cursor: 'none' }}
+                  onMouseEnter={() => setCursorType('hover')}
+                  onMouseLeave={() => setCursorType('default')}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={handleClick}
+                  className="mo-item group flex items-center justify-between px-6 py-4
+                             transition-colors duration-200"
+                  style={{ borderBottom: `1px solid ${DIVIDER}` }}
+                  onMouseEnter={() => setCursorType('hover')}
+                  onMouseLeave={() => setCursorType('default')}
+                >
+                  {inner}
+                </Link>
+              )
+            })}
           </nav>
 
           {/* ── LINE 2 — wipes in after nav items ──────────────── */}
@@ -316,19 +336,18 @@ export default function MenuOverlay() {
             </div>
 
             {/* CTA */}
-            <Link
-              href="/contact"
-              onClick={close}
+            <button
+              onClick={() => { close(); openContact() }}
               className="flex flex-shrink-0 items-center gap-2 rounded-full px-5 py-2.5
                          text-[10px] font-medium uppercase tracking-[0.16em]
                          transition-all duration-300 hover:gap-3"
-              style={{ background: CREAM, color: BG }}
+              style={{ background: CREAM, color: BG, border: 'none', cursor: 'none' }}
               onMouseEnter={() => setCursorType('hover')}
               onMouseLeave={() => setCursorType('default')}
             >
               Let&apos;s work
               <span>↗</span>
-            </Link>
+            </button>
           </div>
 
         </div>

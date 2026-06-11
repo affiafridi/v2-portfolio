@@ -4,6 +4,18 @@ import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
+import ImageCycler       from '@/components/ui/ImageCycler'
+
+/* ─── Images for accent word hover ──────────────────────────────── */
+const ABOUT_IMAGES = [
+  'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80',  // code landscape
+  'https://images.unsplash.com/photo-1549692520-acc6669e2f0c?w=400&q=80',  // dev portrait
+  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80', // laptop landscape
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80', // person portrait
+  'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80', // code landscape
+  'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80', // screen portrait
+  'https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=600&q=80', // workspace landscape
+]
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -16,20 +28,21 @@ const ACC = '#ff4d00'
 type W = { w: string; italic?: boolean; accent?: boolean }
 
 const WORDS: W[] = [
-  { w: 'Creative'    },
-  { w: 'developer'   },
-  { w: 'with',    italic: true },
-  { w: 'a',       italic: true },
-  { w: 'design',  italic: true },
-  { w: 'eye,',    italic: true },
-  { w: 'crafting'    },
-  { w: 'immersive'   },
-  { w: 'digital'     },
-  { w: 'experiences', accent: true },
-  { w: 'that'        },
-  { w: 'push'        },
-  { w: 'the'         },
-  { w: 'web.'        },
+  { w: 'A'              },
+  { w: 'developer'      },
+  { w: 'who',    italic: true },
+  { w: 'learned', italic: true },
+  { w: 'by',     italic: true },
+  { w: 'building.', italic: true },
+  { w: 'Not'            },
+  { w: 'in'             },
+  { w: 'a'              },
+  { w: 'classroom', accent: true },
+  { w: '—'              },
+  { w: 'in'             },
+  { w: 'the'            },
+  { w: 'real'           },
+  { w: 'world.'         },
 ]
 
 const STATS = [
@@ -192,12 +205,13 @@ export default function AboutSection() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem' }}>
 
           <div className="ab-left-item">
-            <span style={LABEL_STYLE}>Background</span>
+            <span style={LABEL_STYLE}>My Story</span>
             <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0 }}>
-              Starting as a graphic designer before transitioning into creative
-              development gives me a rare dual perspective — I merge visual craft
-              with technical depth to build things that look exceptional and
-              perform flawlessly.
+              I didn&apos;t learn development in a classroom. I learned it by
+              building projects, solving problems, breaking things, and figuring
+              out how to make them work again. What started as curiosity became
+              a long-term commitment to creating products that are useful,
+              reliable, and enjoyable to use.
             </p>
           </div>
 
@@ -206,9 +220,10 @@ export default function AboutSection() {
             style={{ borderLeft: `2px solid ${ACC}`, paddingLeft: '16px' }}
           >
             <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0 }}>
-              Based in Dubai, drawing inspiration from culture, motion, and
-              interaction design. Working with clients and studios worldwide to
-              build digital experiences that genuinely move people.
+              Being self-taught taught me more than programming. It taught me
+              how to learn, adapt, and solve problems independently. Every
+              project is another opportunity to improve, experiment, and create
+              something meaningful.
             </p>
           </div>
 
@@ -227,28 +242,35 @@ export default function AboutSection() {
             overflowWrap:  'break-word',
           }}
         >
-          {WORDS.map(({ w, italic, accent }, i) => (
-            <span
-              key={i}
-              className="ab-word"
-              style={{
-                display:     'inline',
-                opacity:     0.07,
-                fontStyle:   italic ? 'italic'  : 'normal',
-                color:       accent  ? ACC       : INK,
-                marginRight: '0.22em',
-                /* accent word always shows its underline, just dim initially */
-                ...(accent ? {
-                  textDecorationLine:      'underline',
-                  textDecorationColor:     ACC,
-                  textUnderlineOffset:     '7px',
-                  textDecorationThickness: '3px',
-                } : {}),
-              }}
-            >
-              {w}
-            </span>
-          ))}
+          {WORDS.map(({ w, italic, accent }, i) => {
+            const wordSpan = (
+              <span
+                key={i}
+                className="ab-word"
+                style={{
+                  display:     'inline',
+                  opacity:     accent ? 0.30 : 0.07,
+                  fontStyle:   italic ? 'italic'  : 'normal',
+                  color:       accent  ? ACC       : INK,
+                  marginRight: '0.22em',
+                  ...(accent ? {
+                    textDecorationLine:      'underline',
+                    textDecorationColor:     ACC,
+                    textUnderlineOffset:     '7px',
+                    textDecorationThickness: '3px',
+                  } : {}),
+                }}
+              >
+                {w}
+              </span>
+            )
+
+            return accent ? (
+              <ImageCycler key={i} images={ABOUT_IMAGES}>
+                {wordSpan}
+              </ImageCycler>
+            ) : wordSpan
+          })}
         </p>
 
       </div>
@@ -327,7 +349,7 @@ export default function AboutSection() {
             setCursorType('default')
           }}
         >
-          Let&apos;s collaborate
+          Have a project in mind?
           <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
             <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round" />

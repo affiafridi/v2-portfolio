@@ -1,0 +1,8 @@
+// No service worker needed — unregister any previously cached one
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', () => {
+  self.registration.unregister()
+  self.clients.matchAll({ type: 'window' }).then(clients => {
+    clients.forEach(client => client.navigate(client.url))
+  })
+})

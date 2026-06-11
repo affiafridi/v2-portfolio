@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -76,17 +76,25 @@ export default function HeroSection() {
       .to([g, m], { x: 0, opacity: 0, duration: 0.14, ease: 'power2.out' })
   }, [])
 
+  /* ── Hide before first paint — prevents flash on page navigation ── */
+  useLayoutEffect(() => {
+    gsap.set('.hj-meta-item', { opacity: 0, y: 14 })
+    gsap.set(imgWrapRef.current,  { opacity: 0, scale: 0.94 })
+    gsap.set('.hj-bio',      { opacity: 0, y: 22 })
+    gsap.set('.hj-headline', { opacity: 0 })
+  }, [])
+
   /* ── Entrance animation ──────────────────────────────────────── */
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      tl.from('.hj-meta-item', { y: 14, opacity: 0, duration: 0.6, stagger: 0.09 })
-        .from(imgWrapRef.current, {
-          scale: 0.94, opacity: 0,
+      tl.to('.hj-meta-item', { y: 0, opacity: 1, duration: 0.6, stagger: 0.09 })
+        .to(imgWrapRef.current, {
+          scale: 1, opacity: 1,
           duration: 1.4, ease: 'expo.out', clearProps: 'scale,opacity',
         }, '-=0.35')
-        .from('.hj-bio',      { y: 22, opacity: 0, duration: 0.75, stagger: 0.14 }, '-=1.0')
-        .from('.hj-headline', { opacity: 0, duration: 0.55 }, '-=0.38')
+        .to('.hj-bio',      { y: 0, opacity: 1, duration: 0.75, stagger: 0.14 }, '-=1.0')
+        .to('.hj-headline', { opacity: 1, duration: 0.55 }, '-=0.38')
         .call(triggerGlitch)
     }, sectionRef)
 
@@ -120,7 +128,7 @@ export default function HeroSection() {
     const outerMq = outerMarqueeRef.current
     if (!imgWrap || !marquee || !outerMq) return
 
-    const BASE_S  = 22
+    const BASE_S  = 12
     let   spanW   = (marquee.children[0] as HTMLElement).offsetWidth
     let   basePpf = spanW / (BASE_S * 60)
     let   xPos    = 0
@@ -153,10 +161,10 @@ export default function HeroSection() {
 
       goingLeft = down
 
-      const factor  = Math.min(delta / 22, 1)
-      spdProxy.mult = 1 + factor * 1.0
+      const factor  = Math.min(delta / 12, 1)
+      spdProxy.mult = 1 + factor * 4.0
 
-      gsap.to(spdProxy, { mult: 1, duration: 1.8, ease: 'power2.out', overwrite: true })
+      gsap.to(spdProxy, { mult: 1, duration: 1.4, ease: 'power3.out', overwrite: true })
 
       gsap.to(outerMq, { skewX: down ? -2 : 2, duration: 0.12, ease: 'none', overwrite: true })
       gsap.to(outerMq, { skewX: 0, duration: 1.1, ease: 'power3.out', delay: 0.12, overwrite: false })
@@ -351,35 +359,72 @@ export default function HeroSection() {
       </div>
 
       {/* ── Left column ────────────────────────────────────────── */}
-      <div className="absolute z-20" style={{ top: '32%', left: '5%', width: '44%' }}>
+      <div className="absolute z-20" style={{ top: '30%', left: '5%', width: '46%' }}>
+
+        {/* Sublabel — matches brand label style */}
+        <div
+          className="hj-bio"
+          style={{
+            display:       'flex',
+            alignItems:    'center',
+            gap:           '8px',
+            marginBottom:  '1.2rem',
+          }}
+        >
+          <span style={{
+            display:      'inline-block',
+            width:        '6px',
+            height:       '6px',
+            borderRadius: '50%',
+            background:   '#ff4d00',
+            flexShrink:   0,
+          }} />
+          <span style={{
+            fontSize:      '10px',
+            fontWeight:    700,
+            letterSpacing: '0.20em',
+            textTransform: 'uppercase',
+            color:         `${INK}40`,
+          }}>
+            Currently available for Freelance projects.
+          </span>
+        </div>
+
+        {/* Heading — 800 weight, tight tracking, editorial */}
         <p
           className="hj-bio"
           style={{
-            fontSize: 'clamp(32px, 3.8vw, 56px)',
-            fontWeight: 700,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.12,
-            color: INK,
-            marginBottom: '1.6rem',
+            fontSize:      'clamp(34px, 4.0vw, 62px)',
+            fontWeight:    800,
+            letterSpacing: '-0.04em',
+            lineHeight:    1.04,
+            color:         INK,
+            marginBottom:  '1.8rem',
           }}
         >
-          Crafting digital<br />experiences.
+          Building products<br />
+          people{' '}
+          <em style={{ fontStyle: 'italic', fontWeight: 800 }}>enjoy using.</em>
         </p>
 
+        {/* Para — clean, correct, on-brand */}
         <p
           className="hj-bio"
           style={{
-            fontSize: '14px',
-            lineHeight: 1.9,
-            color: `${INK}50`,
-            borderLeft: `2px solid ${INK}14`,
-            paddingLeft: '16px',
-            maxWidth: '340px',
+            fontSize:      '13px',
+            fontWeight:    500,
+            lineHeight:    1.85,
+            letterSpacing: '0.01em',
+            color:         `${INK}52`,
+            borderLeft:    `2px solid ${INK}12`,
+            paddingLeft:   '16px',
+            maxWidth:      '480px',
           }}
         >
-          Drawing inspiration from the diverse<br />
-          culture of Queens, working as an<br />
-          independent creative based in Dubai.
+          Self-taught developer passionate about turning ideas
+          into real products. I build modern web applications,
+          SaaS platforms, and digital experiences with a focus
+          on performance, usability, and clean execution.
         </p>
       </div>
 
@@ -410,7 +455,7 @@ export default function HeroSection() {
                   paddingRight:  '2.5rem',
                 }}
               >
-                Creative Developer — Interaction Designer —&nbsp;
+                Full-Stack Developer —&nbsp;
               </span>
             ))}
           </div>

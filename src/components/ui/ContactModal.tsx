@@ -2,9 +2,65 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { useContactStore } from '@/store/useContactStore'
 import { useCursorStore }  from '@/store/useCursorStore'
+
+/* ─── URL sync hook — pushes /contact on open, restores on close ─── */
+function useContactUrl(isOpen: boolean, close: () => void) {
+  const prevPathRef    = useRef('/')
+  const usedPushState  = useRef(false)
+  const savedScrollRef = useRef(0)
+  const router         = useRouter()
+
+  useEffect(() => {
+    if (isOpen) {
+      /* Save scroll position before the modal covers the page */
+      savedScrollRef.current = window.scrollY
+
+      if (window.location.pathname !== '/contact') {
+        prevPathRef.current   = window.location.pathname
+        usedPushState.current = true
+        window.history.pushState({ contactModal: true }, '', '/contact')
+      } else {
+        usedPushState.current = false
+        prevPathRef.current   = '/'
+      }
+    } else {
+      if (window.location.pathname === '/contact') {
+        if (usedPushState.current) {
+          window.history.pushState({}, '', prevPathRef.current)
+        } else {
+          router.back()
+        }
+      }
+
+      /* Restore scroll position after modal closes.
+         Use rAF so Lenis has resumed before we set position. */
+      const saved = savedScrollRef.current
+      requestAnimationFrame(() => {
+        const lenis = (window as unknown as Record<string, unknown>).__lenis as
+          | { scrollTo: (target: number, opts: Record<string, unknown>) => void }
+          | undefined
+        if (lenis) {
+          lenis.scrollTo(saved, { immediate: true })
+        } else {
+          window.scrollTo(0, saved)
+        }
+      })
+    }
+  }, [isOpen, router])
+
+  /* Handle browser back button while modal is open */
+  useEffect(() => {
+    const onPop = () => {
+      if (window.location.pathname !== '/contact') close()
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [close])
+}
 
 /* ─── Tokens ─────────────────────────────────────────────────────── */
 const BG  = 'rgba(240,238,234,0.72)'
@@ -36,6 +92,8 @@ const INTERESTS = [
 export default function ContactModal() {
   const { isOpen, close } = useContactStore()
   const { setCursorType } = useCursorStore()
+
+  useContactUrl(isOpen, close)
 
   const panelRef = useRef<HTMLDivElement>(null)
   const tlRef    = useRef<gsap.core.Timeline | null>(null)

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { Inter } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import '@/styles/globals.css'
 import Header               from '@/components/layout/Header'
 import Cursor               from '@/components/ui/Cursor'
@@ -8,14 +9,13 @@ import MenuOverlay          from '@/components/ui/MenuOverlay'
 import Preloader            from '@/components/ui/Preloader'
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
 import ContactModal         from '@/components/ui/ContactModal'
+import ScrollRestoration   from '@/components/ui/ScrollRestoration'
+import BackToTop           from '@/components/ui/BackToTop'
 
 /* ─── Font ───────────────────────────────────────────────────────── */
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-})
+/* GeistSans and GeistMono from the `geist` npm package already
+   expose .variable (CSS custom property) and .className directly —
+   no configuration needed.                                          */
 
 /* ─── Metadata ───────────────────────────────────────────────────── */
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 /* ─── Layout ─────────────────────────────────────────────────────── */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning data-loading="" className={inter.variable}>
+    <html lang="en" suppressHydrationWarning data-loading="" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       {/* TODO: Wrap body children with Lenis SmoothScroll provider */}
       <body>
         <Preloader />
@@ -44,6 +44,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Header />
             <MenuOverlay />
             <ContactModal />
+            <ScrollRestoration />
+            <BackToTop />
             {children}
           </SmoothScrollProvider>
         </div>

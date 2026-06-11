@@ -282,7 +282,7 @@ function getFrames(p: Project): React.ReactNode[] {
     /* Terminal */
     <div key="c" style={{ ...F, background:'#0c0c0c', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
       <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(255,255,255,0.20)', marginBottom:'12px' }}>About</div>
-      <div style={{ background:'#111', border:'1px solid rgba(255,255,255,0.07)', borderRadius:'8px', padding:'16px 18px', fontFamily:'monospace' }}>
+      <div style={{ background:'#111', border:'1px solid rgba(255,255,255,0.07)', borderRadius:'8px', padding:'16px 18px', fontFamily:'var(--font-geist-mono), monospace' }}>
         <div style={{ fontSize:'10px', color:'rgba(255,77,0,0.85)', marginBottom:'10px' }}>$ whoami</div>
         <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.60)', lineHeight:1.8 }}>
           Creative developer + designer.<br/>

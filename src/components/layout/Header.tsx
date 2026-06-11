@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCursorStore } from '@/store/useCursorStore'
 import { useMenuStore }     from '@/store/useMenuStore'
@@ -33,11 +34,13 @@ function NavItem({
   activeId,
   setActiveId,
   theme = 'dark',
+  onClick,
 }: {
   item:        { label: string; href: string }
   activeId:    string | null
   setActiveId: (v: string | null) => void
   theme?:      'light' | 'dark'
+  onClick?:    () => void
 }) {
   const { setCursorType } = useCursorStore()
   const isActive = activeId === item.label
@@ -45,23 +48,36 @@ function NavItem({
   const fg    = theme === 'light' ? '#1a1a1a'             : '#f0f0f0'
   const muted = theme === 'light' ? 'rgba(26,26,26,0.38)' : 'rgba(240,240,240,0.38)'
 
-  return (
-    <Link
-      href={item.href}
-      className="relative px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em]"
-      style={{ color: isActive ? fg : muted, transition: 'color 0.2s ease' }}
-      onMouseEnter={() => { setActiveId(item.label); setCursorType('hover') }}
-      onMouseLeave={() => setCursorType('default')}
-    >
-      <span className="flex items-center">
-        <span style={{ opacity: isActive ? 1 : 0, marginRight: isActive ? '3px' : '0', transition: 'opacity 0.18s ease, margin 0.18s ease' }}>
-          [
-        </span>
-        <span>{item.label}</span>
-        <span style={{ opacity: isActive ? 1 : 0, marginLeft: isActive ? '3px' : '0', transition: 'opacity 0.18s ease, margin 0.18s ease' }}>
-          ]
-        </span>
+  const inner = (
+    <span className="flex items-center">
+      <span style={{ opacity: isActive ? 1 : 0, marginRight: isActive ? '3px' : '0', transition: 'opacity 0.18s ease, margin 0.18s ease' }}>
+        [
       </span>
+      <span>{item.label}</span>
+      <span style={{ opacity: isActive ? 1 : 0, marginLeft: isActive ? '3px' : '0', transition: 'opacity 0.18s ease, margin 0.18s ease' }}>
+        ]
+      </span>
+    </span>
+  )
+
+  const sharedProps = {
+    className: 'relative px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em]',
+    style: { color: isActive ? fg : muted, transition: 'color 0.2s ease' } as React.CSSProperties,
+    onMouseEnter: () => { setActiveId(item.label); setCursorType('hover') },
+    onMouseLeave: () => setCursorType('default'),
+  }
+
+  if (onClick) {
+    return (
+      <button {...sharedProps} onClick={onClick} style={{ ...sharedProps.style, background: 'none', border: 'none', cursor: 'none' }}>
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <Link href={item.href} {...sharedProps}>
+      {inner}
     </Link>
   )
 }
@@ -69,6 +85,11 @@ function NavItem({
 /* ─── DEFAULT header — nav only (logo lives in root Header) ─────── */
 function DefaultHeader() {
   const [activeId, setActiveId] = useState<string | null>(null)
+  const pathname  = usePathname()
+  const { open: openContact } = useContactStore()
+
+  // Work detail pages (/work/slug) have a dark hero — use white nav text
+  const theme: 'light' | 'dark' = /^\/work\/.+/.test(pathname) ? 'dark' : 'light'
 
   return (
     <motion.div
@@ -79,14 +100,20 @@ function DefaultHeader() {
       exit={{ opacity: 0, y: -14 }}
       transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      {/* Nav — bare text, no pill container */}
       <div className="flex justify-center pt-7">
         <nav
           className="pointer-events-auto flex items-center"
           onMouseLeave={() => setActiveId(null)}
         >
           {NAV_ITEMS.map((item) => (
-            <NavItem key={item.label} item={item} activeId={activeId} setActiveId={setActiveId} theme="light" />
+            <NavItem
+              key={item.label}
+              item={item}
+              activeId={activeId}
+              setActiveId={setActiveId}
+              theme={theme}
+              onClick={item.label === 'Contact' ? openContact : undefined}
+            />
           ))}
         </nav>
       </div>

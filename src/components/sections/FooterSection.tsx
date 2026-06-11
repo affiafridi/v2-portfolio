@@ -6,6 +6,17 @@ import Link from 'next/link'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore }   from '@/store/useCursorStore'
+import ImageCycler         from '@/components/ui/ImageCycler'
+
+const FOOTER_IMAGES = [
+  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80', // team landscape
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80', // portrait
+  'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=600&q=80',    // code landscape
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80', // portrait
+  'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=600&q=80', // code landscape
+  'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=80', // portrait
+  'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80', // workspace landscape
+]
 import { useContactStore }  from '@/store/useContactStore'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -19,17 +30,20 @@ const ACC = '#ff4d00'
 type W = { w: string; italic?: boolean; accent?: boolean }
 
 const WORDS: W[] = [
-  { w: 'For'         },
-  { w: 'any'         },
-  { w: 'collaborative', accent: true },
-  { w: 'projects'    },
-  { w: 'or'          },
-  { w: 'inquiries,'  },
-  { w: 'feel',    italic: true },
-  { w: 'free',    italic: true },
-  { w: 'to',      italic: true },
-  { w: 'reach',   italic: true },
-  { w: 'out.',    italic: true },
+  { w: 'Whether'       },
+  { w: 'you\'re'       },
+  { w: 'starting', accent: true },
+  { w: 'from'          },
+  { w: 'scratch'       },
+  { w: 'or'            },
+  { w: 'improving',    italic: true },
+  { w: 'an',           italic: true },
+  { w: 'existing',     italic: true },
+  { w: 'product,',     italic: true },
+  { w: 'let\'s'        },
+  { w: 'build'         },
+  { w: 'something'     },
+  { w: 'real.'         },
 ]
 
 /* ─── Ticker text ────────────────────────────────────────────────── */
@@ -226,7 +240,7 @@ export default function FooterSection() {
               fontSize: '9px', fontWeight: 700, letterSpacing: '0.20em',
               textTransform: 'uppercase', color: `${INK}30`,
             }}>
-              Say hello
+              Get in touch
             </span>
             <a
               href="mailto:aftab@matildacake.com"
@@ -274,7 +288,7 @@ export default function FooterSection() {
             onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
             onMouseLeave={e => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = `${INK}28`; setCursorType('default') }}
           >
-            Start a project
+            Get in touch
             <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
               <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5"
                 strokeLinecap="round" strokeLinejoin="round" />
@@ -297,27 +311,35 @@ export default function FooterSection() {
               overflowWrap:  'break-word',
             }}
           >
-            {WORDS.map(({ w, italic, accent }, i) => (
-              <span
-                key={i}
-                className="ft-word"
-                style={{
-                  display:     'inline',
-                  opacity:     0.07,
-                  fontStyle:   italic  ? 'italic' : 'normal',
-                  color:       accent  ? ACC      : INK,
-                  marginRight: '0.22em',
-                  ...(accent ? {
-                    textDecorationLine:      'underline',
-                    textDecorationColor:     ACC,
-                    textUnderlineOffset:     '7px',
-                    textDecorationThickness: '3px',
-                  } : {}),
-                }}
-              >
-                {w}
-              </span>
-            ))}
+            {WORDS.map(({ w, italic, accent }, i) => {
+              const wordSpan = (
+                <span
+                  key={i}
+                  className="ft-word"
+                  style={{
+                    display:     'inline',
+                    opacity:     accent ? 0.30 : 0.07,
+                    fontStyle:   italic  ? 'italic' : 'normal',
+                    color:       accent  ? ACC      : INK,
+                    marginRight: '0.22em',
+                    ...(accent ? {
+                      textDecorationLine:      'underline',
+                      textDecorationColor:     ACC,
+                      textUnderlineOffset:     '7px',
+                      textDecorationThickness: '3px',
+                    } : {}),
+                  }}
+                >
+                  {w}
+                </span>
+              )
+
+              return accent ? (
+                <ImageCycler key={i} images={FOOTER_IMAGES}>
+                  {wordSpan}
+                </ImageCycler>
+              ) : wordSpan
+            })}
           </p>
 
         </div>

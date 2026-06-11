@@ -39,7 +39,7 @@ function ImgWebDev() {
       <div style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 12px', background:'#181818', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
         {['rgba(255,90,90,0.8)','rgba(255,200,0,0.6)','rgba(50,205,100,0.6)'].map(c => <div key={c} style={{ width:'7px', height:'7px', borderRadius:'50%', background:c }}/>)}
         <div style={{ flex:1, marginLeft:'6px', background:'rgba(255,255,255,0.05)', borderRadius:'3px', padding:'3px 8px' }}>
-          <span style={{ fontSize:'7px', color:'rgba(255,255,255,0.22)', fontFamily:'monospace' }}>localhost:3000</span>
+          <span style={{ fontSize:'7px', color:'rgba(255,255,255,0.22)', fontFamily:'var(--font-geist-mono), monospace' }}>localhost:3000</span>
         </div>
       </div>
       <div style={{ flex:1, padding:'18px 16px 0', display:'flex', gap:'14px' }}>
@@ -97,13 +97,13 @@ function ImgGSAP() {
       <div style={{ fontSize:'6px', color:'rgba(255,77,0,0.55)', letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:'10px' }}>GSAP Timeline</div>
       {[{l:'scale',w:0.94,d:0},{l:'opacity',w:0.68,d:0.05},{l:'y',w:0.80,d:0.03},{l:'blur',w:0.52,d:0.08},{l:'stagger',w:0.88,d:0.02}].map((item,i) => (
         <div key={item.l} style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'7px' }}>
-          <span style={{ fontSize:'6px', color:'rgba(255,255,255,0.18)', width:'32px', fontFamily:'monospace' }}>{item.l}</span>
+          <span style={{ fontSize:'6px', color:'rgba(255,255,255,0.18)', width:'32px', fontFamily:'var(--font-geist-mono), monospace' }}>{item.l}</span>
           <div style={{ flex:1, height:'5px', background:'rgba(255,255,255,0.04)', borderRadius:'3px', overflow:'hidden', position:'relative' }}>
             <div style={{ position:'absolute', left:`${item.d*100}%`, width:`${(item.w-item.d)*100}%`, height:'100%', background:`rgba(255,77,0,${0.38+i*0.11})`, borderRadius:'3px' }}/>
           </div>
         </div>
       ))}
-      <div style={{ marginTop:'10px', background:'rgba(255,255,255,0.03)', borderRadius:'5px', padding:'7px 9px', fontFamily:'monospace' }}>
+      <div style={{ marginTop:'10px', background:'rgba(255,255,255,0.03)', borderRadius:'5px', padding:'7px 9px', fontFamily:'var(--font-geist-mono), monospace' }}>
         <div style={{ fontSize:'7px', color:'rgba(255,77,0,0.70)', marginBottom:'2px' }}>gsap.timeline(&#123;&#125;)</div>
         <div style={{ fontSize:'6px', color:'rgba(255,255,255,0.28)' }}>&nbsp;&nbsp;.from(el, &#123; y:40, opacity:0 &#125;)</div>
         <div style={{ fontSize:'6px', color:'rgba(255,255,255,0.28)' }}>&nbsp;&nbsp;.to(el2, &#123; scale:1 &#125;, &apos;-=0.2&apos;)</div>
@@ -344,7 +344,7 @@ export default function ServiceSection() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: listRef.current!,
-          start:   'top 60%',
+          start:   'top 80%',
           once:    true,
         },
         delay: 0.05,
@@ -356,7 +356,7 @@ export default function ServiceSection() {
       /* Top divider wipes first */
       tl.fromTo(lines[0],
         { scaleX: 0 },
-        { scaleX: 1, duration: 0.55, ease: 'power2.out' },
+        { scaleX: 1, duration: 0.28, ease: 'power3.out' },
       )
 
       /* Per-service: label → number → bottom line */
@@ -366,14 +366,14 @@ export default function ServiceSection() {
         tl.fromTo(label,
           { opacity: 0, filter: 'blur(10px)', x: 6 },
           { opacity: 1, filter: 'blur(0px)',  x: 0,
-            duration: 0.40, ease: 'power2.out' },
+            duration: 0.22, ease: 'power2.out' },
         )
 
         /* Number fades alongside label */
         if (nums[i]) {
           tl.fromTo(nums[i],
             { opacity: 0 },
-            { opacity: 0.18, duration: 0.32, ease: 'power2.out' },
+            { opacity: 0.18, duration: 0.16, ease: 'power2.out' },
             '<',
           )
         }
@@ -382,7 +382,7 @@ export default function ServiceSection() {
         if (lines[i + 1]) {
           tl.fromTo(lines[i + 1],
             { scaleX: 0 },
-            { scaleX: 1, duration: 0.55, ease: 'power2.out' },
+            { scaleX: 1, duration: 0.26, ease: 'power3.out' },
           )
         }
       })

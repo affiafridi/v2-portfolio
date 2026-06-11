@@ -118,7 +118,7 @@ function Initials({ name, color }: { name: string; color: string }) {
       background: `#${color}18`, border: `1px solid #${color}38`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: '9px', fontWeight: 800, color: `#${color}`,
-      fontFamily: 'monospace', letterSpacing: '-0.02em', flexShrink: 0,
+      fontFamily: 'var(--font-geist-mono), monospace', letterSpacing: '-0.02em', flexShrink: 0,
     }}>
       {abbr}
     </div>

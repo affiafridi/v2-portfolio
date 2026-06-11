@@ -83,120 +83,94 @@ export default function Preloader() {
     const counter = counterRef.current
     if (!canvas || !counter) return
 
-    /* Size canvas to fill viewport exactly */
-    const W = window.innerWidth
-    const H = window.innerHeight
-    canvas.width  = W
-    canvas.height = H
-
-    /* R_MAX: 28% of viewport diagonal — enough for holes to fully overlap
-       and erase the entire dark overlay even with organic waviness.        */
-    const R_MAX = Math.hypot(W, H) * 0.28
-
-    const ctx = canvas.getContext('2d')!
-
-    /* Per-hole proxy objects — GSAP tweens `.r` on each */
-    const proxyArr = HOLES.map(() => ({ r: 0 }))
-
-    /* RAF draw loop — fills dark, then punches transparent holes */
+    /* ── Guard against React StrictMode double-fire ─────────────────
+       StrictMode mounts → cleanups → remounts in dev. Wrapping in a
+       tiny setTimeout means the cleanup's clearTimeout fires before
+       the animation starts on the first (fake) mount, so GSAP only
+       ever runs on the real second mount.
+       ─────────────────────────────────────────────────────────────── */
     let running = true
     let raf     = 0
+    let tl:     gsap.core.Timeline | null = null
+    let safety: ReturnType<typeof setTimeout> | null = null
 
-    const draw = () => {
-      if (!running) return
+    const startId = setTimeout(() => {
 
-      ctx.clearRect(0, 0, W, H)
+      /* Size canvas to fill viewport exactly */
+      const W = window.innerWidth
+      const H = window.innerHeight
+      canvas.width  = W
+      canvas.height = H
 
-      /* Solid dark fill */
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.fillStyle = '#0a0a0a'
-      ctx.fillRect(0, 0, W, H)
+      const R_MAX = Math.hypot(W, H) * 0.28
+      const ctx   = canvas.getContext('2d')!
+      const proxyArr = HOLES.map(() => ({ r: 0 }))
 
-      /* Punch organic transparent holes through the fill */
-      ctx.globalCompositeOperation = 'destination-out'
-      ctx.fillStyle = 'rgba(0,0,0,1)'
-      proxyArr.forEach((p, i) => {
-        if (p.r <= 0.5) return
-        drawOrganic(ctx, HOLES[i].x * W, HOLES[i].y * H, p.r, HOLES[i].seed)
-        ctx.fill()
-      })
-
-      raf = requestAnimationFrame(draw)
-    }
-    draw()
-
-    /* ── Helpers ─────────────────────────────────────────────────── */
-    const revealPage = () => {
-      const pc = document.getElementById('pc')
-      if (pc) pc.style.visibility = ''
-    }
-
-    const teardown = () => {
-      running = false
-      cancelAnimationFrame(raf)
-      document.documentElement.removeAttribute('data-loading')
-      revealPage()
-      /* Refresh ScrollTrigger after page becomes visible so all
-         trigger positions are recalculated against real layout    */
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const ST = (window as unknown as Record<string, unknown>).ScrollTrigger as
-            { refresh: () => void } | undefined
-          ST?.refresh()
+      const draw = () => {
+        if (!running) return
+        ctx.clearRect(0, 0, W, H)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.fillStyle = '#0a0a0a'
+        ctx.fillRect(0, 0, W, H)
+        ctx.globalCompositeOperation = 'destination-out'
+        ctx.fillStyle = 'rgba(0,0,0,1)'
+        proxyArr.forEach((p, i) => {
+          if (p.r <= 0.5) return
+          drawOrganic(ctx, HOLES[i].x * W, HOLES[i].y * H, p.r, HOLES[i].seed)
+          ctx.fill()
         })
+        raf = requestAnimationFrame(draw)
+      }
+      draw()
+
+      const revealPage = () => {
+        const pc = document.getElementById('pc')
+        if (pc) pc.style.visibility = ''
+      }
+
+      const teardown = () => {
+        running = false
+        cancelAnimationFrame(raf)
+        document.documentElement.removeAttribute('data-loading')
+        revealPage()
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const ST = (window as unknown as Record<string, unknown>).ScrollTrigger as
+              { refresh: () => void } | undefined
+            ST?.refresh()
+          })
+        })
+      }
+
+      const cProxy = { val: 0 }
+
+      tl = gsap.timeline({
+        onComplete() { teardown(); setMounted(false) },
       })
-    }
 
-    /* ── Main timeline ───────────────────────────────────────────── */
-    const cProxy = { val: 0 }
+      tl
+        .to(cProxy, {
+          val: 100, duration: 1.2, ease: 'power2.inOut',
+          onUpdate() { if (counter) counter.textContent = `${Math.round(cProxy.val)}%` },
+        })
+        .to(counter, { y: -28, opacity: 0, duration: 0.22, ease: 'power2.in' }, '-=0.05')
+        .call(revealPage)
+        .to(proxyArr, {
+          r: R_MAX, duration: 1.10, ease: 'expo.inOut',
+          stagger: { each: 0.022, from: 'random' },
+        }, '+=0.04')
+        .to(canvas, { opacity: 0, duration: 0.22, ease: 'power1.in' })
 
-    const tl = gsap.timeline({
-      onComplete() {
-        teardown()
-        setMounted(false)
-      },
-    })
+      safety = window.setTimeout(() => { teardown(); setMounted(false) }, 6000)
 
-    tl
-      /* 1 — count 0 → 100 */
-      .to(cProxy, {
-        val: 100,
-        duration: 1.2,
-        ease: 'power2.inOut',
-        onUpdate() {
-          if (counter) counter.textContent = `${Math.round(cProxy.val)}%`
-        },
-      })
-
-      /* 2 — counter slides out upward */
-      .to(counter, { y: -28, opacity: 0, duration: 0.22, ease: 'power2.in' }, '-=0.05')
-
-      /* 3 — show page behind canvas so Hero starts mid-animation */
-      .call(revealPage)
-
-      /* 4 — organic holes grow from random positions → page shows through */
-      .to(proxyArr, {
-        r:        R_MAX,
-        duration: 1.10,
-        ease:     'expo.inOut',
-        stagger:  { each: 0.022, from: 'random' },
-      }, '+=0.04')
-
-      /* 5 — fade remaining dark fringe, then done */
-      .to(canvas, { opacity: 0, duration: 0.22, ease: 'power1.in' })
-
-    /* Safety unmount in case timeline stalls */
-    const safety = window.setTimeout(() => {
-      teardown()
-      setMounted(false)
-    }, 6000)
+    }, 0) /* delay 0 — yields to StrictMode cleanup before firing */
 
     return () => {
+      clearTimeout(startId)
       running = false
       cancelAnimationFrame(raf)
-      teardown()
-      window.clearTimeout(safety)
-      tl.kill()
+      if (safety) window.clearTimeout(safety)
+      tl?.kill()
     }
   }, [])
 
@@ -231,7 +205,7 @@ export default function Preloader() {
         <span
           ref={counterRef}
           style={{
-            fontFamily:    'var(--font-inter), system-ui, sans-serif',
+            fontFamily:    'var(--font-geist-sans), system-ui, sans-serif',
             fontSize:      'clamp(52px, 9vw, 108px)',
             fontWeight:    800,
             letterSpacing: '-0.04em',
