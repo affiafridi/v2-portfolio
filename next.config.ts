@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   images: {
-    // sharp is installed for optimized image processing
     formats: ['image/avif', 'image/webp'],
   },
 

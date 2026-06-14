@@ -11,10 +11,12 @@ import { useContactStore }  from '@/store/useContactStore'
 
 /* ─── Nav data ───────────────────────────────────────────────────── */
 const NAV_ITEMS = [
-  { label: 'Index',   href: '/' },
-  { label: 'Work',    href: '/work' },
-  { label: 'About',   href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Index',    href: '/'         },
+  { label: 'Work',     href: '/work'     },
+  { label: 'Services', href: '/services' },
+  { label: 'Blog',     href: '/blog'     },
+  { label: 'About',    href: '/about'    },
+  { label: 'Contact',  href: '/contact'  },
 ]
 
 /* ─── Logo SVG ───────────────────────────────────────────────────── */
@@ -137,13 +139,14 @@ function StickyHeader() {
       transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
       <nav
-        className="pointer-events-auto flex items-center justify-between rounded-full px-6 py-4"
+        className="pointer-events-auto flex items-center justify-between px-6 py-4"
         style={{
           width:                'min(90vw, 500px)',
           background:           'rgba(10,10,10,0.90)',
           backdropFilter:       'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           border:               '1px solid rgba(240,240,240,0.08)',
+          borderRadius:         '20px',
         }}
       >
         {/* Left: Let's talk → opens ContactModal */}

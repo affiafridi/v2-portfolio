@@ -23,11 +23,12 @@ import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
    ───────────────────────────────────────────────────────────────── */
 
 const NAV_ITEMS = [
-  { num: '01', label: 'Index',   href: '/',        note: 'Home'             },
-  { num: '02', label: 'Work',    href: '/work',    note: 'Selected projects'},
-  { num: '03', label: 'About',   href: '/about',   note: 'Who I am'         },
-  { num: '04', label: 'Process', href: '/process', note: 'How I work'       },
-  { num: '05', label: 'Contact', href: '/contact', note: 'Let\'s talk'      },
+  { num: '01', label: 'Index',    href: '/',         note: 'Home'             },
+  { num: '02', label: 'Work',     href: '/work',     note: 'Selected projects'},
+  { num: '03', label: 'Services', href: '/services', note: 'What I build'     },
+  { num: '04', label: 'Blog',     href: '/blog',     note: 'My writing'       },
+  { num: '05', label: 'About',    href: '/about',    note: 'Who I am'         },
+  { num: '06', label: 'Contact',  href: '/contact',  note: 'Let\'s talk'      },
 ]
 
 const BG      = '#0d0d0d'

@@ -623,9 +623,6 @@ video {
 .z-\[300\] {
   z-index: 300;
 }
-.z-\[9999\] {
-  z-index: 9999;
-}
 .z-\[99999\] {
   z-index: 99999;
 }
@@ -706,6 +703,12 @@ video {
 }
 .flex-shrink-0 {
   flex-shrink: 0;
+}
+.shrink {
+  flex-shrink: 1;
+}
+.grow {
+  flex-grow: 1;
 }
 .-translate-x-2 {
   --tw-translate-x: -0.5rem;

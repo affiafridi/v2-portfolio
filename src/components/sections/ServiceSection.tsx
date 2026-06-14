@@ -561,7 +561,7 @@ export default function ServiceSection() {
         }}
       >
         <Link
-          href="/work"
+          href="/services"
           style={{
             display:        'inline-flex',
             alignItems:     'center',
@@ -579,7 +579,7 @@ export default function ServiceSection() {
           onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
           onMouseLeave={e => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = 'rgba(26,26,26,0.28)'; setCursorType('default') }}
         >
-          See all services
+          View all services
           <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
             <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
