@@ -196,6 +196,7 @@ export default function FooterSection() {
         minHeight:      '100vh',
         display:        'flex',
         flexDirection:  'column',
+        overflowX:      'hidden',
       }}
     >
 
@@ -213,12 +214,12 @@ export default function FooterSection() {
           gap:                 'clamp(32px,4.5vw,72px)',
           alignItems:          'start',
           alignContent:        'start',
-          padding:             'clamp(104px,10vw,148px) clamp(32px,6.5vw,96px) clamp(48px,6vw,80px)',
+          padding:             'clamp(104px,10vw,148px) clamp(24px,6.5vw,96px) clamp(48px,6vw,80px)',
         }}
       >
 
         {/* ── Col 1: heading + email + CTA ─────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem' }}>
+        <div className="ft-col-left" style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem' }}>
 
           <h2
             className="ft-title"
@@ -298,7 +299,7 @@ export default function FooterSection() {
         </div>
 
         {/* ── Col 2: word reveal + navigation below ────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(28px,3.5vw,52px)', paddingTop: 'clamp(40px,5vw,80px)' }}>
+        <div className="ft-col-statement" style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(28px,3.5vw,52px)', paddingTop: 'clamp(40px,5vw,80px)' }}>
 
           <p
             className="ft-statement"
@@ -345,7 +346,7 @@ export default function FooterSection() {
         </div>
 
         {/* ── Col 3: social (top) + navigation (bottom) ────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem', alignItems: 'flex-end', alignSelf: 'end' }}>
+        <div className="ft-col-right" style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem', alignItems: 'flex-end', alignSelf: 'end' }}>
 
           {/* Social */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -420,7 +421,7 @@ export default function FooterSection() {
 
 
       {/* ══ BIG NAME ════════════════════════════════════════════════ */}
-      <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', paddingTop: 'clamp(8px, 2vw, 24px)' }}>
         <div
           ref={nameRef}
           style={{
@@ -460,7 +461,7 @@ export default function FooterSection() {
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'space-between',
-          padding:        'clamp(12px,1.8vw,20px) clamp(32px,6.5vw,96px)',
+          padding:        'clamp(12px,1.8vw,20px) clamp(24px,6.5vw,96px)',
           borderTop:      `1px solid ${INK}10`,
           gap:            '16px',
           flexWrap:       'wrap',
@@ -475,7 +476,7 @@ export default function FooterSection() {
         </span>
 
         <button
-          className="ft-bottom-item"
+          className="ft-bottom-item ft-back-btn"
           onClick={() => {
             const overlay = overlayRef.current
             const lenis   = (window as unknown as Record<string, unknown>).__lenis as {
@@ -546,6 +547,67 @@ export default function FooterSection() {
         backdropFilter blurs all content. opacity driven by GSAP.
         pointerEvents: none — never blocks interaction.
         ─────────────────────────────────────────────────────────── */}
+    <style>{`
+      @media (max-width: 767px) {
+        .ft-body {
+          grid-template-columns: 1fr !important;
+          padding: 88px 24px 40px !important;
+          gap: 48px !important;
+          overflow: hidden !important;
+        }
+        .ft-col-right {
+          flex-direction: row !important;
+          align-items: flex-start !important;
+          gap: 48px !important;
+          align-self: auto !important;
+          padding-top: 140px !important;
+        }
+        .ft-bottom {
+          padding: 14px 24px !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          text-align: center !important;
+          gap: 10px !important;
+        }
+        .ft-back-btn {
+          display: none !important;
+        }
+      }
+      @media (min-width: 768px) and (max-width: 1023px) {
+        .ft-body {
+          grid-template-columns: 1fr 1fr !important;
+          padding: 100px 40px 56px !important;
+        }
+        .ft-col-right {
+          grid-column: 1 / -1 !important;
+          flex-direction: row !important;
+          justify-content: flex-start !important;
+          gap: 64px !important;
+          align-self: auto !important;
+          align-items: flex-start !important;
+        }
+      }
+
+      /* ── Small laptop: 1024px – 1279px ── */
+      @media (min-width: 1024px) and (max-width: 1279px) {
+        .ft-body {
+          grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) !important;
+          gap: 32px !important;
+          padding: 100px 48px 56px !important;
+        }
+      }
+
+      /* ── Large laptop: 1280px – 1439px ── */
+      @media (min-width: 1280px) and (max-width: 1439px) {
+        .ft-body {
+          grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) minmax(0,0.7fr) !important;
+          gap: 40px !important;
+          padding: 110px 56px 64px !important;
+        }
+      }
+    `}</style>
+
     {mounted && createPortal(
       <div
         ref={overlayRef}

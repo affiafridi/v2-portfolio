@@ -704,12 +704,6 @@ video {
 .flex-shrink-0 {
   flex-shrink: 0;
 }
-.shrink {
-  flex-shrink: 1;
-}
-.grow {
-  flex-grow: 1;
-}
 .-translate-x-2 {
   --tw-translate-x: -0.5rem;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -1065,6 +1059,11 @@ a, button, input, textarea, select, label, [role='button'] {
   cursor: none !important;
 }
 
+/* ─── Prevent horizontal overflow on all sections ───────────────── */
+section, footer, header, main, div {
+  max-width: 100%;
+}
+
 /* ─── Selection ──────────────────────────────────────────────────── */
 ::-moz-selection {
   background-color: var(--color-accent);
@@ -1090,18 +1089,125 @@ a, button, input, textarea, select, label, [role='button'] {
   from { transform: translateX(0%);   }
   to   { transform: translateX(-25%); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   All section-level media queries live here to avoid JSX <style>
+   hydration mismatches in Next.js App Router.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── HeroSection ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .hj-section        { min-height: 100vh !important; }
+  .hj-meta           { display: none !important; }
+  .hj-portrait-outer {
+    width: 100% !important; height: 58vh !important;
+    top: 0 !important; right: 0 !important; transform: none !important;
+  }
+  .hj-frame-1, .hj-frame-2 { display: none !important; }
+  .hj-headline       { bottom: auto !important; top: 52vh !important; }
+  .hj-marquee-span   { font-size: clamp(48px, 13vw, 76px) !important; }
+  .hj-left           { top: 62vh !important; left: 5% !important; width: 90% !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hj-section        { min-height: 100vh !important; }
+  .hj-meta           { display: none !important; }
+  .hj-portrait-outer {
+    width: 100% !important; height: 55vh !important;
+    top: 0 !important; right: 0 !important; transform: none !important;
+  }
+  .hj-frame-1, .hj-frame-2 { display: none !important; }
+  .hj-headline       { bottom: auto !important; top: 49vh !important; }
+  .hj-marquee-span   { font-size: clamp(60px, 9vw, 100px) !important; }
+  .hj-left           { top: 62vh !important; left: 5% !important; width: 80% !important; }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .hj-section        { min-height: 100vh !important; }
+  .hj-meta           { display: none !important; }
+  .hj-portrait-outer {
+    width: 100% !important; height: 55vh !important;
+    top: 0 !important; right: 0 !important; transform: none !important;
+  }
+  .hj-frame-1, .hj-frame-2 { display: none !important; }
+  .hj-headline       { bottom: auto !important; top: 49vh !important; }
+  .hj-marquee-span   { font-size: clamp(72px, 8vw, 120px) !important; }
+  .hj-left           { top: 63vh !important; left: 5% !important; width: 70% !important; }
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .hj-portrait-outer { width: 39% !important; }
+  .hj-left            { width: 47% !important; }
+}
+
+/* ── AboutSection ────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ab-section   { padding: 48px 24px 56px !important; }
+  .ab-title     { font-size: clamp(52px, 14vw, 72px) !important; margin-bottom: 40px !important; }
+  .ab-body      { grid-template-columns: 1fr !important; gap: 36px !important; overflow: hidden !important; }
+  .ab-statement { font-size: clamp(28px, 7.5vw, 40px) !important; overflow: hidden !important; }
+  .ab-footer    { gap: 24px !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ab-section   { padding: 56px 40px 56px !important; }
+  .ab-title     { font-size: clamp(56px, 9vw, 88px) !important; margin-bottom: 48px !important; }
+  .ab-body      { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) !important; gap: 40px !important; overflow: hidden !important; }
+  .ab-statement { font-size: clamp(28px, 4vw, 52px) !important; overflow: hidden !important; }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .ab-section   { padding: clamp(56px, 6vw, 80px) clamp(32px, 5vw, 64px) !important; }
+  .ab-title     { margin-bottom: clamp(40px, 5vw, 64px) !important; }
+  .ab-body      { grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) !important; gap: clamp(32px, 4vw, 56px) !important; overflow: hidden !important; }
+  .ab-statement { overflow: hidden !important; }
+}
+
+/* ── ServiceSection ──────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .sv-section { overflow-x: hidden !important; }
+  .sv-section .sv-list {
+    padding-left: 24px !important; padding-right: 24px !important; overflow: hidden !important;
+  }
+  .sv-heading-wrap { padding-left: 24px !important; padding-right: 24px !important; padding-top: 48px !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sv-section { overflow-x: hidden !important; }
+  .sv-section .sv-list {
+    padding-left: 8vw !important; padding-right: 40px !important; overflow: hidden !important;
+  }
+  .sv-heading-wrap { padding-left: 40px !important; padding-right: 40px !important; padding-top: 56px !important; }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .sv-section { overflow-x: hidden !important; }
+  .sv-section .sv-list { padding-left: 28vw !important; overflow: hidden !important; }
+}
+
 .hover\:gap-3:hover {
   gap: 0.75rem;
 }
+
 .group:hover .group-hover\:translate-x-0 {
   --tw-translate-x: 0px;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
+
 .group:hover .group-hover\:translate-x-1\.5 {
   --tw-translate-x: 0.375rem;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
+
 .group:hover .group-hover\:opacity-100 {
   opacity: 1;
+}
+
+@media (min-width: 768px) {
+
+  .md\:block {
+    display: block;
+  }
 }
 

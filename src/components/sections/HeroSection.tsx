@@ -239,13 +239,13 @@ export default function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen overflow-hidden"
+      className="hj-section relative min-h-screen overflow-hidden"
       style={{ background: BG }}
     >
 
       {/* ── Right meta ─────────────────────────────────────────── */}
       <div
-        className="pointer-events-none absolute top-8 z-30 flex items-start gap-12"
+        className="hj-meta pointer-events-none absolute top-8 z-30 flex items-start gap-12"
         style={{ right: 'calc(9% + 16px)' }}
       >
         <div className="hj-meta-item flex flex-col items-end gap-[3px]">
@@ -273,6 +273,7 @@ export default function HeroSection() {
           independently of the static CSS rotateY on the outer wrapper.
           ─────────────────────────────────────────────────────────── */}
       <div
+        className="hj-portrait-outer"
         style={{
           position:        'absolute',
           width:           '38%',
@@ -288,7 +289,7 @@ export default function HeroSection() {
         {/* Frame 2 — furthest back */}
         <div
           aria-hidden
-          className="pointer-events-none"
+          className="hj-frame-2 pointer-events-none"
           style={{
             position: 'absolute', top: 0, bottom: 0,
             left: '52px', right: '-52px',
@@ -301,7 +302,7 @@ export default function HeroSection() {
         {/* Frame 1 */}
         <div
           aria-hidden
-          className="pointer-events-none"
+          className="hj-frame-1 pointer-events-none"
           style={{
             position: 'absolute', top: 0, bottom: 0,
             left: '26px', right: '-26px',
@@ -359,7 +360,7 @@ export default function HeroSection() {
       </div>
 
       {/* ── Left column ────────────────────────────────────────── */}
-      <div className="absolute z-20" style={{ top: '30%', left: '5%', width: '46%' }}>
+      <div className="hj-left absolute z-20" style={{ top: '30%', left: '5%', width: '46%' }}>
 
         {/* Sublabel — matches brand label style */}
         <div
@@ -435,7 +436,7 @@ export default function HeroSection() {
           a compositing layer that isolates the blend from siblings.
           ─────────────────────────────────────────────────────────── */}
       <div
-        className="hj-headline pointer-events-none absolute bottom-0 left-0 right-0 select-none"
+        className="hj-headline pointer-events-none absolute bottom-0 left-0 right-0 select-none overflow-hidden"
         style={{ zIndex: 20, mixBlendMode: 'difference' }}
       >
         <div ref={outerMarqueeRef} style={{ paddingBottom: '0.20em' }}>
@@ -447,6 +448,7 @@ export default function HeroSection() {
             {Array.from({ length: 4 }).map((_, i) => (
               <span
                 key={i}
+                className="hj-marquee-span"
                 style={{
                   fontSize:      'clamp(88px, 12.8vw, 200px)',
                   fontWeight:    800,

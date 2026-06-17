@@ -59,29 +59,37 @@ export default function AboutSection() {
   useEffect(() => {
     const ctx = gsap.context(() => {
 
-      /* Big title slides down */
+      /* Big title slides down — on mobile skip ScrollTrigger (Lenis
+         can desync it on touch devices), run immediately on mount    */
+      const isMobile = window.innerWidth < 768
       gsap.from('.ab-title', {
-        y: -36,
+        y: isMobile ? -16 : -36,
         opacity: 0,
         duration: 1.1,
         ease: 'power3.out',
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top 82%',
-        },
+        delay: isMobile ? 0.15 : 0,
+        ...(isMobile ? {} : {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 82%',
+          },
+        }),
       })
 
       /* Left bio blocks stagger in from left */
       gsap.from('.ab-left-item', {
-        x: -32,
+        x: isMobile ? -16 : -32,
         opacity: 0,
         duration: 0.9,
         ease: 'power3.out',
         stagger: 0.18,
-        scrollTrigger: {
-          trigger: '.ab-body',
-          start: 'top 75%',
-        },
+        delay: isMobile ? 0.35 : 0,
+        ...(isMobile ? {} : {
+          scrollTrigger: {
+            trigger: '.ab-body',
+            start: 'top 75%',
+          },
+        }),
       })
 
       /* ── Scroll-scrubbed word reveal ────────────────────────────
@@ -155,6 +163,7 @@ export default function AboutSection() {
   return (
     <section
       ref={sectionRef}
+      className="ab-section"
       style={{
         background: BG,
         minHeight:  '100vh',

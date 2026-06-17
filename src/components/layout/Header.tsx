@@ -205,9 +205,18 @@ export default function Header() {
   const { setCursorType } = useCursorStore()
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 80)
+    const handler = () => {
+      // Mobile: always show sticky — no room for the full horizontal nav
+      if (window.innerWidth < 768) { setScrolled(true); return }
+      setScrolled(window.scrollY > 80)
+    }
+    handler()
     window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
+    window.addEventListener('resize', handler, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', handler)
+      window.removeEventListener('resize', handler)
+    }
   }, [])
 
   return (
@@ -216,8 +225,10 @@ export default function Header() {
            An animated opacity/transform ancestor traps mix-blend-mode into
            its own stacking context, breaking the inversion. This element
            has no compositing ancestor so it blends directly against the page. */}
+      {/* Logo — hidden on mobile (sticky header has its own logo) */}
       <Link
         href="/"
+        className="hidden md:block"
         style={{
           position:      'fixed',
           left:          '2rem',

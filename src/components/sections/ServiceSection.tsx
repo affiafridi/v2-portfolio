@@ -432,12 +432,13 @@ export default function ServiceSection() {
   return (
     <section
       ref={sectionRef}
-      style={{ background: CREAM, position: 'relative', zIndex: 2 }}
+      className="sv-section"
+      style={{ background: CREAM, position: 'relative', zIndex: 2, overflowX: 'hidden' }}
       onMouseLeave={handleLeave}
     >
 
       {/* ══ HEADING — identical to About ════════════════════════════ */}
-      <div style={{ padding: 'clamp(64px,8vw,108px) clamp(32px,6.5vw,96px) 0' }}>
+      <div className="sv-heading-wrap" style={{ padding: 'clamp(64px,8vw,108px) clamp(32px,6.5vw,96px) 0' }}>
         <h2
           className="sv-title"
           style={{
