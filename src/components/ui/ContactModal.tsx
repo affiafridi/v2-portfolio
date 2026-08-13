@@ -106,6 +106,8 @@ export default function ContactModal() {
     interests: [] as string[],
     agreed:    false,
   })
+  const [submitting,  setSubmitting]  = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const toggleInterest = (tag: string) =>
     setForm(prev => ({
@@ -364,7 +366,30 @@ export default function ContactModal() {
         {/* ── Form ───────────────────────────────────────────────── */}
         <form
           style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-          onSubmit={e => e.preventDefault()}
+          onSubmit={async e => {
+            e.preventDefault()
+            if (!form.name || !form.email || !form.message || submitting) return
+            setSubmitError('')
+            setSubmitting(true)
+            try {
+              const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: form.name, email: form.email, phone: form.phone, message: form.message, interests: form.interests }),
+              })
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}))
+                setSubmitError(data.error || 'Something went wrong — please try again.')
+                return
+              }
+              setForm({ name: '', email: '', phone: '', message: '', interests: [], agreed: false })
+              close()
+            } catch {
+              setSubmitError('Network error — please check your connection and try again.')
+            } finally {
+              setSubmitting(false)
+            }
+          }}
         >
 
           {/* Name */}
@@ -460,6 +485,18 @@ export default function ContactModal() {
             />
           </div>
 
+          {submitError && (
+            <p style={{
+              color:         '#dc2626',
+              fontSize:      '12px',
+              fontWeight:    600,
+              marginTop:     'clamp(12px, 1.6vw, 20px)',
+              marginBottom:  0,
+            }}>
+              {submitError}
+            </p>
+          )}
+
           {/* Policy checkbox + send */}
           <div
             className="cm-bottom"
@@ -536,7 +573,7 @@ export default function ContactModal() {
 
             <button
               type="submit"
-              disabled={!form.agreed}
+              disabled={!form.agreed || submitting}
               style={{
                 display:       'inline-flex',
                 alignItems:    'center',
@@ -552,12 +589,13 @@ export default function ContactModal() {
                 border:        'none',
                 cursor:        'none',
                 transition:    'background 0.22s ease',
-                pointerEvents: form.agreed ? 'auto' : 'none',
+                opacity:       submitting ? 0.7 : 1,
+                pointerEvents: form.agreed && !submitting ? 'auto' : 'none',
               }}
               onMouseEnter={e => { if (form.agreed) { e.currentTarget.style.background = ACC; setCursorType('hover') } }}
               onMouseLeave={e => { if (form.agreed) { e.currentTarget.style.background = INK; setCursorType('default') } }}
             >
-              Send
+              {submitting ? 'Sending…' : 'Send'}
               <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
                 <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5"
                   strokeLinecap="round" strokeLinejoin="round" />

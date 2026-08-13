@@ -52,7 +52,12 @@ const STATS = [
 ]
 
 /* ─── Component ──────────────────────────────────────────────────── */
-export default function AboutSection() {
+export default function AboutSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
+  const aboutImages = (settings.images as string[]) || ABOUT_IMAGES
+  const aboutWords  = (settings.scrollRevealWords as W[]) || WORDS
+  const aboutStats  = (settings.stats as { num: string; label: string }[]) || STATS
+  const storyP1     = (settings.storyParagraph1 as string) || "I didn't learn development in a classroom. I learned it by building projects, solving problems, breaking things, and figuring out how to make them work again. What started as curiosity became a long-term commitment to creating products that are useful, reliable, and enjoyable to use."
+  const storyP2     = (settings.storyParagraph2 as string) || 'Being self-taught taught me more than programming. It taught me how to learn, adapt, and solve problems independently. Every project is another opportunity to improve, experiment, and create something meaningful.'
   const sectionRef = useRef<HTMLElement>(null)
   const { setCursorType } = useCursorStore()
 
@@ -216,11 +221,7 @@ export default function AboutSection() {
           <div className="ab-left-item">
             <span style={LABEL_STYLE}>My Story</span>
             <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0 }}>
-              I didn&apos;t learn development in a classroom. I learned it by
-              building projects, solving problems, breaking things, and figuring
-              out how to make them work again. What started as curiosity became
-              a long-term commitment to creating products that are useful,
-              reliable, and enjoyable to use.
+              {storyP1}
             </p>
           </div>
 
@@ -229,10 +230,7 @@ export default function AboutSection() {
             style={{ borderLeft: `2px solid ${ACC}`, paddingLeft: '16px' }}
           >
             <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0 }}>
-              Being self-taught taught me more than programming. It taught me
-              how to learn, adapt, and solve problems independently. Every
-              project is another opportunity to improve, experiment, and create
-              something meaningful.
+              {storyP2}
             </p>
           </div>
 
@@ -251,7 +249,7 @@ export default function AboutSection() {
             overflowWrap:  'break-word',
           }}
         >
-          {WORDS.map(({ w, italic, accent }, i) => {
+          {aboutWords.map(({ w, italic, accent }, i) => {
             const wordSpan = (
               <span
                 key={i}
@@ -275,7 +273,7 @@ export default function AboutSection() {
             )
 
             return accent ? (
-              <ImageCycler key={i} images={ABOUT_IMAGES}>
+              <ImageCycler key={i} images={aboutImages}>
                 {wordSpan}
               </ImageCycler>
             ) : wordSpan
@@ -300,7 +298,7 @@ export default function AboutSection() {
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 'clamp(28px, 4.5vw, 64px)' }}>
-          {STATS.map(({ num, label }) => (
+          {aboutStats.map(({ num, label }) => (
             <div key={label} className="ab-stat">
               <div
                 style={{

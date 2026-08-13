@@ -67,7 +67,13 @@ const SOCIAL_LINKS = [
 ]
 
 /* ─── Component ──────────────────────────────────────────────────── */
-export default function FooterSection() {
+export default function FooterSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
+  const footerEmail       = (settings.email as string)       || 'aftab@matildacake.com'
+  const footerSocials     = (settings.socialLinks as { label: string; url: string }[]) || SOCIAL_LINKS.map(l => ({ label: l.label, url: l.href }))
+  const footerWords       = (settings.wordReveal as W[])     || WORDS
+  const footerImages      = (settings.images as string[])    || FOOTER_IMAGES
+  const footerCopyright   = (settings.copyrightName as string) || 'Aftab'
+  const footerTechCredits = (settings.techCredits as string) || 'Next.js · GSAP · Three.js · Framer Motion'
   const sectionRef  = useRef<HTMLElement>(null)
   const nameRef     = useRef<HTMLDivElement>(null)
   const overlayRef  = useRef<HTMLDivElement>(null)
@@ -244,7 +250,7 @@ export default function FooterSection() {
               Get in touch
             </span>
             <a
-              href="mailto:aftab@matildacake.com"
+              href={`mailto:${footerEmail}`}
               style={{
                 fontSize:       'clamp(14px, 1.5vw, 22px)',
                 fontWeight:     700,
@@ -259,7 +265,7 @@ export default function FooterSection() {
               onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
               onMouseLeave={e => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = `${INK}18`; setCursorType('default') }}
             >
-              aftab@matildacake.com
+              {footerEmail}
             </a>
           </div>
 
@@ -312,7 +318,7 @@ export default function FooterSection() {
               overflowWrap:  'break-word',
             }}
           >
-            {WORDS.map(({ w, italic, accent }, i) => {
+            {footerWords.map(({ w, italic, accent }, i) => {
               const wordSpan = (
                 <span
                   key={i}
@@ -336,7 +342,7 @@ export default function FooterSection() {
               )
 
               return accent ? (
-                <ImageCycler key={i} images={FOOTER_IMAGES}>
+                <ImageCycler key={i} images={footerImages}>
                   {wordSpan}
                 </ImageCycler>
               ) : wordSpan
@@ -357,10 +363,10 @@ export default function FooterSection() {
             }}>
               Social
             </span>
-            {SOCIAL_LINKS.map(link => (
+            {footerSocials.map(link => (
               <a
                 key={link.label}
-                href={link.href}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ft-right-item"
@@ -468,11 +474,11 @@ export default function FooterSection() {
         }}
       >
         <span className="ft-bottom-item" style={{ fontSize: '10px', color: INK, letterSpacing: '0.08em' }}>
-          © {year} Aftab · Designed &amp; developed by Aftab
+          © {year} {footerCopyright} · Designed &amp; developed by {footerCopyright}
         </span>
 
         <span className="ft-bottom-item" style={{ fontSize: '10px', color: INK, letterSpacing: '0.06em' }}>
-          Next.js · GSAP · Three.js · Framer Motion
+          {footerTechCredits}
         </span>
 
         <button

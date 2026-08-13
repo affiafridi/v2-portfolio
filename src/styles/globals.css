@@ -79,6 +79,26 @@ a, button, input, textarea, select, label, [role='button'] {
   cursor: none !important;
 }
 
+/* ─── Admin panel: restore native cursor (no custom Cursor component here) ── */
+.admin-shell, .admin-shell * {
+  cursor: auto !important;
+}
+.admin-shell a,
+.admin-shell button,
+.admin-shell label,
+.admin-shell [role='button'] {
+  cursor: pointer !important;
+}
+.admin-shell input,
+.admin-shell textarea,
+.admin-shell select {
+  cursor: text !important;
+}
+.admin-shell button:disabled,
+.admin-shell [aria-disabled='true'] {
+  cursor: not-allowed !important;
+}
+
 /* ─── Prevent horizontal overflow on all sections ───────────────── */
 section, footer, header, main, div {
   max-width: 100%;

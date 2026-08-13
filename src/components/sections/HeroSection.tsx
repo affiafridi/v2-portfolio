@@ -46,7 +46,28 @@ function useClock() {
 }
 
 /* ─── Component ──────────────────────────────────────────────────── */
-export default function HeroSection() {
+interface HeroSettings {
+  heading?: string
+  bio?: string
+  marqueeText?: string
+  location?: string
+  availabilityText?: string
+  portraitImage?: string
+}
+
+export default function HeroSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
+  const s: HeroSettings = {
+    heading:          (settings.heading as string)          || 'Building products people *enjoy using.*',
+    bio:              (settings.bio as string)              || 'Self-taught developer passionate about turning ideas into real products. I build modern web applications, SaaS platforms, and digital experiences with a focus on performance, usability, and clean execution.',
+    marqueeText:      (settings.marqueeText as string)     || 'Full-Stack Developer',
+    location:         (settings.location as string)        || 'Dubai, UAE',
+    availabilityText: (settings.availabilityText as string)|| 'Currently available for Freelance projects.',
+    portraitImage:    (settings.portraitImage as string)    || '/images/aftab.jpg',
+  }
+
+  const headingParts = s.heading!.split('*')
+  const headingMain  = headingParts[0]
+  const headingItalic = headingParts[1] || ''
   const time = useClock()
   const year = new Date().getFullYear()
 
@@ -253,7 +274,7 @@ export default function HeroSection() {
             Based in
           </span>
           <span className="text-[11px] tracking-[0.06em]" style={{ color: `${INK}55` }}>
-            Dubai, UAE
+            {s.location}
           </span>
         </div>
         <div className="hj-meta-item flex flex-col items-end gap-[3px]">
@@ -325,7 +346,7 @@ export default function HeroSection() {
         >
           <div className="relative h-full w-full">
             <Image
-              src="/images/aftab.jpg"
+              src={s.portraitImage!}
               alt="Portrait"
               fill priority sizes="38vw"
               className="object-cover object-top"
@@ -336,7 +357,7 @@ export default function HeroSection() {
           {/* Green glitch channel */}
           <div ref={greenRef} className="pointer-events-none absolute inset-0" style={{ opacity: 0 }}>
             <Image
-              src="/images/aftab.jpg" alt="" fill sizes="38vw"
+              src={s.portraitImage!} alt="" fill sizes="38vw"
               className="object-cover object-top"
               style={{
                 filter: 'grayscale(100%) sepia(100%) saturate(900%) hue-rotate(90deg) brightness(0.6) contrast(1.3)',
@@ -348,7 +369,7 @@ export default function HeroSection() {
           {/* Magenta glitch channel */}
           <div ref={magentaRef} className="pointer-events-none absolute inset-0" style={{ opacity: 0 }}>
             <Image
-              src="/images/aftab.jpg" alt="" fill sizes="38vw"
+              src={s.portraitImage!} alt="" fill sizes="38vw"
               className="object-cover object-top"
               style={{
                 filter: 'grayscale(100%) sepia(100%) saturate(900%) hue-rotate(270deg) brightness(0.6) contrast(1.3)',
@@ -387,7 +408,7 @@ export default function HeroSection() {
             textTransform: 'uppercase',
             color:         `${INK}40`,
           }}>
-            Currently available for Freelance projects.
+            {s.availabilityText}
           </span>
         </div>
 
@@ -403,9 +424,8 @@ export default function HeroSection() {
             marginBottom:  '1.8rem',
           }}
         >
-          Building products<br />
-          people{' '}
-          <em style={{ fontStyle: 'italic', fontWeight: 800 }}>enjoy using.</em>
+          {headingMain}
+          {headingItalic && <><br /><em style={{ fontStyle: 'italic', fontWeight: 800 }}>{headingItalic}</em></>}
         </p>
 
         {/* Para — clean, correct, on-brand */}
@@ -422,10 +442,7 @@ export default function HeroSection() {
             maxWidth:      '480px',
           }}
         >
-          Self-taught developer passionate about turning ideas
-          into real products. I build modern web applications,
-          SaaS platforms, and digital experiences with a focus
-          on performance, usability, and clean execution.
+          {s.bio}
         </p>
       </div>
 
@@ -457,7 +474,7 @@ export default function HeroSection() {
                   paddingRight:  '2.5rem',
                 }}
               >
-                Full-Stack Developer —&nbsp;
+                {s.marqueeText} —&nbsp;
               </span>
             ))}
           </div>

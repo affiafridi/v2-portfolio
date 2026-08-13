@@ -5,15 +5,15 @@ import Link from 'next/link'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
-import { projects } from '@/data/projects'
-
 gsap.registerPlugin(ScrollTrigger)
 
 const CREAM = '#f0eeea'
 const INK   = '#1a1a1a'
 const ACC   = '#ff4d00'
 
-export default function WorkPageList() {
+interface WorkProject { slug: string; title: string; type: string; year: number; image: string; tags: string[]; id?: string; description?: string }
+
+export default function WorkPageList({ projects = [] }: { projects?: WorkProject[] }) {
   const sectionRef  = useRef<HTMLElement>(null)
   const floatRef    = useRef<HTMLDivElement>(null)
   const imgRefs     = useRef<(HTMLDivElement | null)[]>([])
@@ -177,7 +177,7 @@ export default function WorkPageList() {
             style={{ height: '1px', background: `${INK}10`, transformOrigin: 'left center' }} />
 
           {projects.map((project, i) => (
-            <div key={project.id}>
+            <div key={project.slug}>
               <Link
                 href={`/work/${project.slug}`}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -192,7 +192,7 @@ export default function WorkPageList() {
                       letterSpacing: '0.14em', color: ACC, flexShrink: 0,
                       fontVariantNumeric: 'tabular-nums' }}
                   >
-                    {project.id.padStart(2, '0')}
+                    {String(i + 1).padStart(2, '0')}
                   </span>
                   <span
                     ref={el => { nameRefs.current[i] = el }}
@@ -233,7 +233,7 @@ export default function WorkPageList() {
         }}
       >
         {projects.map((project, i) => (
-          <div key={project.id}
+          <div key={project.slug}
             ref={el => { imgRefs.current[i] = el }}
             style={{ position: 'absolute', inset: 0 }}
           >

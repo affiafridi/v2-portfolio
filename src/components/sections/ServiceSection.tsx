@@ -196,7 +196,10 @@ function ImgCMS() {
 const PREVIEWS = [ImgWebDev, ImgUIUX, ImgGSAP, ImgBrand, ImgEcom, ImgCMS]
 
 /* ─── Component ──────────────────────────────────────────────────── */
-export default function ServiceSection() {
+interface ServiceItem { num: string; label: string; tag: string; slug?: string; image?: string | null }
+
+export default function ServiceSection({ services }: { services?: ServiceItem[] }) {
+  const svcList = services && services.length > 0 ? services : SERVICES
   const sectionRef    = useRef<HTMLElement>(null)
   const listRef       = useRef<HTMLDivElement>(null)   // the actual list container
   const rowRefs       = useRef<(HTMLDivElement | null)[]>([])
@@ -472,7 +475,7 @@ export default function ServiceSection() {
           style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
         />
 
-        {SERVICES.map((s, i) => (
+        {svcList.map((s, i) => (
           <div key={s.num}>
             <div
               className="sv-row"
@@ -539,7 +542,7 @@ export default function ServiceSection() {
             </div>
 
             {/* Bottom divider — not rendered for the last service */}
-            {i < SERVICES.length - 1 && (
+            {i < svcList.length - 1 && (
               <div
                 className="sv-line"
                 ref={el => { lineRefs.current[i + 1] = el }}

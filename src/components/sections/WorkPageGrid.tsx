@@ -5,17 +5,16 @@ import Link from 'next/link'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
-import { projects } from '@/data/projects'
-
 gsap.registerPlugin(ScrollTrigger)
 
 const CREAM = '#f0eeea'
 const INK   = '#1a1a1a'
 const ACC   = '#ff4d00'
 
-const FEATURED = projects.slice(0, 4)
+interface WorkProject { slug: string; title: string; type: string; year: number; image: string; tags: string[]; id?: string; description?: string }
 
-export default function WorkPageGrid() {
+export default function WorkPageGrid({ projects }: { projects?: WorkProject[] }) {
+  const FEATURED = (projects || []).slice(0, 4)
   const sectionRef  = useRef<HTMLElement>(null)
   const glitchTls   = useRef<(gsap.core.Timeline | null)[]>([null, null, null, null])
   const greenRefs   = useRef<(HTMLDivElement | null)[]>([])
@@ -112,7 +111,7 @@ export default function WorkPageGrid() {
       }}>
         {FEATURED.map((project, i) => (
           <Link
-            key={project.id}
+            key={project.slug}
             href={`/work/${project.slug}`}
             className={`wpg-card wpg-c${i}`}
             style={{
@@ -257,9 +256,9 @@ export default function WorkPageGrid() {
                   maxWidth: '38ch',
                   marginBottom: 'clamp(8px,1vw,14px)',
                 }}>
-                  {project.description.length > 72
-                    ? project.description.slice(0, 72) + '…'
-                    : project.description}
+                  {(project.description?.length ?? 0) > 72
+                    ? project.description!.slice(0, 72) + '…'
+                    : project.description ?? ''}
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>

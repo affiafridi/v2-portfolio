@@ -208,7 +208,8 @@ function TechCard({ tech }: { tech: Tech }) {
 }
 
 /* ─── Section ────────────────────────────────────────────────────── */
-export default function StackSection() {
+export default function StackSection({ categories }: { categories?: Cat[] }) {
+  const stackData = categories && categories.length > 0 ? categories : STACK
   const [activeIdx, setActiveIdx] = useState(0)
   const sectionRef = useRef<HTMLElement>(null)
   const gridRef    = useRef<HTMLDivElement>(null)
@@ -266,7 +267,7 @@ export default function StackSection() {
     return () => ctx.revert()
   }, [])
 
-  const cat = STACK[activeIdx]
+  const cat = stackData[activeIdx]
 
   return (
     <section
@@ -330,7 +331,7 @@ export default function StackSection() {
         gap:          0,
         scrollbarWidth: 'none',
       }}>
-        {STACK.map((c, i) => (
+        {stackData.map((c, i) => (
           <div
             key={c.num}
             className="sk-tab"

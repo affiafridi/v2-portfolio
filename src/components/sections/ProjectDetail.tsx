@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
-import { projects } from '@/data/projects'
 import type { Project } from '@/types'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -16,13 +15,12 @@ const DARK  = '#0d0d0d'
 const ACC   = '#ff4d00'
 
 /* ─── Component ──────────────────────────────────────────────────── */
-export default function ProjectDetail({ project }: { project: Project }) {
+export default function ProjectDetail({ project, nextProject }: { project: Project; nextProject?: { slug: string; title: string; type?: string; year?: number } }) {
   const sectionRef = useRef<HTMLElement>(null)
   const coverRef   = useRef<HTMLDivElement>(null)
   const { setCursorType } = useCursorStore()
 
-  const idx  = projects.findIndex(p => p.slug === project.slug)
-  const next = projects[(idx + 1) % projects.length]
+  const next = nextProject || { slug: project.slug, title: project.title, type: project.type }
 
   /* ── Gallery glitch ────────────────────────────────────────────── */
   const gallery        = project.gallery ?? []
