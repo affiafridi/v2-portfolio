@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-guard'
+import { prisma } from '@/lib/prisma'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
-const MAX_SIZE_BYTES = 8 * 1024 * 1024 // 8MB
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg']
+const ALLOWED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES]
+
+const MAX_IMAGE_SIZE = 8 * 1024 * 1024 // 8MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
 export async function POST(request: Request) {
   const unauthorized = await requireAdmin()
@@ -20,14 +25,17 @@ export async function POST(request: Request) {
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Unsupported file type. Allowed: JPEG, PNG, WebP, GIF, AVIF.' },
+        { error: 'Unsupported file type. Allowed: JPEG, PNG, WebP, GIF, AVIF, MP4, WebM, MOV, OGG.' },
         { status: 400 }
       )
     }
 
-    if (file.size > MAX_SIZE_BYTES) {
+    const isVideo = VIDEO_TYPES.includes(file.type)
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
+
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Max size is 8MB.' },
+        { error: `File too large. Max size is ${isVideo ? '50MB' : '8MB'}.` },
         { status: 400 }
       )
     }
@@ -48,7 +56,21 @@ export async function POST(request: Request) {
     const filePath = path.join(uploadsDir, uniqueName)
     await writeFile(filePath, buffer)
 
-    return NextResponse.json({ url: `/uploads/${uniqueName}` })
+    const url = `/uploads/${uniqueName}`
+
+    // Every upload — regardless of which form triggered it — lands in the
+    // central media library automatically.
+    const asset = await prisma.mediaAsset.create({
+      data: {
+        url,
+        filename: uniqueName,
+        type: isVideo ? 'video' : 'image',
+        title: sanitized.replace(/\.[^.]+$/, ''),
+        size: buffer.length,
+      },
+    })
+
+    return NextResponse.json({ url, asset })
   } catch {
     return NextResponse.json(
       { error: 'Failed to upload file' },

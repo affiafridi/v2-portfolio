@@ -3,12 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToastStore } from '@/store/useToastStore'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import ImageUpload from '@/components/admin/ImageUpload'
+import MediaField from '@/components/admin/MediaField'
 import ArrayInput from '@/components/admin/ArrayInput'
+import FormSection from '@/components/admin/FormSection'
+import FormToolbar from '@/components/admin/FormToolbar'
+import SlugField from '@/components/admin/SlugField'
+import PublishToggle from '@/components/admin/PublishToggle'
 
 interface ServiceData {
   id?: string
@@ -20,12 +23,12 @@ interface ServiceData {
   points: string[]
   deliverables: string[]
   image: string
-  sortOrder: number
+  published: boolean
 }
 
 const DEFAULT: ServiceData = {
   slug: '', num: '', title: '', tag: '', description: '',
-  points: [], deliverables: [], image: '', sortOrder: 0,
+  points: [], deliverables: [], image: '', published: false,
 }
 
 export default function ServiceForm({ initial }: { initial?: ServiceData }) {
@@ -55,49 +58,67 @@ export default function ServiceForm({ initial }: { initial?: ServiceData }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label>Number *</Label>
-          <Input value={data.num} onChange={(e) => set('num', e.target.value)} placeholder="01" required />
+    <>
+      <FormToolbar
+        backHref="/admin/services"
+        backLabel="Back to Services"
+        formId="service-form"
+        saving={saving}
+        isEdit={isEdit}
+        entityLabel="Service"
+        viewHref={isEdit ? `/services/${data.slug}` : undefined}
+        extra={<PublishToggle published={data.published} onChange={(v) => set('published', v)} />}
+      />
+
+      <form id="service-form" onSubmit={handleSubmit} className="p-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {/* Main column — focus content */}
+          <div className="space-y-4 lg:col-span-2">
+            <FormSection title="Title">
+              <div className="space-y-2">
+                <Label>Title *</Label>
+                <Input value={data.title} onChange={(e) => set('title', e.target.value)} className="text-base" required />
+                <SlugField
+                  title={data.title}
+                  value={data.slug}
+                  onChange={(slug) => set('slug', slug)}
+                  pathPrefix="/services/"
+                  isEdit={isEdit}
+                />
+              </div>
+            </FormSection>
+
+            <FormSection title="Description">
+              <Textarea value={data.description} onChange={(e) => set('description', e.target.value)} rows={4} required />
+            </FormSection>
+
+            <FormSection title="Points & Deliverables">
+              <ArrayInput value={data.points} onChange={(v) => set('points', v)} label="Key Points" placeholder="e.g. Next.js & React architecture" />
+              <ArrayInput value={data.deliverables} onChange={(v) => set('deliverables', v)} label="Deliverables" placeholder="e.g. Source code & documentation" />
+            </FormSection>
+          </div>
+
+          {/* Sidebar column — compact metadata */}
+          <div className="space-y-4">
+            <FormSection title="Cover Image">
+              <MediaField value={data.image} onChange={(url) => set('image', url)} />
+            </FormSection>
+
+            <FormSection title="Details" description="Metadata for this service">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Number *</Label>
+                  <Input value={data.num} onChange={(e) => set('num', e.target.value)} placeholder="01" required className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tag *</Label>
+                  <Input value={data.tag} onChange={(e) => set('tag', e.target.value)} placeholder="Full Stack" required className="h-8 text-sm" />
+                </div>
+              </div>
+            </FormSection>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Title *</Label>
-          <Input value={data.title} onChange={(e) => set('title', e.target.value)} required />
-        </div>
-        <div className="space-y-2">
-          <Label>Tag *</Label>
-          <Input value={data.tag} onChange={(e) => set('tag', e.target.value)} placeholder="Full Stack" required />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Slug</Label>
-        <Input value={data.slug} onChange={(e) => set('slug', e.target.value)} placeholder="auto-generated" />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Description *</Label>
-        <Textarea value={data.description} onChange={(e) => set('description', e.target.value)} rows={4} required />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Cover Image</Label>
-        <ImageUpload value={data.image} onChange={(url) => set('image', url)} />
-      </div>
-
-      <ArrayInput value={data.points} onChange={(v) => set('points', v)} label="Key Points" placeholder="e.g. Next.js & React architecture" />
-      <ArrayInput value={data.deliverables} onChange={(v) => set('deliverables', v)} label="Deliverables" placeholder="e.g. Source code & documentation" />
-
-      <div className="space-y-2">
-        <Label>Sort Order</Label>
-        <Input type="number" value={data.sortOrder} onChange={(e) => set('sortOrder', parseInt(e.target.value))} />
-      </div>
-
-      <div className="flex gap-3">
-        <Button type="submit" disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Update Service' : 'Create Service'}</Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-      </div>
-    </form>
+      </form>
+    </>
   )
 }

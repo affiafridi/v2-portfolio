@@ -2,27 +2,27 @@ import { prisma } from '@/lib/prisma'
 import { cache } from 'react'
 
 export const getProjects = cache(async () => {
-  return prisma.project.findMany({ orderBy: { sortOrder: 'asc' } })
+  return prisma.project.findMany({ where: { published: true }, orderBy: { sortOrder: 'asc' } })
 })
 
 export const getFeaturedProjects = cache(async () => {
   return prisma.project.findMany({
-    where: { featured: true },
+    where: { featured: true, published: true },
     orderBy: { sortOrder: 'asc' },
     take: 4,
   })
 })
 
 export const getProjectBySlug = cache(async (slug: string) => {
-  return prisma.project.findUnique({ where: { slug } })
+  return prisma.project.findFirst({ where: { slug, published: true } })
 })
 
 export const getServices = cache(async () => {
-  return prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })
+  return prisma.service.findMany({ where: { published: true }, orderBy: { sortOrder: 'asc' } })
 })
 
 export const getServiceBySlug = cache(async (slug: string) => {
-  return prisma.service.findUnique({ where: { slug } })
+  return prisma.service.findFirst({ where: { slug, published: true } })
 })
 
 export const getPublishedPosts = cache(async () => {
@@ -33,7 +33,7 @@ export const getPublishedPosts = cache(async () => {
 })
 
 export const getPostBySlug = cache(async (slug: string) => {
-  return prisma.post.findUnique({ where: { slug } })
+  return prisma.post.findFirst({ where: { slug, published: true } })
 })
 
 export const getStackCategories = cache(async () => {

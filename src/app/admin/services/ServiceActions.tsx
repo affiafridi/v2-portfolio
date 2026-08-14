@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
 import { useToastStore } from '@/store/useToastStore'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, ExternalLink } from 'lucide-react'
 
-export default function ServiceActions({ id, title }: { id: string; title: string }) {
+export default function ServiceActions({ id, title, slug }: { id: string; title: string; slug: string }) {
   const router = useRouter()
   const toast = useToastStore((s) => s.add)
   const [showDelete, setShowDelete] = useState(false)
@@ -26,6 +26,9 @@ export default function ServiceActions({ id, title }: { id: string; title: strin
 
   return (
     <div className="flex items-center gap-1">
+      <a href={`/services/${slug}`} target="_blank" rel="noopener noreferrer">
+        <Button variant="ghost" size="icon"><ExternalLink className="h-4 w-4" /></Button>
+      </a>
       <Link href={`/admin/services/${id}/edit`}>
         <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
       </Link>

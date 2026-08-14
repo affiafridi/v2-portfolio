@@ -17,13 +17,13 @@ import { useAdminNavStore } from '@/store/useAdminNavStore'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'Media', href: '/admin/media', icon: ImageIcon },
   { label: 'Projects', href: '/admin/projects', icon: FolderKanban },
   { label: 'Services', href: '/admin/services', icon: Briefcase },
   { label: 'Blog', href: '/admin/posts', icon: FileText },
   { label: 'Stack', href: '/admin/stack', icon: Layers },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Submissions', href: '/admin/submissions', icon: MessageSquare },
-  { label: 'Media', href: '/admin/media', icon: ImageIcon },
+  { label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
 export default function AdminSidebar() {

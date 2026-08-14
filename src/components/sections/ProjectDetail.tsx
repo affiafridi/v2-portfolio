@@ -390,12 +390,10 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
                 <span style={{ display: 'inline-block', width: '20px', height: '1px', background: ACC }} />
                 Description
               </div>
-              <p style={{
-                fontSize: 'clamp(14px,1.3vw,18px)', fontWeight: 400,
-                lineHeight: 1.75, color: `${INK}80`, margin: 0,
-              }}>
-                {project.challenge}
-              </p>
+              <div
+                className="prose-challenge"
+                dangerouslySetInnerHTML={{ __html: project.challenge }}
+              />
             </div>
           )}
 
@@ -753,6 +751,15 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
           color: #fff;
         }
         .pd-gal-img:hover .pd-gal-photo { transform: scale(1.06); }
+        .prose-challenge p { font-size: clamp(14px,1.3vw,18px); font-weight: 400; line-height: 1.75; color: ${INK}80; margin: 0 0 1em; }
+        .prose-challenge p:last-child { margin-bottom: 0; }
+        .prose-challenge strong { font-weight: 700; color: ${INK}; }
+        .prose-challenge em { font-style: italic; }
+        .prose-challenge ul, .prose-challenge ol { padding-left: 1.2em; margin: 0 0 1em; }
+        .prose-challenge li { font-size: clamp(14px,1.3vw,18px); line-height: 1.75; color: ${INK}80; }
+        .prose-challenge blockquote { border-left: 2px solid ${ACC}; padding-left: 16px; margin: 1em 0; font-style: italic; color: ${INK}60; }
+        .prose-challenge a { color: ${ACC}; text-decoration: underline; text-underline-offset: 3px; }
+        .prose-challenge code { font-family: var(--font-geist-mono), monospace; font-size: 0.9em; background: ${INK}0a; padding: 0.15em 0.4em; border-radius: 4px; }
         @keyframes pd-lb-in {
           from { opacity: 0; }
           to   { opacity: 1; }

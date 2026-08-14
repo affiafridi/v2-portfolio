@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     if (!body.slug) body.slug = slugify(body.title || '')
+    if (body.sortOrder === undefined) body.sortOrder = await prisma.service.count()
     const service = await prisma.service.create({ data: body })
     revalidatePath('/')
     revalidatePath('/services')

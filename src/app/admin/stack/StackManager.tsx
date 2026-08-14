@@ -1,15 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
+import ColorPickerInput from '@/components/admin/ColorPickerInput'
 import { useToastStore } from '@/store/useToastStore'
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, GripVertical, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface StackItem {
   id: string
@@ -28,6 +46,92 @@ interface StackCategory {
   items: StackItem[]
 }
 
+function SortableCategory({
+  cat,
+  active,
+  onSelect,
+  onEdit,
+  onDelete,
+}: {
+  cat: StackCategory
+  active: boolean
+  onSelect: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }}
+      onClick={onSelect}
+      className={cn(
+        'flex cursor-pointer items-center gap-1 rounded-md px-2 py-2 text-sm transition-colors',
+        active ? 'bg-neutral-100 font-medium' : 'hover:bg-neutral-50'
+      )}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-300 hover:bg-neutral-100 hover:text-neutral-500 active:cursor-grabbing"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <span className="flex-1 truncate">{cat.num}. {cat.label}</span>
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onEdit() }}><Pencil className="h-3 w-3" /></Button>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onDelete() }}><Trash2 className="h-3 w-3 text-red-500" /></Button>
+      </div>
+    </div>
+  )
+}
+
+function SortableItemRow({ item, onEdit, onDelete }: { item: StackItem; onEdit: () => void; onDelete: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+
+  return (
+    <TableRow ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }}>
+      <TableCell className="w-8 px-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-300 hover:bg-neutral-100 hover:text-neutral-500 active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <img
+            src={`https://cdn.simpleicons.org/${item.slug}/${item.color}`}
+            alt=""
+            className="h-4 w-4"
+            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
+          />
+          <span className="font-medium">{item.name}</span>
+        </div>
+      </TableCell>
+      <TableCell className="font-mono text-xs">{item.slug}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 rounded" style={{ backgroundColor: `#${item.color}` }} />
+          <span className="font-mono text-xs">#{item.color}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}><Pencil className="h-3 w-3" /></Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}><Trash2 className="h-3 w-3 text-red-500" /></Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+}
+
 export default function StackManager({ initialCategories }: { initialCategories: StackCategory[] }) {
   const router = useRouter()
   const toast = useToastStore((s) => s.add)
@@ -35,24 +139,34 @@ export default function StackManager({ initialCategories }: { initialCategories:
   const [selectedId, setSelectedId] = useState<string | null>(initialCategories[0]?.id || null)
   const [showCatForm, setShowCatForm] = useState(false)
   const [editCat, setEditCat] = useState<StackCategory | null>(null)
-  const [catForm, setCatForm] = useState({ num: '', label: '', desc: '', sortOrder: 0 })
+  const [catForm, setCatForm] = useState({ num: '', label: '', desc: '' })
   const [showItemForm, setShowItemForm] = useState(false)
   const [editItem, setEditItem] = useState<StackItem | null>(null)
-  const [itemForm, setItemForm] = useState({ name: '', slug: '', color: '', sortOrder: 0 })
+  const [itemForm, setItemForm] = useState({ name: '', slug: '', color: '' })
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'item'; id: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  useEffect(() => { setCategories(initialCategories) }, [initialCategories])
+
   const selected = categories.find((c) => c.id === selectedId)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+
+  const refreshList = async () => {
+    const listRes = await fetch('/api/admin/stack')
+    const data = await listRes.json()
+    setCategories(data)
+    return data as StackCategory[]
+  }
 
   const openNewCat = () => {
     setEditCat(null)
-    setCatForm({ num: '', label: '', desc: '', sortOrder: 0 })
+    setCatForm({ num: '', label: '', desc: '' })
     setShowCatForm(true)
   }
 
   const openEditCat = (cat: StackCategory) => {
     setEditCat(cat)
-    setCatForm({ num: cat.num, label: cat.label, desc: cat.desc, sortOrder: cat.sortOrder })
+    setCatForm({ num: cat.num, label: cat.label, desc: cat.desc })
     setShowCatForm(true)
   }
 
@@ -69,21 +183,19 @@ export default function StackManager({ initialCategories }: { initialCategories:
     toast(editCat ? 'Category updated' : 'Category created')
     setShowCatForm(false)
     router.refresh()
-    const listRes = await fetch('/api/admin/stack')
-    const data = await listRes.json()
-    setCategories(data)
+    const data = await refreshList()
     if (!editCat && data.length) setSelectedId(data[data.length - 1].id)
   }
 
   const openNewItem = () => {
     setEditItem(null)
-    setItemForm({ name: '', slug: '', color: '', sortOrder: 0 })
+    setItemForm({ name: '', slug: '', color: '' })
     setShowItemForm(true)
   }
 
   const openEditItem = (item: StackItem) => {
     setEditItem(item)
-    setItemForm({ name: item.name, slug: item.slug, color: item.color, sortOrder: item.sortOrder })
+    setItemForm({ name: item.name, slug: item.slug, color: item.color })
     setShowItemForm(true)
   }
 
@@ -100,9 +212,7 @@ export default function StackManager({ initialCategories }: { initialCategories:
     toast(editItem ? 'Item updated' : 'Item created')
     setShowItemForm(false)
     router.refresh()
-    const listRes = await fetch('/api/admin/stack')
-    const data = await listRes.json()
-    setCategories(data)
+    await refreshList()
   }
 
   const handleDelete = async () => {
@@ -123,9 +233,59 @@ export default function StackManager({ initialCategories }: { initialCategories:
     if (deleteTarget.type === 'category' && selectedId === deleteTarget.id) setSelectedId(null)
     toast(deleteTarget.type === 'category' ? 'Category deleted' : 'Item deleted')
     router.refresh()
-    const listRes = await fetch('/api/admin/stack')
-    const data = await listRes.json()
-    setCategories(data)
+    await refreshList()
+  }
+
+  const handleCategoryDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = categories.findIndex((c) => c.id === active.id)
+    const newIndex = categories.findIndex((c) => c.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const previous = categories
+    const next = arrayMove(categories, oldIndex, newIndex)
+    setCategories(next)
+
+    const res = await fetch('/api/admin/stack/reorder', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: next.map((c) => c.id) }),
+    })
+
+    if (!res.ok) {
+      setCategories(previous)
+      toast('Failed to save new order', 'error')
+    } else {
+      router.refresh()
+    }
+  }
+
+  const handleItemDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id || !selected) return
+
+    const oldIndex = selected.items.findIndex((i) => i.id === active.id)
+    const newIndex = selected.items.findIndex((i) => i.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const previous = categories
+    const nextItems = arrayMove(selected.items, oldIndex, newIndex)
+    setCategories((prev) => prev.map((c) => (c.id === selected.id ? { ...c, items: nextItems } : c)))
+
+    const res = await fetch('/api/admin/stack/items/reorder', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: nextItems.map((i) => i.id) }),
+    })
+
+    if (!res.ok) {
+      setCategories(previous)
+      toast('Failed to save new order', 'error')
+    } else {
+      router.refresh()
+    }
   }
 
   return (
@@ -137,19 +297,20 @@ export default function StackManager({ initialCategories }: { initialCategories:
           <Button size="sm" variant="outline" onClick={openNewCat}><Plus className="mr-1 h-3 w-3" /> Add</Button>
         </CardHeader>
         <CardContent className="space-y-1 p-2">
-          {categories.map((cat) => (
-            <div
-              key={cat.id}
-              className={`flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${selectedId === cat.id ? 'bg-neutral-100 font-medium' : 'hover:bg-neutral-50'}`}
-              onClick={() => setSelectedId(cat.id)}
-            >
-              <span>{cat.num}. {cat.label}</span>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); openEditCat(cat) }}><Pencil className="h-3 w-3" /></Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: 'category', id: cat.id, name: cat.label }) }}><Trash2 className="h-3 w-3 text-red-500" /></Button>
-              </div>
-            </div>
-          ))}
+          <DndContext id="stack-categories-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+            <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              {categories.map((cat) => (
+                <SortableCategory
+                  key={cat.id}
+                  cat={cat}
+                  active={selectedId === cat.id}
+                  onSelect={() => setSelectedId(cat.id)}
+                  onEdit={() => openEditCat(cat)}
+                  onDelete={() => setDeleteTarget({ type: 'category', id: cat.id, name: cat.label })}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </CardContent>
       </Card>
 
@@ -161,38 +322,31 @@ export default function StackManager({ initialCategories }: { initialCategories:
         </CardHeader>
         <CardContent>
           {selected && selected.items.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Color</TableHead>
-                  <TableHead>Order</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selected.items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{item.slug}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded" style={{ backgroundColor: `#${item.color}` }} />
-                        <span className="font-mono text-xs">#{item.color}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.sortOrder}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditItem(item)}><Pencil className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget({ type: 'item', id: item.id, name: item.name })}><Trash2 className="h-3 w-3 text-red-500" /></Button>
-                      </div>
-                    </TableCell>
+            <DndContext id="stack-items-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8 px-2" />
+                    <TableHead>Name</TableHead>
+                    <TableHead>Slug</TableHead>
+                    <TableHead>Color</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  <SortableContext items={selected.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                    {selected.items.map((item) => (
+                      <SortableItemRow
+                        key={item.id}
+                        item={item}
+                        onEdit={() => openEditItem(item)}
+                        onDelete={() => setDeleteTarget({ type: 'item', id: item.id, name: item.name })}
+                      />
+                    ))}
+                  </SortableContext>
+                </TableBody>
+              </Table>
+            </DndContext>
           ) : selected ? (
             <p className="py-8 text-center text-sm text-neutral-400">No items yet. Add one above.</p>
           ) : (
@@ -202,66 +356,70 @@ export default function StackManager({ initialCategories }: { initialCategories:
       </Card>
 
       {/* Category form dialog */}
-      {showCatForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{editCat ? 'Edit Category' : 'New Category'}</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowCatForm(false)}><X className="h-4 w-4" /></Button>
+      <Dialog open={showCatForm} onOpenChange={setShowCatForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editCat ? 'Edit Category' : 'New Category'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Number</Label>
+              <Input value={catForm.num} onChange={(e) => setCatForm({ ...catForm, num: e.target.value })} placeholder="01" />
             </div>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>Number</Label>
-                <Input value={catForm.num} onChange={(e) => setCatForm({ ...catForm, num: e.target.value })} placeholder="01" />
-              </div>
-              <div className="space-y-1">
-                <Label>Label</Label>
-                <Input value={catForm.label} onChange={(e) => setCatForm({ ...catForm, label: e.target.value })} placeholder="Frontend" />
-              </div>
-              <div className="space-y-1">
-                <Label>Description</Label>
-                <Input value={catForm.desc} onChange={(e) => setCatForm({ ...catForm, desc: e.target.value })} placeholder="UI & Styling" />
-              </div>
-              <div className="space-y-1">
-                <Label>Sort Order</Label>
-                <Input type="number" value={catForm.sortOrder} onChange={(e) => setCatForm({ ...catForm, sortOrder: parseInt(e.target.value) || 0 })} />
-              </div>
-              <Button className="w-full" onClick={saveCat}><Check className="mr-2 h-4 w-4" /> Save</Button>
+            <div className="space-y-1.5">
+              <Label>Label</Label>
+              <Input value={catForm.label} onChange={(e) => setCatForm({ ...catForm, label: e.target.value })} placeholder="Frontend" />
             </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Input value={catForm.desc} onChange={(e) => setCatForm({ ...catForm, desc: e.target.value })} placeholder="UI & Styling" />
+            </div>
+            <Button className="w-full" onClick={saveCat}><Check className="mr-2 h-4 w-4" /> Save</Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Item form dialog */}
-      {showItemForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{editItem ? 'Edit Item' : 'New Item'}</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowItemForm(false)}><X className="h-4 w-4" /></Button>
+      <Dialog open={showItemForm} onOpenChange={setShowItemForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editItem ? 'Edit Item' : 'New Item'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50">
+                {itemForm.slug ? (
+                  <img
+                    src={`https://cdn.simpleicons.org/${itemForm.slug}/${/^[0-9a-fA-F]{6}$/.test(itemForm.color) ? itemForm.color : '000000'}`}
+                    alt=""
+                    className="h-6 w-6"
+                    onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
+                  />
+                ) : (
+                  <span className="text-[10px] text-neutral-400">Icon</span>
+                )}
+              </div>
+              <p className="text-xs text-neutral-500">
+                Icons load automatically from <span className="font-mono">simpleicons.org</span> using the slug and color below — no upload needed.
+              </p>
             </div>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>Name</Label>
-                <Input value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} placeholder="React" />
-              </div>
-              <div className="space-y-1">
-                <Label>Slug (SimpleIcons)</Label>
-                <Input value={itemForm.slug} onChange={(e) => setItemForm({ ...itemForm, slug: e.target.value })} placeholder="react" />
-              </div>
-              <div className="space-y-1">
-                <Label>Color (hex without #)</Label>
-                <Input value={itemForm.color} onChange={(e) => setItemForm({ ...itemForm, color: e.target.value })} placeholder="61DAFB" />
-              </div>
-              <div className="space-y-1">
-                <Label>Sort Order</Label>
-                <Input type="number" value={itemForm.sortOrder} onChange={(e) => setItemForm({ ...itemForm, sortOrder: parseInt(e.target.value) || 0 })} />
-              </div>
-              <Button className="w-full" onClick={saveItem}><Check className="mr-2 h-4 w-4" /> Save</Button>
+
+            <div className="space-y-1.5">
+              <Label>Name</Label>
+              <Input value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} placeholder="React" />
             </div>
+            <div className="space-y-1.5">
+              <Label>Slug (SimpleIcons)</Label>
+              <Input value={itemForm.slug} onChange={(e) => setItemForm({ ...itemForm, slug: e.target.value })} placeholder="react" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Color</Label>
+              <ColorPickerInput value={itemForm.color} onChange={(hex) => setItemForm({ ...itemForm, color: hex })} />
+            </div>
+            <Button className="w-full" onClick={saveItem}><Check className="mr-2 h-4 w-4" /> Save</Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={!!deleteTarget}

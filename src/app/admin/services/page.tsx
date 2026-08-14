@@ -2,47 +2,52 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import AdminHeader from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import AdminDataTable, { type AdminTableColumn, type AdminTableRow } from '@/components/admin/AdminDataTable'
 import { Plus } from 'lucide-react'
 import ServiceActions from './ServiceActions'
 
+const columns: AdminTableColumn[] = [
+  { header: 'Num' },
+  { header: 'Title' },
+  { header: 'Tag' },
+  { header: 'Status' },
+  { header: 'Actions', headClassName: 'w-[130px]' },
+]
+
 export default async function ServicesPage() {
   const services = await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })
+
+  const rows: AdminTableRow[] = services.map((s) => ({
+    id: s.id,
+    searchText: `${s.title} ${s.tag} ${s.num}`,
+    cells: [
+      s.num,
+      <span key="title" className="font-medium">{s.title}</span>,
+      s.tag,
+      <Badge key="status" variant={s.published ? 'success' : 'secondary'}>
+        {s.published ? 'Published' : 'Draft'}
+      </Badge>,
+      <ServiceActions key="actions" id={s.id} title={s.title} slug={s.slug} />,
+    ],
+  }))
 
   return (
     <>
       <AdminHeader title="Services" />
       <div className="p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-neutral-500">{services.length} services</p>
-          <Link href="/admin/services/new">
-            <Button size="sm" className="gap-2"><Plus className="h-4 w-4" /> Add Service</Button>
-          </Link>
-        </div>
-        <div className="rounded-lg border border-neutral-200 bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Num</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Tag</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {services.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>{s.num}</TableCell>
-                  <TableCell className="font-medium">{s.title}</TableCell>
-                  <TableCell>{s.tag}</TableCell>
-                  <TableCell>
-                    <ServiceActions id={s.id} title={s.title} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <AdminDataTable
+          columns={columns}
+          rows={rows}
+          searchPlaceholder="Search services…"
+          emptyMessage="No services yet."
+          reorderEndpoint="/api/admin/services/reorder"
+          headerAction={
+            <Link href="/admin/services/new">
+              <Button size="sm" className="gap-2"><Plus className="h-4 w-4" /> Add Service</Button>
+            </Link>
+          }
+        />
       </div>
     </>
   )

@@ -18,6 +18,7 @@ export async function POST(request: Request) {
   if (unauthorized) return unauthorized
   try {
     const body = await request.json()
+    if (body.sortOrder === undefined) body.sortOrder = await prisma.stackCategory.count()
     const category = await prisma.stackCategory.create({ data: body })
     revalidatePath('/')
     return NextResponse.json(category, { status: 201 })
