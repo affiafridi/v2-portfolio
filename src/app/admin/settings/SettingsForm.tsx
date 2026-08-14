@@ -13,6 +13,7 @@ import ImageUpload from '@/components/admin/ImageUpload'
 import ArrayInput from '@/components/admin/ArrayInput'
 import GalleryMediaInput from '@/components/admin/GalleryMediaInput'
 import TaxonomyManager from '@/components/admin/TaxonomyManager'
+import MediaField from '@/components/admin/MediaField'
 import FormSection from '@/components/admin/FormSection'
 import { X, Plus } from 'lucide-react'
 
@@ -62,6 +63,17 @@ interface SettingsData {
     interests: string[]
     phonePlaceholder: string
   }
+  seo: {
+    siteName: string
+    titleTemplate: string
+    defaultTitle: string
+    defaultDescription: string
+    defaultOgImage: string
+    twitterHandle: string
+    work: { title: string; description: string }
+    services: { title: string; description: string }
+    blog: { title: string; description: string }
+  }
 }
 
 const EMPTY: SettingsData = {
@@ -69,12 +81,37 @@ const EMPTY: SettingsData = {
   about: { storyParagraph1: '', storyParagraph2: '', scrollRevealWords: [], stats: [], images: [] },
   footer: { email: '', socialLinks: [], tickerText: '', wordReveal: [], images: [], copyrightName: '', techCredits: '' },
   contact: { interests: [], phonePlaceholder: '' },
+  seo: {
+    siteName: 'Aftab',
+    titleTemplate: '%s | Aftab',
+    defaultTitle: 'Aftab — Creative Developer',
+    defaultDescription: 'Creative developer crafting immersive digital experiences that push the limits of the web.',
+    defaultOgImage: '',
+    twitterHandle: '',
+    work: { title: 'Work', description: '' },
+    services: { title: 'Services', description: '' },
+    blog: { title: 'Blog', description: '' },
+  },
 }
 
 export default function SettingsForm({ initialData }: { initialData: Partial<SettingsData> }) {
   const router = useRouter()
   const toast = useToastStore((s) => s.add)
-  const [data, setData] = useState<SettingsData>({ ...EMPTY, ...initialData, hero: { ...EMPTY.hero, ...initialData.hero }, about: { ...EMPTY.about, ...initialData.about }, footer: { ...EMPTY.footer, ...initialData.footer }, contact: { ...EMPTY.contact, ...initialData.contact } })
+  const [data, setData] = useState<SettingsData>({
+    ...EMPTY,
+    ...initialData,
+    hero: { ...EMPTY.hero, ...initialData.hero },
+    about: { ...EMPTY.about, ...initialData.about },
+    footer: { ...EMPTY.footer, ...initialData.footer },
+    contact: { ...EMPTY.contact, ...initialData.contact },
+    seo: {
+      ...EMPTY.seo,
+      ...initialData.seo,
+      work: { ...EMPTY.seo.work, ...initialData.seo?.work },
+      services: { ...EMPTY.seo.services, ...initialData.seo?.services },
+      blog: { ...EMPTY.seo.blog, ...initialData.seo?.blog },
+    },
+  })
   const [saving, setSaving] = useState(false)
 
   const setHero = <K extends keyof SettingsData['hero']>(key: K, val: SettingsData['hero'][K]) =>
@@ -89,9 +126,15 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
   const setContact = <K extends keyof SettingsData['contact']>(key: K, val: SettingsData['contact'][K]) =>
     setData((d) => ({ ...d, contact: { ...d.contact, [key]: val } }))
 
+  const setSeo = <K extends keyof SettingsData['seo']>(key: K, val: SettingsData['seo'][K]) =>
+    setData((d) => ({ ...d, seo: { ...d.seo, [key]: val } }))
+
+  const setSeoSection = (section: 'work' | 'services' | 'blog', field: 'title' | 'description', value: string) =>
+    setData((d) => ({ ...d, seo: { ...d.seo, [section]: { ...d.seo[section], [field]: value } } }))
+
   const handleSave = async () => {
     setSaving(true)
-    const res = await fetch('/api/admin/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) })
+    const res = await fetch('/api/admin/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
     setSaving(false)
     if (res.ok) {
       toast('Settings saved')
@@ -136,6 +179,7 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
             <TabsTrigger value="footer">Footer</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="taxonomies">Taxonomies</TabsTrigger>
+            <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
 
           {/* Hero Tab */}
@@ -279,6 +323,66 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
                 listKey="categories"
                 placeholder="e.g. Design"
               />
+            </FormSection>
+          </TabsContent>
+
+          {/* SEO Tab */}
+          <TabsContent value="seo" className="mt-0">
+            <FormSection title="SEO Defaults" description="Site-wide search engine and social sharing defaults. Individual Projects, Services, and Posts can override these.">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Site Name</Label>
+                  <Input value={data.seo.siteName} onChange={(e) => setSeo('siteName', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title Template</Label>
+                  <Input value={data.seo.titleTemplate} onChange={(e) => setSeo('titleTemplate', e.target.value)} placeholder="%s | Aftab" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Default Meta Title</Label>
+                  <span className={`text-xs ${data.seo.defaultTitle.length > 60 ? 'text-red-500' : 'text-neutral-400'}`}>{data.seo.defaultTitle.length}/60</span>
+                </div>
+                <Input value={data.seo.defaultTitle} onChange={(e) => setSeo('defaultTitle', e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Default Meta Description</Label>
+                  <span className={`text-xs ${data.seo.defaultDescription.length > 160 ? 'text-red-500' : 'text-neutral-400'}`}>{data.seo.defaultDescription.length}/160</span>
+                </div>
+                <Textarea value={data.seo.defaultDescription} onChange={(e) => setSeo('defaultDescription', e.target.value)} rows={3} />
+              </div>
+              <div className="space-y-2">
+                <Label>Default Social Share Image</Label>
+                <p className="text-xs text-neutral-400">Used when a Project, Service, or Post doesn&apos;t have its own SEO image set</p>
+                <MediaField value={data.seo.defaultOgImage} onChange={(url) => setSeo('defaultOgImage', url)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Twitter Handle</Label>
+                <Input value={data.seo.twitterHandle} onChange={(e) => setSeo('twitterHandle', e.target.value)} placeholder="@yourhandle" className="max-w-xs" />
+              </div>
+            </FormSection>
+
+            <FormSection title="Page Titles & Descriptions" description="SEO for the Work, Services, and Blog index pages">
+              {(['work', 'services', 'blog'] as const).map((section) => (
+                <div key={section} className="space-y-2 border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
+                  <Label className="capitalize">{section}</Label>
+                  <Input
+                    value={data.seo[section].title}
+                    onChange={(e) => setSeoSection(section, 'title', e.target.value)}
+                    placeholder="Meta title"
+                    className="text-sm"
+                  />
+                  <Textarea
+                    value={data.seo[section].description}
+                    onChange={(e) => setSeoSection(section, 'description', e.target.value)}
+                    placeholder="Meta description"
+                    rows={2}
+                    className="text-sm"
+                  />
+                </div>
+              ))}
             </FormSection>
           </TabsContent>
         </Tabs>

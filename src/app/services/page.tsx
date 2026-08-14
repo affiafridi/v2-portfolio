@@ -1,8 +1,19 @@
-
+import type { Metadata } from 'next'
 import { getServices, getSiteSettings } from '@/lib/data'
+import { getSeoSettings, buildMetadata } from '@/lib/seo'
 import ServicesPageClient from './ServicesPageClient'
 
-export const metadata = { title: 'Services' }
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings()
+  const seo = getSeoSettings(settings)
+  return buildMetadata({
+    title: seo.services.title || 'Services',
+    description: seo.services.description || seo.defaultDescription,
+    image: seo.defaultOgImage,
+    path: '/services',
+    seo,
+  })
+}
 
 export default async function ServicesPage() {
   const services = await getServices()

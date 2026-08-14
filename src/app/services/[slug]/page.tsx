@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
-import { getServices, getServiceBySlug } from '@/lib/data'
+import { getServices, getServiceBySlug, getSiteSettings } from '@/lib/data'
+import { getSeoSettings, buildMetadata } from '@/lib/seo'
 import ServiceDetailClient from './ServiceDetailClient'
 
 export async function generateStaticParams() {
@@ -9,8 +10,18 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const service = await getServiceBySlug(slug)
-  return { title: service ? `${service.title} — Services` : 'Services' }
+  const [service, settings] = await Promise.all([getServiceBySlug(slug), getSiteSettings()])
+  if (!service) return { title: 'Services' }
+
+  const seo = getSeoSettings(settings)
+  return buildMetadata({
+    title: service.seoTitle || service.title,
+    description: service.seoDescription || service.description,
+    image: service.seoImage || service.image || seo.defaultOgImage,
+    path: `/services/${slug}`,
+    noindex: service.noindex,
+    seo,
+  })
 }
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {

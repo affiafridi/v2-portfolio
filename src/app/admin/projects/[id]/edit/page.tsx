@@ -16,6 +16,9 @@ export default async function EditProjectPage({ params }: { params: { id: string
     challenge: project.challenge || '',
     url: project.url || '',
     features: project.features as { title: string; desc: string }[],
+    seoTitle: project.seoTitle || '',
+    seoDescription: project.seoDescription || '',
+    seoImage: project.seoImage || '',
   }
 
   return (

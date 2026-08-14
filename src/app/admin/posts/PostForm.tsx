@@ -15,6 +15,7 @@ import FormToolbar from '@/components/admin/FormToolbar'
 import SlugField from '@/components/admin/SlugField'
 import DateField from '@/components/admin/DateField'
 import PublishToggle from '@/components/admin/PublishToggle'
+import SeoFields from '@/components/admin/SeoFields'
 
 interface PostData {
   id?: string
@@ -28,11 +29,16 @@ interface PostData {
   readTime: string
   image: string
   published: boolean
+  seoTitle: string
+  seoDescription: string
+  seoImage: string
+  noindex: boolean
 }
 
 const DEFAULT: PostData = {
   slug: '', num: '', category: '', title: '', excerpt: '', content: '',
   date: '', readTime: '', image: '', published: false,
+  seoTitle: '', seoDescription: '', seoImage: '', noindex: false,
 }
 
 export default function PostForm({ initial }: { initial?: PostData }) {
@@ -156,6 +162,15 @@ export default function PostForm({ initial }: { initial?: PostData }) {
                 <Textarea value={data.excerpt} onChange={(e) => set('excerpt', e.target.value)} rows={3} required className="text-sm" />
               </div>
             </FormSection>
+
+            <SeoFields
+              value={{ seoTitle: data.seoTitle, seoDescription: data.seoDescription, seoImage: data.seoImage, noindex: data.noindex }}
+              onChange={(v) => setData((d) => ({ ...d, ...v }))}
+              fallbackTitle={data.title}
+              fallbackDescription={data.excerpt}
+              fallbackImage={data.image}
+              previewPath={`/blog/${data.slug || 'your-slug'}`}
+            />
           </div>
         </div>
       </form>

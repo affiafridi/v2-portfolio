@@ -1,7 +1,19 @@
+import type { Metadata } from 'next'
 import { getPublishedPosts, getSiteSettings } from '@/lib/data'
+import { getSeoSettings, buildMetadata } from '@/lib/seo'
 import BlogPageClient from './BlogPageClient'
 
-export const metadata = { title: 'Blog' }
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings()
+  const seo = getSeoSettings(settings)
+  return buildMetadata({
+    title: seo.blog.title || 'Blog',
+    description: seo.blog.description || seo.defaultDescription,
+    image: seo.defaultOgImage,
+    path: '/blog',
+    seo,
+  })
+}
 
 export default async function BlogPage() {
   const [posts, settings] = await Promise.all([getPublishedPosts(), getSiteSettings()])

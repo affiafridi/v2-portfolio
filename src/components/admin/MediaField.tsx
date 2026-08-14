@@ -13,11 +13,18 @@ interface MediaFieldProps {
   onChange: (url: string) => void
   accept?: 'image' | 'video' | 'all'
   className?: string
+  size?: 'default' | 'sm'
 }
 
-export default function MediaField({ value, onChange, accept = 'all', className }: MediaFieldProps) {
+const SIZE_CLASS = {
+  default: 'h-40 w-40',
+  sm: 'h-20 w-20',
+}
+
+export default function MediaField({ value, onChange, accept = 'all', className, size = 'default' }: MediaFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const isVideo = value ? VIDEO_EXT.test(value) : false
+  const sizeClass = SIZE_CLASS[size]
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -26,7 +33,7 @@ export default function MediaField({ value, onChange, accept = 'all', className 
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="block h-40 w-40 overflow-hidden rounded-md border border-neutral-200"
+            className={cn('block overflow-hidden rounded-md border border-neutral-200', sizeClass)}
           >
             {isVideo ? (
               <video src={value} className="h-full w-full object-cover" muted preload="metadata" />
@@ -48,10 +55,10 @@ export default function MediaField({ value, onChange, accept = 'all', className 
           type="button"
           variant="outline"
           onClick={() => setPickerOpen(true)}
-          className="h-40 w-40 flex-col gap-2"
+          className={cn('flex-col gap-1.5', sizeClass)}
         >
-          <ImageIcon className="h-6 w-6 text-neutral-400" />
-          <span className="text-xs text-neutral-500">Select Media</span>
+          <ImageIcon className={cn('text-neutral-400', size === 'sm' ? 'h-4 w-4' : 'h-6 w-6')} />
+          <span className={cn('text-neutral-500', size === 'sm' ? 'text-[10px]' : 'text-xs')}>Select Media</span>
         </Button>
       )}
 

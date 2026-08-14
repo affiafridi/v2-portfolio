@@ -21,6 +21,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     return () => document.body.classList.remove('admin-shell')
   }, [])
 
+  // <html data-loading> ships on every SSR page and is only ever cleared by
+  // the portfolio's <Preloader>, which never mounts on admin routes. Left
+  // in place it permanently paints <html>/<body> near-black (see globals.css)
+  // — normally hidden behind the admin UI, but exposed as a black gap
+  // whenever the admin shell's height falls short of the real viewport.
+  useEffect(() => {
+    document.documentElement.removeAttribute('data-loading')
+  }, [])
+
   // Consecutive admin pages render <AdminHeader> at the same tree position,
   // so React updates that instance in place instead of remounting it — its
   // own mount-effect stop() only ever fires once. Clearing loading here
@@ -49,13 +58,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="admin-shell flex h-screen bg-neutral-50">
+    <div className="admin-shell flex h-dvh bg-neutral-50">
       <AdminSidebar />
-      <main className="relative flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto">
         {children}
-        <PageLoadingOverlay />
       </main>
       <Toaster />
+      <PageLoadingOverlay />
     </div>
   )
 }

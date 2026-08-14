@@ -1,11 +1,21 @@
+import type { Metadata } from 'next'
 import WorkHero       from '@/components/sections/WorkPageHero'
 import WorkList        from '@/components/sections/WorkPageList'
 import WorkGrid        from '@/components/sections/WorkPageGrid'
 import FooterSection   from '@/components/sections/FooterSection'
 import { getProjects, getSiteSettings } from '@/lib/data'
+import { getSeoSettings, buildMetadata } from '@/lib/seo'
 
-export const metadata = {
-  title: 'Work',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings()
+  const seo = getSeoSettings(settings)
+  return buildMetadata({
+    title: seo.work.title || 'Work',
+    description: seo.work.description || seo.defaultDescription,
+    image: seo.defaultOgImage,
+    path: '/work',
+    seo,
+  })
 }
 
 export default async function WorkPage() {

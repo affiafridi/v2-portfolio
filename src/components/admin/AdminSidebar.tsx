@@ -31,7 +31,7 @@ export default function AdminSidebar() {
   const start = useAdminNavStore((s) => s.start)
 
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-neutral-200 bg-white">
+    <aside className="flex h-dvh w-60 flex-col border-r border-neutral-200 bg-white">
       <div className="flex h-14 items-center border-b border-neutral-200 px-6">
         <Link href="/admin" className="text-lg font-bold text-neutral-900">
           Portfolio Admin

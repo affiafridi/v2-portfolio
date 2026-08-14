@@ -10,7 +10,16 @@ export default async function EditPostPage({ params }: { params: { id: string } 
   return (
     <>
       <AdminHeader title={`Edit: ${post.title}`} />
-      <PostForm initial={{ ...post, content: post.content || '', image: post.image || '' }} />
+      <PostForm
+        initial={{
+          ...post,
+          content: post.content || '',
+          image: post.image || '',
+          seoTitle: post.seoTitle || '',
+          seoDescription: post.seoDescription || '',
+          seoImage: post.seoImage || '',
+        }}
+      />
     </>
   )
 }

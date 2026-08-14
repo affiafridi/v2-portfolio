@@ -20,7 +20,10 @@ export async function PUT(request: Request) {
       update: { data: body },
       create: { id: 'singleton', data: body },
     })
-    revalidatePath('/')
+    // Settings affect nearly every route (home, work/services/blog index
+    // pages, SEO defaults on every detail page, footer everywhere) — revalidate
+    // the whole tree under the root layout, not just "/".
+    revalidatePath('/', 'layout')
     return NextResponse.json(settings.data)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to update settings'

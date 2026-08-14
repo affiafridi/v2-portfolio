@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import HeroSection    from '@/components/sections/HeroSection'
 import AboutSection   from '@/components/sections/AboutSection'
 import WorkSection    from '@/components/sections/WorkSection'
@@ -5,6 +6,24 @@ import ServiceSection from '@/components/sections/ServiceSection'
 import StackSection   from '@/components/sections/StackSection'
 import FooterSection  from '@/components/sections/FooterSection'
 import { getFeaturedProjects, getServices, getStackCategories, getSiteSettings } from '@/lib/data'
+import { getSeoSettings, buildMetadata } from '@/lib/seo'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings()
+  const seo = getSeoSettings(settings)
+  return {
+    ...buildMetadata({
+      title: seo.defaultTitle,
+      description: seo.defaultDescription,
+      image: seo.defaultOgImage,
+      path: '/',
+      seo,
+    }),
+    // The root layout's title.template would otherwise wrap this in
+    // "<title> | Aftab" — the home page's title IS the site title.
+    title: { absolute: seo.defaultTitle },
+  }
+}
 
 export default async function Home() {
   const [settings, services, stackCategories] = await Promise.all([

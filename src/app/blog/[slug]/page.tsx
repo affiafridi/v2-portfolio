@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
-import { getPublishedPosts, getPostBySlug } from '@/lib/data'
+import { getPublishedPosts, getPostBySlug, getSiteSettings } from '@/lib/data'
+import { getSeoSettings, buildMetadata, blogPostingJsonLd } from '@/lib/seo'
 import BlogPostClient from './BlogPostClient'
 
 export async function generateStaticParams() {
@@ -9,18 +10,29 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPostBySlug(slug)
-  return { title: post ? `${post.title} — Blog` : 'Blog' }
+  const [post, settings] = await Promise.all([getPostBySlug(slug), getSiteSettings()])
+  if (!post) return { title: 'Blog' }
+
+  const seo = getSeoSettings(settings)
+  return buildMetadata({
+    title: post.seoTitle || post.title,
+    description: post.seoDescription || post.excerpt,
+    image: post.seoImage || post.image || seo.defaultOgImage,
+    path: `/blog/${slug}`,
+    noindex: post.noindex,
+    seo,
+  })
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const [post, allPosts] = await Promise.all([getPostBySlug(slug), getPublishedPosts()])
+  const [post, allPosts, settings] = await Promise.all([getPostBySlug(slug), getPublishedPosts(), getSiteSettings()])
 
   if (!post) notFound()
 
   const postIdx = allPosts.findIndex(p => p.slug === slug)
   const nextPost = allPosts[(postIdx + 1) % allPosts.length]
+  const seo = getSeoSettings(settings)
 
   const mapPost = (p: typeof post) => ({
     slug:     p.slug,
@@ -34,5 +46,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     image:    p.image,
   })
 
-  return <BlogPostClient post={mapPost(post)} next={mapPost(nextPost)} />
+  const jsonLd = blogPostingJsonLd({
+    title: post.seoTitle || post.title,
+    description: post.seoDescription || post.excerpt,
+    image: post.seoImage || post.image || undefined,
+    path: `/blog/${slug}`,
+    datePublished: post.date,
+    dateModified: post.updatedAt,
+    authorName: seo.siteName,
+  })
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BlogPostClient post={mapPost(post)} next={mapPost(nextPost)} />
+    </>
+  )
 }

@@ -17,6 +17,7 @@ import FormToolbar from '@/components/admin/FormToolbar'
 import SlugField from '@/components/admin/SlugField'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import PublishToggle from '@/components/admin/PublishToggle'
+import SeoFields from '@/components/admin/SeoFields'
 
 interface ProjectData {
   id?: string
@@ -35,12 +36,17 @@ interface ProjectData {
   published: boolean
   features: { title: string; desc: string }[]
   gallery: string[]
+  seoTitle: string
+  seoDescription: string
+  seoImage: string
+  noindex: boolean
 }
 
 const DEFAULT: ProjectData = {
   title: '', slug: '', type: '', year: new Date().getFullYear(), role: '', client: '',
   duration: '', description: '', challenge: '', tags: [], image: '', url: '',
   published: false, features: [], gallery: [],
+  seoTitle: '', seoDescription: '', seoImage: '', noindex: false,
 }
 
 export default function ProjectForm({ initial }: { initial?: ProjectData }) {
@@ -182,6 +188,15 @@ export default function ProjectForm({ initial }: { initial?: ProjectData }) {
                 <Input value={data.url} onChange={(e) => set('url', e.target.value)} placeholder="https://" className="h-8 text-sm" />
               </div>
             </FormSection>
+
+            <SeoFields
+              value={{ seoTitle: data.seoTitle, seoDescription: data.seoDescription, seoImage: data.seoImage, noindex: data.noindex }}
+              onChange={(v) => setData((d) => ({ ...d, ...v }))}
+              fallbackTitle={data.title}
+              fallbackDescription={data.description}
+              fallbackImage={data.image}
+              previewPath={`/work/${data.slug || 'your-slug'}`}
+            />
           </div>
         </div>
       </form>

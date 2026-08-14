@@ -10,7 +10,15 @@ export default async function EditServicePage({ params }: { params: { id: string
   return (
     <>
       <AdminHeader title={`Edit: ${service.title}`} />
-      <ServiceForm initial={{ ...service, image: service.image || '' }} />
+      <ServiceForm
+        initial={{
+          ...service,
+          image: service.image || '',
+          seoTitle: service.seoTitle || '',
+          seoDescription: service.seoDescription || '',
+          seoImage: service.seoImage || '',
+        }}
+      />
     </>
   )
 }
