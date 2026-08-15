@@ -13,7 +13,7 @@ const INK   = '#1a1a1a'
 const ACC   = '#ff4d00'
 
 /* ─── Services ───────────────────────────────────────────────────── */
-const SERVICES = [
+const SERVICES: ServiceItem[] = [
   { num: '01', label: 'Web Development',    tag: 'Full Stack'  },
   { num: '02', label: 'UI/UX Design',       tag: 'Interaction' },
   { num: '03', label: 'GSAP Animations',    tag: 'Motion'      },
@@ -202,7 +202,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
   const svcList = services && services.length > 0 ? services : SERVICES
   const sectionRef    = useRef<HTMLElement>(null)
   const listRef       = useRef<HTMLDivElement>(null)   // the actual list container
-  const rowRefs       = useRef<(HTMLDivElement | null)[]>([])
+  const rowRefs       = useRef<(HTMLElement | null)[]>([])
   const labelRefs     = useRef<(HTMLSpanElement | null)[]>([])
   const tagRefs       = useRef<(HTMLSpanElement | null)[]>([])
   const numRefs       = useRef<(HTMLSpanElement | null)[]>([])
@@ -475,24 +475,13 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
           style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
         />
 
-        {svcList.map((s, i) => (
-          <div key={s.num}>
-            <div
-              className="sv-row"
-              ref={el => { rowRefs.current[i] = el }}
-              onMouseEnter={() => handleEnter(i)}
-              onMouseLeave={handleLeave}
-              style={{
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'space-between',
-                padding:        'clamp(12px, 1.6vw, 22px) 0',
-                cursor:         'none',
-              }}
-            >
+        {svcList.map((s, i) => {
+          const rowContent = (
+            <>
               {/* Name + tag */}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', flex: 1, minWidth: 0 }}>
+              <div className="sv-name-row" style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', flex: 1, minWidth: 0 }}>
                 <span
+                  className="sv-name-label"
                   ref={el => { labelRefs.current[i] = el }}
                   style={{
                     fontSize:      'clamp(32px, 5.2vw, 82px)',
@@ -503,11 +492,13 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
                     color:         'rgba(26,26,26,0.38)',
                     userSelect:    'none',
                     flexShrink:    0,
+                    minWidth:      0,
                   }}
                 >
                   {s.label}
                 </span>
                 <span
+                  className="sv-tag-label"
                   ref={el => { tagRefs.current[i] = el }}
                   style={{
                     fontSize:      '10px',
@@ -539,7 +530,41 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
               >
                 {s.num}
               </span>
-            </div>
+            </>
+          )
+
+          const rowStyle: React.CSSProperties = {
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'space-between',
+            padding:        'clamp(12px, 1.6vw, 22px) 0',
+            cursor:         'none',
+          }
+
+          return (
+          <div key={s.num}>
+            {s.slug ? (
+              <Link
+                href={`/services/${s.slug}`}
+                className="sv-row"
+                ref={el => { rowRefs.current[i] = el }}
+                onMouseEnter={() => handleEnter(i)}
+                onMouseLeave={handleLeave}
+                style={rowStyle}
+              >
+                {rowContent}
+              </Link>
+            ) : (
+              <div
+                className="sv-row"
+                ref={el => { rowRefs.current[i] = el }}
+                onMouseEnter={() => handleEnter(i)}
+                onMouseLeave={handleLeave}
+                style={rowStyle}
+              >
+                {rowContent}
+              </div>
+            )}
 
             {/* Bottom divider — not rendered for the last service */}
             {i < svcList.length - 1 && (
@@ -550,7 +575,8 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
               />
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* ══ SEE ALL — same as About CTA ════════════════════════════ */}
@@ -597,6 +623,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
           ═══════════════════════════════════════════════════════════ */}
       <div
         ref={floatRef}
+        className="sv-float"
         style={{
           position:     'fixed',
           width:        'min(25vw, 340px)',

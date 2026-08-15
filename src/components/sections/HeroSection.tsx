@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useHeroColorStore } from '@/store/useHeroColorStore'
+import { useCursorStore } from '@/store/useCursorStore'
 
 /* ─────────────────────────────────────────────────────────────────
    HeroSection — Light-theme editorial hero
@@ -46,6 +49,12 @@ function useClock() {
 }
 
 /* ─── Component ──────────────────────────────────────────────────── */
+interface ImagePosition {
+  x: number
+  y: number
+  zoom?: number
+}
+
 interface HeroSettings {
   heading?: string
   bio?: string
@@ -53,6 +62,8 @@ interface HeroSettings {
   location?: string
   availabilityText?: string
   portraitImage?: string
+  portraitPositionDesktop?: ImagePosition
+  portraitPositionMobile?: ImagePosition
 }
 
 export default function HeroSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
@@ -63,7 +74,20 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
     location:         (settings.location as string)        || 'Dubai, UAE',
     availabilityText: (settings.availabilityText as string)|| 'Currently available for Freelance projects.',
     portraitImage:    (settings.portraitImage as string)    || '/images/aftab.jpg',
+    portraitPositionDesktop: (settings.portraitPositionDesktop as ImagePosition) || { x: 50, y: 0 },
+    portraitPositionMobile:  (settings.portraitPositionMobile as ImagePosition)  || { x: 50, y: 0 },
   }
+
+  const posDesktop  = `${s.portraitPositionDesktop!.x}% ${s.portraitPositionDesktop!.y}%`
+  const posMobile   = `${s.portraitPositionMobile!.x}% ${s.portraitPositionMobile!.y}%`
+  const zoomDesktop = (s.portraitPositionDesktop!.zoom ?? 100) / 100
+  const zoomMobile  = (s.portraitPositionMobile!.zoom ?? 100) / 100
+
+  const color   = useHeroColorStore((st) => st.color)
+  const toggle  = useHeroColorStore((st) => st.toggle)
+  const hydrate = useHeroColorStore((st) => st.hydrate)
+  useLayoutEffect(() => { hydrate() }, [hydrate])
+  const { setCursorType } = useCursorStore()
 
   const headingParts = s.heading!.split('*')
   const headingMain  = headingParts[0]
@@ -342,23 +366,46 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
             borderRadius: '16px',
             zIndex: 3,
             willChange: 'transform',
-          }}
+            ['--hero-pos-desktop' as string]:  posDesktop,
+            ['--hero-pos-mobile' as string]:   posMobile,
+            ['--hero-zoom-desktop' as string]: zoomDesktop,
+            ['--hero-zoom-mobile' as string]:  zoomMobile,
+          } as CSSProperties}
         >
           <div className="relative h-full w-full">
             <Image
               src={s.portraitImage!}
               alt="Portrait"
-              fill priority sizes="38vw"
-              className="object-cover object-top"
-              style={{ filter: 'grayscale(100%) contrast(1.06)' }}
+              fill priority
+              /* Must track the actual rendered width per breakpoint, not
+                 just desktop's 38%. On mobile this box renders at ~92%
+                 of viewport width (plus a deliberate oversize buffer for
+                 the water-physics wobble, see globals.css), and up to
+                 1279px it's 100% — sizes="38vw" everywhere told the
+                 browser to fetch a much smaller source than needed, which
+                 then got upscaled to fill the real box: the low-quality
+                 look on mobile. */
+              sizes="(max-width: 767px) 130vw, (max-width: 1279px) 100vw, 39vw"
+              draggable={false}
+              className="object-cover hj-portrait-img"
+              style={{
+                filter: color ? 'contrast(1.06)' : 'grayscale(100%) contrast(1.06)',
+                /* Best-effort save/select protection — a determined user
+                   can always screenshot, but this blocks the common paths
+                   (long-press "Save Image" on iOS, drag-out, right-click). */
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect:   'none',
+                userSelect:         'none',
+              }}
+              onContextMenu={(e) => e.preventDefault()}
             />
           </div>
 
           {/* Green glitch channel */}
           <div ref={greenRef} className="pointer-events-none absolute inset-0" style={{ opacity: 0 }}>
             <Image
-              src={s.portraitImage!} alt="" fill sizes="38vw"
-              className="object-cover object-top"
+              src={s.portraitImage!} alt="" fill sizes="(max-width: 767px) 130vw, (max-width: 1279px) 100vw, 39vw"
+              className="object-cover hj-portrait-img"
               style={{
                 filter: 'grayscale(100%) sepia(100%) saturate(900%) hue-rotate(90deg) brightness(0.6) contrast(1.3)',
                 mixBlendMode: 'screen',
@@ -369,8 +416,8 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
           {/* Magenta glitch channel */}
           <div ref={magentaRef} className="pointer-events-none absolute inset-0" style={{ opacity: 0 }}>
             <Image
-              src={s.portraitImage!} alt="" fill sizes="38vw"
-              className="object-cover object-top"
+              src={s.portraitImage!} alt="" fill sizes="(max-width: 767px) 130vw, (max-width: 1279px) 100vw, 39vw"
+              className="object-cover hj-portrait-img"
               style={{
                 filter: 'grayscale(100%) sepia(100%) saturate(900%) hue-rotate(270deg) brightness(0.6) contrast(1.3)',
                 mixBlendMode: 'screen',
@@ -378,6 +425,42 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
             />
           </div>
         </div>
+
+        {/* Color toggle — sits outside .hj-img-wrap so the water-
+            physics wobble transform on that element doesn't drag it
+            around; visitors can flip the portrait between grayscale
+            (default) and full color. */}
+        <button
+          onClick={() => { toggle(); triggerGlitch() }}
+          onMouseEnter={() => setCursorType('hover')}
+          onMouseLeave={() => setCursorType('default')}
+          aria-label={color ? 'Switch portrait to grayscale' : 'Switch portrait to color'}
+          onContextMenu={(e) => e.preventDefault()}
+          className="hj-color-toggle"
+          style={{
+            position:       'absolute',
+            top:            '14px',
+            left:           '14px',
+            zIndex:         15,
+            width:          '34px',
+            height:         '34px',
+            borderRadius:   '50%',
+            background:     'rgba(240,238,234,0.90)',
+            backdropFilter:       'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border:         'none',
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            cursor:         'none',
+            boxShadow:      '0 4px 16px rgba(0,0,0,0.14)',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.4" fill={color ? '#ff4d00' : 'none'} stroke={INK} strokeWidth="1.3" />
+            <path d="M8 1.6a6.4 6.4 0 0 1 0 12.8V1.6z" fill={INK} />
+          </svg>
+        </button>
       </div>
 
       {/* ── Left column ────────────────────────────────────────── */}

@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
+import { useHeaderVisibilityStore } from '@/store/useHeaderVisibilityStore'
+import AboutSection from '@/components/sections/AboutSection'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -364,7 +366,7 @@ function CardStack({ p }: { p: Project }) {
   }, [])
 
   return (
-    <div style={{ position:'relative', width:'100%', height:'clamp(220px,30vw,420px)' }}>
+    <div className="wk-cardstack" style={{ position:'relative', width:'100%', height:'clamp(220px,30vw,420px)' }}>
       {frames.map((frame, i) => (
         <div
           key={i}
@@ -380,7 +382,7 @@ function CardStack({ p }: { p: Project }) {
             boxShadow:    '0 4px 16px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.06) inset',
           }}
         >
-          <div style={{ height:'clamp(220px,30vw,420px)', overflow:'hidden' }}>
+          <div className="wk-cardstack-frame" style={{ height:'clamp(220px,30vw,420px)', overflow:'hidden' }}>
             {frame}
           </div>
         </div>
@@ -389,13 +391,21 @@ function CardStack({ p }: { p: Project }) {
   )
 }
 
-/* ─── Single panel ───────────────────────────────────────────────── */
-function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
+/* ─── Single panel ───────────────────────────────────────────────────
+   panelIdx: this panel's position in the shared slide-stack (1..N,
+   since panel 0 is About) — drives the wk-panel-N CSS class used for
+   the scroll-jacked transition targeting.
+   ringIdx/ringTotal: project-relative position (0..N-1) — drives the
+   ring's own display ("01/04" etc.) and dot geometry, decoupled from
+   panelIdx so the ring still reads as "project 1 of 4" rather than
+   jumping straight to "2 of 5" just because About now occupies slot 0.
+   ─────────────────────────────────────────────────────────────────── */
+function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: number; ringIdx: number; ringTotal: number }) {
   const { setCursorType } = useCursorStore()
 
   return (
     <div
-      className={`wk-panel wk-panel-${idx}`}
+      className={`wk-panel wk-panel-${panelIdx}`}
       style={{ position:'absolute', inset:'14px', borderRadius:'32px', overflow:'hidden', background:p.bg, willChange:'transform' }}
     >
       {/* Blurred first-frame background */}
@@ -411,7 +421,7 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
       <div aria-hidden style={{ position:'absolute', inset:0, zIndex:2, background:'radial-gradient(ellipse 85% 85% at 50% 50%, transparent 35%, rgba(0,0,0,0.48) 100%)' }} />
 
       {/* Content grid */}
-      <div style={{
+      <div className="wk-content-grid" style={{
         position:'absolute', inset:0, zIndex:3,
         display:'grid',
         gridTemplateColumns:'minmax(0,1.6fr) minmax(0,1fr)',
@@ -420,34 +430,34 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
       }}>
 
         {/* ── LEFT col: ring pinned top-left, content pinned bottom — aligns with images ── */}
-        <div style={{ position:'relative' }}>
+        <div className="wk-col-left" style={{ position:'relative' }}>
 
           {/* Ring counter — top-left, offset down */}
-          <div className="wk-content" style={{ position:'absolute', top:'clamp(1.4rem,2.2vw,2.8rem)', left:0, width:`${RING_SIZE}px`, height:`${RING_SIZE}px`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px' }}>
+          <div className="wk-content wk-ring-wrap" style={{ position:'absolute', top:'clamp(1.4rem,2.2vw,2.8rem)', left:0, width:`${RING_SIZE}px`, height:`${RING_SIZE}px`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px' }}>
 
             <svg width={RING_SIZE} height={RING_SIZE} style={{ position:'absolute', inset:0, transform:'rotate(-90deg)' }}>
               {/* Track */}
               <circle cx={RING_SIZE/2} cy={RING_SIZE/2} r={RING_R} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" />
               {/* One small dot per project on the track */}
-              {Array.from({ length: total }).map((_, t) => {
-                const angle = (t / total) * 2 * Math.PI
+              {Array.from({ length: ringTotal }).map((_, t) => {
+                const angle = (t / ringTotal) * 2 * Math.PI
                 const dx = RING_SIZE / 2 + RING_R * Math.cos(angle)
                 const dy = RING_SIZE / 2 + RING_R * Math.sin(angle)
-                return <circle key={t} cx={dx} cy={dy} r="2" fill={t === idx ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.22)'} />
+                return <circle key={t} cx={dx} cy={dy} r="2" fill={t === ringIdx ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.22)'} />
               })}
               {/* Progress arc */}
-              <circle className={`wk-ring wk-ring-${idx}`} cx={RING_SIZE/2} cy={RING_SIZE/2} r={RING_R} fill="none" stroke="rgba(255,255,255,0.80)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC} />
+              <circle className={`wk-ring wk-ring-${ringIdx}`} cx={RING_SIZE/2} cy={RING_SIZE/2} r={RING_R} fill="none" stroke="rgba(255,255,255,0.80)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC} />
             </svg>
 
             {/* Center content */}
             <span style={{ fontSize:'6.5px', letterSpacing:'0.24em', textTransform:'uppercase', color:'rgba(255,255,255,0.30)', position:'relative', zIndex:1 }}>Project</span>
             <span style={{ fontSize:'26px', fontWeight:800, letterSpacing:'-0.04em', color:'rgba(255,255,255,0.92)', position:'relative', zIndex:1, lineHeight:1.1 }}>{p.id}</span>
             <div style={{ width:'16px', height:'1px', background:'rgba(255,255,255,0.18)', position:'relative', zIndex:1, margin:'3px 0' }} />
-            <span style={{ fontSize:'9px', fontWeight:400, letterSpacing:'0.04em', color:'rgba(255,255,255,0.28)', position:'relative', zIndex:1 }}>/{String(total).padStart(2,'0')}</span>
+            <span style={{ fontSize:'9px', fontWeight:400, letterSpacing:'0.04em', color:'rgba(255,255,255,0.28)', position:'relative', zIndex:1 }}>/{String(ringTotal).padStart(2,'0')}</span>
           </div>
 
           {/* Title + desc + CTA — positioned at green mark (upper-middle of left col) */}
-          <div style={{ position:'absolute', top:'46%', left:0, right:0 }}>
+          <div className="wk-title-block" style={{ position:'absolute', top:'46%', left:0, right:0 }}>
             <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem' }}>{p.title}</h3>
             <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px' }}>{p.desc}</p>
             <a href={p.url} className="wk-left"
@@ -471,7 +481,7 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
         </div>
 
         {/* ── RIGHT col: tags pushed down from nav, cards pinned bottom — fully independent ── */}
-        <div style={{ position:'relative', paddingTop:'clamp(3rem,5vw,5.5rem)' }}>
+        <div className="wk-col-right" style={{ position:'relative', paddingTop:'clamp(3rem,5vw,5.5rem)' }}>
 
           {/* Type + tags — sit naturally after paddingTop, clear of the nav */}
           <div style={{ display:'flex', flexDirection:'column', gap:'13px' }}>
@@ -499,7 +509,7 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
           </div>
 
           {/* Cards — pinned to bottom, independent from tags */}
-          <div style={{ position:'absolute', bottom:0, left:0, right:0 }}>
+          <div className="wk-cardstack-wrap" style={{ position:'absolute', bottom:0, left:0, right:0 }}>
             <CardStack p={p} />
           </div>
 
@@ -509,21 +519,91 @@ function Panel({ p, idx, total }: { p: Project; idx: number; total: number }) {
   )
 }
 
-/* ─── Section ────────────────────────────────────────────────────── */
-export default function WorkSection() {
+/* ─── Section ────────────────────────────────────────────────────────
+   About now lives here as panel 0, sharing this exact pin/slide-stack
+   system with the project panels — not as a separate pinned section
+   that hands off to normal scroll before this one takes over. Scroll
+   forward from About and a project slides up to cover it exactly the
+   way each subsequent project covers the one before it; scroll back
+   and About is what's underneath again. ONE continuous pin for the
+   whole sequence.
+   Panel 0 (About) gets ABOUT_HOLD_UNITS "slots" of dead time before
+   the first transition begins (each project-to-project transition is
+   1 slot = 100dvh). The reveal itself (title, word-by-word statement,
+   stats, CTA) is time-based, not tied to this scroll distance — see
+   revealPanel(0) below — so this hold isn't scroll runway for an
+   animation to finish in, it's purely "how far do you have to scroll
+   past About before the first project starts covering it." Kept
+   deliberately small — a fraction of a viewport-height, not a whole
+   extra screen of scrolling — since a full unit here was exactly the
+   "too much scroll to reach the project section" complaint. */
+const ABOUT_HOLD_UNITS  = 0.35  // slots reserved for About before transitions start
+
+export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<string, unknown> }) {
   const sectionRef     = useRef<HTMLElement>(null)
   const progressRef    = useRef<(HTMLDivElement | null)[]>([])
   const prevActiveIdx  = useRef<number>(-1)
   const animatedPanels = useRef<Set<number>>(new Set())
-  const N              = PROJECTS.length
+  const P          = PROJECTS.length            // project count (4)
+  /* PIN_UNITS is how many "slots" the pinned timeline actually plays
+     through (ABOUT_HOLD_UNITS dead time + P transitions = 6) — this is
+     what self.progress maps onto, since a position:sticky element's
+     pin only lasts for (outerHeight - viewportHeight) of scroll, not
+     outerHeight itself. OUTER_UNITS is what the outer section's own
+     height needs to be for that pin duration to equal exactly
+     PIN_UNITS viewport-heights: one extra unit, to account for the
+     viewport-height that becomes the sticky's own visible frame
+     rather than contributing to the pin duration. Getting this wrong
+     (using PIN_UNITS for both) was a real bug caught in testing: the
+     project transitions started a full viewport-height early. */
+  const PIN_UNITS   = ABOUT_HOLD_UNITS + P
+  const OUTER_UNITS = PIN_UNITS + 1
+  const { hide: hideHeader, show: showHeader } = useHeaderVisibilityStore()
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const panels = gsap.utils.toArray<HTMLElement>('.wk-panel')
+      const panels = gsap.utils.toArray<HTMLElement>('.wk-panel') // [About, ...4 projects] = 5 total
+      const isMobile = window.innerWidth < 768
 
       function revealPanel(idx: number) {
         if (animatedPanels.current.has(idx)) return
         animatedPanels.current.add(idx)
+
+        /* Panel 0 is About — a completely different layout/content
+           from the project panels, so it gets its own reveal instead
+           of the generic wk-content/wk-left/wk-type selectors below
+           (which simply don't exist inside it and would no-op). */
+        if (idx === 0) {
+          gsap.fromTo('.ab-title',
+            { y: -36, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1.1, ease: 'power3.out' }
+          )
+          /* Word reveal — time-based, not scroll-scrubbed. It used to
+             scrub across a dedicated scroll distance, which meant the
+             panel could be fully in view with the heading still mostly
+             unlit, and the user had to keep scrolling just to finish
+             reading it — extra scrolling for no reason once the panel
+             is already pinned and full-screen. This just plays out on
+             its own the moment the panel activates, like every other
+             reveal here. */
+          gsap.to('.ab-word', {
+            opacity: 1, ease: 'none', duration: 0.5, delay: 0.2,
+            stagger: { each: 0.05, from: 'start' },
+          })
+          gsap.fromTo('.ab-left-item',
+            { x: -32, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.9, ease: 'power3.out', stagger: 0.18, delay: 0.3 }
+          )
+          gsap.fromTo('.ab-stat',
+            { opacity: 0, filter: 'blur(10px)', x: 6 },
+            { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', stagger: { each: 0.18, from: 'start' }, delay: 0.6 }
+          )
+          gsap.fromTo('.ab-cta',
+            { opacity: 0, filter: 'blur(10px)', x: 6 },
+            { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', delay: 1.14 }
+          )
+          return
+        }
 
         /* Ring counter — fades up independently */
         gsap.fromTo(`.wk-panel-${idx} .wk-content`,
@@ -569,6 +649,10 @@ export default function WorkSection() {
       function resetPanels() {
         animatedPanels.current.clear()
         prevActiveIdx.current = -1
+        gsap.set('.ab-title',     { opacity: 0, y: -36 })
+        gsap.set('.ab-left-item', { opacity: 0, x: -32 })
+        gsap.set('.ab-stat',      { opacity: 0, filter: 'blur(10px)', x: 6 })
+        gsap.set('.ab-cta',       { opacity: 0, filter: 'blur(10px)', x: 6 })
         panels.forEach((_, i) => {
           gsap.set(`.wk-panel-${i} .wk-content`, { opacity: 0, y: 16 })
           gsap.set(`.wk-panel-${i} .wk-type`,    { opacity: 0, filter: 'blur(8px)', y: 8 })
@@ -577,6 +661,13 @@ export default function WorkSection() {
           gsap.set(`.wk-panel-${i} .wk-line`,    { scaleX: 0 })
         })
       }
+
+      /* Panel 0 (About) — starts hidden the same as every other panel's
+         content, revealed via revealPanel(0) above. */
+      gsap.set('.ab-title',     { opacity: 0, y: -36 })
+      gsap.set('.ab-left-item', { opacity: 0, x: -32 })
+      gsap.set('.ab-stat',      { opacity: 0, filter: 'blur(10px)', x: 6 })
+      gsap.set('.ab-cta',       { opacity: 0, filter: 'blur(10px)', x: 6 })
 
       panels.forEach((_, i) => {
         if (i > 0) {
@@ -592,7 +683,7 @@ export default function WorkSection() {
 
       gsap.fromTo('.wk-sticky',
         { y: 40 },
-        { y: 0, ease:'power2.out', scrollTrigger:{ trigger:sectionRef.current!, start:'top 90%', end:'top top', scrub:1.0 } }
+        { y: 0, ease:'power2.out', scrollTrigger:{ trigger:sectionRef.current!, start:'top 90%', end:'top top', scrub: isMobile ? 0.3 : 1.0 } }
       )
 
       ScrollTrigger.create({
@@ -601,28 +692,78 @@ export default function WorkSection() {
         onLeaveBack: () => resetPanels(),
       })
 
+      /* Mobile only — the sticky nav pill sits over enough of the panel
+         that it crowds the project content. Hide it for the duration of
+         this section's scroll-jacked range, show it again once the user
+         has scrolled past (either direction). */
+      if (isMobile) {
+        ScrollTrigger.create({
+          trigger: sectionRef.current!,
+          start:   'top top',
+          end:     'bottom bottom',
+          onEnter:     () => hideHeader(),
+          onLeave:     () => showHeader(),
+          onEnterBack: () => hideHeader(),
+          onLeaveBack: () => showHeader(),
+        })
+      }
+
+      /* Panel-stack timeline — About (panel 0) holds for ABOUT_HOLD_UNITS
+         slots before the first transition begins (the word reveal
+         itself is time-based now, see revealPanel(0) above — this hold
+         is just a brief pause to actually see it, not scroll distance
+         for a scrub to complete). Every project-to-project transition
+         after that is 1 slot each, unchanged from before. */
       const tl = gsap.timeline()
-      for (let i = 1; i < N; i++) {
-        const t = i - 1
+      for (let i = 1; i <= P; i++) {
+        const t = ABOUT_HOLD_UNITS + (i - 1)
         tl.to(panels[i-1], { scale:0.92, yPercent:-3, opacity:0, duration:1, ease:'power2.inOut' }, t)
         tl.to(panels[i],   { yPercent:0, scale:1, duration:1, ease:'power2.inOut' }, t)
       }
 
+      /* scrub lag layers on top of Lenis's own smoothing — on touch,
+         that double-smoothing reads as sluggish/disconnected from the
+         actual swipe. A smaller scrub keeps this section snappier and
+         closer to 1:1 with touch input, matching how the rest of the
+         page already feels on mobile. */
       ScrollTrigger.create({
         animation:tl,
-        trigger:sectionRef.current!, start:'top top', end:'bottom bottom', scrub:1.5,
+        trigger:sectionRef.current!, start:'top top', end:'bottom bottom', scrub: isMobile ? 0.5 : 1.5,
         onUpdate(self) {
-          const activeIdx = Math.min(Math.floor(self.progress * N + 0.06), N - 1)
+          /* self.progress (0-1) maps across the trigger's own start/end
+             range, which spans exactly PIN_UNITS viewport-heights (see
+             the OUTER_UNITS comment above) — NOT OUTER_UNITS. About's
+             dead time then has to be subtracted out before computing
+             which project is "active", otherwise a naive floor(progress
+             *N) treats every slot as equal width and misfires during
+             the hold. */
+          const currentUnit = self.progress * PIN_UNITS
+          let activeIdx: number
+          if (currentUnit < ABOUT_HOLD_UNITS) {
+            activeIdx = 0
+          } else {
+            const transitionUnit = currentUnit - ABOUT_HOLD_UNITS
+            activeIdx = Math.min(Math.floor(transitionUnit + 0.06) + 1, P)
+          }
+
           progressRef.current.forEach((bar, i) => {
             if (!bar) return
-            bar.style.height     = i === activeIdx ? '28px' : '16px'
-            bar.style.background = i === activeIdx ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.20)'
+            const isActive = activeIdx - 1 === i // dot i represents project i (activeIdx 1..P)
+            bar.style.height     = isActive ? '28px' : '16px'
+            bar.style.background = isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.20)'
           })
-          const offset = RING_CIRC * (1 - self.progress)
-          for (let i = 0; i < N; i++) {
+
+          /* Ring fill tracks progress through the projects-only portion
+             of the timeline, ignoring About's dead time — otherwise the
+             ring would already be partway full the instant a project
+             panel first appears. */
+          const projectProgress = Math.max(0, Math.min((currentUnit - ABOUT_HOLD_UNITS) / P, 1))
+          const offset = RING_CIRC * (1 - projectProgress)
+          for (let i = 0; i < P; i++) {
             const ring = document.querySelector<SVGCircleElement>(`.wk-ring-${i}`)
             if (ring) ring.style.strokeDashoffset = `${offset}`
           }
+
           if (activeIdx !== prevActiveIdx.current) {
             prevActiveIdx.current = activeIdx
             setTimeout(() => revealPanel(activeIdx), 100)
@@ -631,17 +772,35 @@ export default function WorkSection() {
       })
 
     }, sectionRef)
-    return () => ctx.revert()
-  }, [N])
+    return () => {
+      ctx.revert()
+      showHeader() // never leave the nav stuck hidden if this section unmounts mid-hide
+    }
+  }, [P, PIN_UNITS, hideHeader, showHeader])
 
   return (
-    <section ref={sectionRef} style={{ height:`${N*100}vh`, background:CREAM, position:'relative', zIndex:2, marginTop:'-120px' }}>
-      <div className="wk-sticky" style={{ position:'sticky', top:0, height:'100vh', overflow:'hidden', background:CREAM }}>
-        {PROJECTS.map((p,i) => <Panel key={p.id} p={p} idx={i} total={N} />)}
+    <section ref={sectionRef} className="wk-outer" style={{ height:`${OUTER_UNITS*100}dvh`, background:CREAM, position:'relative', zIndex:2, marginTop:'-120px' }}>
+      <div className="wk-sticky" style={{ position:'sticky', top:0, height:'100dvh', overflow:'hidden', background:CREAM }}>
+
+        {/* Panel 0 — About. Same floating-card treatment (inset + rounded
+            corners) as the project panels so it reads as part of the
+            same slide-stack rather than a differently-styled intruder. */}
+        <div
+          className="wk-panel wk-panel-0"
+          style={{ position:'absolute', inset:'14px', borderRadius:'32px', overflow:'hidden', background:CREAM, willChange:'transform' }}
+        >
+          <AboutSection settings={aboutSettings} />
+        </div>
+
+        {PROJECTS.map((p,i) => <Panel key={p.id} p={p} panelIdx={i+1} ringIdx={i} ringTotal={P} />)}
+
+        {/* Progress dots — represent the 4 projects only; About has no
+            dot of its own, so all start dim until the first transition
+            begins. */}
         <div style={{ position:'absolute', top:'2.5rem', right:'2.5rem', display:'flex', alignItems:'flex-end', gap:'4px', zIndex:20 }}>
           {PROJECTS.map((_,i) => (
             <div key={i} ref={el=>{ progressRef.current[i]=el }}
-              style={{ width:'2.5px', height:i===0?'28px':'16px', background:i===0?'rgba(255,255,255,0.92)':'rgba(255,255,255,0.20)', borderRadius:'2px', transition:'height 0.3s ease, background 0.3s ease' }}
+              style={{ width:'2.5px', height:'16px', background:'rgba(255,255,255,0.20)', borderRadius:'2px', transition:'height 0.3s ease, background 0.3s ease' }}
             />
           ))}
         </div>

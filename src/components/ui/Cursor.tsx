@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { useCursorStore } from '@/store/useCursorStore'
 
@@ -14,9 +14,17 @@ export default function Cursor() {
   const dotRef  = useRef<HTMLDivElement>(null)
 
   const { cursorType } = useCursorStore()
+  const [hasPointer, setHasPointer] = useState(true)
+
+  /* Touch devices never fire mousemove, so the ring/dot would otherwise
+     sit stuck at their initial center-screen position forever. */
+  useEffect(() => {
+    setHasPointer(window.matchMedia('(pointer: fine)').matches)
+  }, [])
 
   /* ── Mouse tracking ───────────────────────────────────────────────── */
   useEffect(() => {
+    if (!hasPointer) return
     const rw = ringWrapRef.current
     const dw = dotWrapRef.current
     if (!rw || !dw) return
@@ -96,6 +104,8 @@ export default function Cursor() {
         gsap.to(dot,  { scale: 1, opacity: 1, borderRadius: '50%', duration: 0.25, ease: 'power2.out' })
     }
   }, [cursorType])
+
+  if (!hasPointer) return null
 
   return (
     <>

@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore }   from '@/store/useCursorStore'
@@ -54,7 +55,6 @@ const TICKER_TEXT =
 const NAV_LINKS = [
   { label: 'Index',   href: '/'        },
   { label: 'Work',    href: '/work'    },
-  { label: 'About',   href: '/about'   },
   { label: 'Process', href: '/process' },
   { label: 'Contact', href: '/contact' },
 ]
@@ -87,6 +87,7 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      const isMobile = window.innerWidth < 768
 
       /* ── "Reach Out" heading — slides down from above, same as About ── */
       gsap.from('.ft-title', {
@@ -99,11 +100,11 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
 
       /* ── Left body items — blur + slide in, step by step ── */
       gsap.fromTo('.ft-left-item',
-        { x: -18, opacity: 0, filter: 'blur(12px)' },
+        isMobile ? { x: -18, opacity: 0 } : { x: -18, opacity: 0, filter: 'blur(12px)' },
         {
           x:        0,
           opacity:  1,
-          filter:   'blur(0px)',
+          ...(isMobile ? {} : { filter: 'blur(0px)' }),
           duration: 1.1,
           ease:     'power3.out',
           stagger:  0.28,
@@ -112,28 +113,39 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
         }
       )
 
-      /* ── Scroll-scrubbed word reveal — identical to About section ──
-         Words start at opacity 0.07 and light up as you scroll.
+      /* ── Word reveal — identical to About section ──────────────────
+         Desktop: scroll-scrubbed. Mobile: fires once on enter — a
+         scrub reads live scroll progress every frame, and Lenis can
+         desync from ScrollTrigger's expected position on touch
+         devices, stranding mid-sentence words at a random opacity.
          ─────────────────────────────────────────────────────────── */
       gsap.to('.ft-word', {
         opacity:  1,
         ease:     'none',
         stagger:  { each: 0.055, from: 'start' },
-        scrollTrigger: {
-          trigger: '.ft-statement',
-          start:   'top 70%',
-          end:     'bottom 52%',
-          scrub:   2,
-        },
+        ...(isMobile ? {
+          duration: 0.6,
+          scrollTrigger: { trigger: '.ft-statement', start: 'top 85%' },
+        } : {
+          scrollTrigger: {
+            trigger: '.ft-statement',
+            start:   'top 70%',
+            end:     'bottom 52%',
+            scrub:   2,
+          },
+        }),
       })
 
-      /* ── Right column items — blur + slide in, step by step ── */
+      /* ── Right column items — blur + slide in, step by step ──
+         8 items (4 social + 4 nav) at a 0.12s stagger against a 0.85s
+         duration means several are mid-blur simultaneously at any
+         given moment — a real jank source on mobile. Opacity+x only. */
       gsap.fromTo('.ft-right-item',
-        { x: 14, opacity: 0, filter: 'blur(10px)' },
+        isMobile ? { x: 14, opacity: 0 } : { x: 14, opacity: 0, filter: 'blur(10px)' },
         {
           x:        0,
           opacity:  1,
-          filter:   'blur(0px)',
+          ...(isMobile ? {} : { filter: 'blur(0px)' }),
           duration: 0.85,
           ease:     'power3.out',
           stagger:  0.12,
@@ -171,7 +183,12 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
           trigger: sectionRef.current!,
           start:   'top bottom',
           end:     'top 15%',
-          scrub:   1.5,
+          /* Same fix as WorkSection's panel scrub: on touch, scrub lag
+             stacks on top of Lenis's own smoothing, and after any brief
+             stall (touch-start is a common source) GSAP's catch-up
+             reads as a visible jump. Snappier scrub keeps this closer
+             to 1:1 with the actual swipe. */
+          scrub:   isMobile ? 0.4 : 1.5,
         },
       })
 
@@ -199,7 +216,7 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
         position:       'relative',
         zIndex:         3,
         marginTop:      '-40px',
-        minHeight:      '100vh',
+        minHeight:      '100dvh',
         display:        'flex',
         flexDirection:  'column',
         overflowX:      'hidden',
@@ -237,9 +254,36 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
               color:         INK,
               margin:        0,
               userSelect:    'none',
+              display:       'flex',
+              alignItems:    'center',
+              gap:           '0.14em',
+              flexWrap:      'wrap',
             }}
           >
-            Reach Out
+            Reach
+            <span
+              className="ft-title-gif"
+              style={{
+                display:      'inline-block',
+                width:        'clamp(72px, 10vw, 150px)',
+                height:       'clamp(58px, 8.2vw, 128px)',
+                borderRadius: '10px',
+                overflow:     'hidden',
+                verticalAlign: 'middle',
+                flexShrink:   0,
+                position:     'relative',
+              }}
+            >
+              <Image
+                src="/uploads/1786797195871-reach-out.gif"
+                alt=""
+                fill
+                unoptimized
+                sizes="130px"
+                className="object-cover object-center"
+              />
+            </span>
+            Out
           </h2>
 
           <div className="ft-left-item" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -321,14 +365,12 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
             {footerWords.map(({ w, italic, accent }, i) => {
               const wordSpan = (
                 <span
-                  key={i}
                   className="ft-word"
                   style={{
                     display:     'inline',
                     opacity:     accent ? 0.30 : 0.07,
                     fontStyle:   italic  ? 'italic' : 'normal',
                     color:       accent  ? ACC      : INK,
-                    marginRight: '0.22em',
                     ...(accent ? {
                       textDecorationLine:      'underline',
                       textDecorationColor:     ACC,
@@ -341,11 +383,16 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
                 </span>
               )
 
-              return accent ? (
-                <ImageCycler key={i} images={footerImages}>
-                  {wordSpan}
-                </ImageCycler>
-              ) : wordSpan
+              /* Real space character, not just margin — see AboutSection's
+                 identical word-reveal for why: margin-only gaps between
+                 spans give the browser no line-break opportunity, so long
+                 sentences never wrap and get silently clipped instead. */
+              return (
+                <Fragment key={i}>
+                  {accent ? <ImageCycler images={footerImages}>{wordSpan}</ImageCycler> : wordSpan}
+                  {' '}
+                </Fragment>
+              )
             })}
           </p>
 
@@ -400,24 +447,50 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
               Navigation
             </span>
             {NAV_LINKS.map(link => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="ft-right-item"
-                style={{
-                  display:        'block',
-                  fontSize:       '13px',
-                  fontWeight:     500,
-                  color:          INK,
-                  textDecoration: 'none',
-                  padding:        '4px 0',
-                  transition:     'color 0.2s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = ACC; setCursorType('hover') }}
-                onMouseLeave={e => { e.currentTarget.style.color = INK; setCursorType('default') }}
-              >
-                {link.label}
-              </Link>
+              link.label === 'Contact' ? (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={openContact}
+                  className="ft-right-item"
+                  style={{
+                    display:        'block',
+                    fontSize:       '13px',
+                    fontWeight:     500,
+                    color:          INK,
+                    background:     'none',
+                    border:         'none',
+                    textAlign:      'left',
+                    textDecoration: 'none',
+                    padding:        '4px 0',
+                    cursor:         'none',
+                    transition:     'color 0.2s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = ACC; setCursorType('hover') }}
+                  onMouseLeave={e => { e.currentTarget.style.color = INK; setCursorType('default') }}
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="ft-right-item"
+                  style={{
+                    display:        'block',
+                    fontSize:       '13px',
+                    fontWeight:     500,
+                    color:          INK,
+                    textDecoration: 'none',
+                    padding:        '4px 0',
+                    transition:     'color 0.2s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = ACC; setCursorType('hover') }}
+                  onMouseLeave={e => { e.currentTarget.style.color = INK; setCursorType('default') }}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
 
@@ -430,6 +503,7 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
       <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', paddingTop: 'clamp(8px, 2vw, 24px)' }}>
         <div
           ref={nameRef}
+          className="ft-big-name"
           style={{
             display:       'flex',
             alignItems:    'flex-end',
@@ -553,66 +627,6 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
         backdropFilter blurs all content. opacity driven by GSAP.
         pointerEvents: none — never blocks interaction.
         ─────────────────────────────────────────────────────────── */}
-    <style>{`
-      @media (max-width: 767px) {
-        .ft-body {
-          grid-template-columns: 1fr !important;
-          padding: 88px 24px 40px !important;
-          gap: 48px !important;
-          overflow: hidden !important;
-        }
-        .ft-col-right {
-          flex-direction: row !important;
-          align-items: flex-start !important;
-          gap: 48px !important;
-          align-self: auto !important;
-          padding-top: 140px !important;
-        }
-        .ft-bottom {
-          padding: 14px 24px !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          justify-content: center !important;
-          text-align: center !important;
-          gap: 10px !important;
-        }
-        .ft-back-btn {
-          display: none !important;
-        }
-      }
-      @media (min-width: 768px) and (max-width: 1023px) {
-        .ft-body {
-          grid-template-columns: 1fr 1fr !important;
-          padding: 100px 40px 56px !important;
-        }
-        .ft-col-right {
-          grid-column: 1 / -1 !important;
-          flex-direction: row !important;
-          justify-content: flex-start !important;
-          gap: 64px !important;
-          align-self: auto !important;
-          align-items: flex-start !important;
-        }
-      }
-
-      /* ── Small laptop: 1024px – 1279px ── */
-      @media (min-width: 1024px) and (max-width: 1279px) {
-        .ft-body {
-          grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) !important;
-          gap: 32px !important;
-          padding: 100px 48px 56px !important;
-        }
-      }
-
-      /* ── Large laptop: 1280px – 1439px ── */
-      @media (min-width: 1280px) and (max-width: 1439px) {
-        .ft-body {
-          grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) minmax(0,0.7fr) !important;
-          gap: 40px !important;
-          padding: 110px 56px 64px !important;
-        }
-      }
-    `}</style>
 
     {mounted && createPortal(
       <div

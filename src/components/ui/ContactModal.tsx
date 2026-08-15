@@ -339,9 +339,9 @@ export default function ContactModal() {
             <span
               style={{
                 display:      'inline-block',
-                width:        'clamp(60px, 8vw, 120px)',
-                height:       'clamp(46px, 6.2vw, 92px)',
-                borderRadius: '8px',
+                width:        'clamp(78px, 11vw, 146px)',
+                height:       'clamp(60px, 8.5vw, 112px)',
+                borderRadius: '10px',
                 overflow:     'hidden',
                 verticalAlign: 'middle',
                 flexShrink:   0,
@@ -350,12 +350,12 @@ export default function ContactModal() {
               }}
             >
               <Image
-                src="/images/aftab.jpg"
+                src="/uploads/1786796888930-lets-connect.gif"
                 alt=""
                 fill
-                sizes="120px"
-                className="object-cover object-top"
-                style={{ filter: 'grayscale(100%) contrast(1.06)' }}
+                unoptimized
+                sizes="146px"
+                className="object-cover object-center"
               />
             </span>
             together
@@ -394,7 +394,7 @@ export default function ContactModal() {
 
           {/* Name */}
           <div className="cm-field" style={{ display: 'flex', alignItems: 'center', gap: '24px', borderBottom: `1px solid ${INK}12`, padding: 'clamp(12px,1.6vw,20px) 0' }}>
-            <span style={LABEL} className="cm-required">Name</span>
+            <span style={LABEL} className="cm-label cm-required">Name</span>
             <input
               type="text" placeholder="Your full name"
               value={form.name}
@@ -407,7 +407,7 @@ export default function ContactModal() {
 
           {/* Email */}
           <div className="cm-field" style={{ display: 'flex', alignItems: 'center', gap: '24px', borderBottom: `1px solid ${INK}12`, padding: 'clamp(12px,1.6vw,20px) 0' }}>
-            <span style={LABEL} className="cm-required">Email</span>
+            <span style={LABEL} className="cm-label cm-required">Email</span>
             <input
               type="email" placeholder="your@email.com"
               value={form.email}
@@ -420,7 +420,7 @@ export default function ContactModal() {
 
           {/* Phone */}
           <div className="cm-field" style={{ display: 'flex', alignItems: 'center', gap: '24px', borderBottom: `1px solid ${INK}12`, padding: 'clamp(12px,1.6vw,20px) 0' }}>
-            <span style={LABEL}>Phone</span>
+            <span style={LABEL} className="cm-label">Phone</span>
             <input
               type="tel" placeholder="+971 XX XXX XXXX"
               value={form.phone}
@@ -433,7 +433,7 @@ export default function ContactModal() {
 
           {/* Interest tags */}
           <div className="cm-field cm-tags" style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', borderBottom: `1px solid ${INK}12`, padding: 'clamp(12px,1.6vw,20px) 0' }}>
-            <span style={{ ...LABEL, paddingTop: '6px' }}>Interest</span>
+            <span style={{ ...LABEL, paddingTop: '6px' }} className="cm-label">Interest</span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {INTERESTS.map(tag => {
                 const active = form.interests.includes(tag)
@@ -441,6 +441,7 @@ export default function ContactModal() {
                   <button
                     key={tag}
                     type="button"
+                    className="cm-tag-btn"
                     onClick={() => toggleInterest(tag)}
                     style={{
                       fontSize:      '11px',
@@ -473,7 +474,7 @@ export default function ContactModal() {
 
           {/* Message */}
           <div className="cm-field" style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', borderBottom: `1px solid ${INK}12`, padding: 'clamp(12px,1.6vw,20px) 0' }}>
-            <span style={{ ...LABEL, paddingTop: '8px' }} className="cm-required">Message</span>
+            <span style={{ ...LABEL, paddingTop: '8px' }} className="cm-label cm-required">Message</span>
             <textarea
               placeholder="Project brief, timeline, budget…"
               value={form.message}

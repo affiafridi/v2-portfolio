@@ -8,6 +8,7 @@ import { useCursorStore } from '@/store/useCursorStore'
 import { useMenuStore }     from '@/store/useMenuStore'
 import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
 import { useContactStore }  from '@/store/useContactStore'
+import { useHeaderVisibilityStore } from '@/store/useHeaderVisibilityStore'
 
 /* ─── Nav data ───────────────────────────────────────────────────── */
 const NAV_ITEMS = [
@@ -15,7 +16,6 @@ const NAV_ITEMS = [
   { label: 'Work',     href: '/work'     },
   { label: 'Services', href: '/services' },
   { label: 'Blog',     href: '/blog'     },
-  { label: 'About',    href: '/about'    },
   { label: 'Contact',  href: '/contact'  },
 ]
 
@@ -128,15 +128,21 @@ function StickyHeader() {
   const { setCursorType }                   = useCursorStore()
   const { open, close, isOpen }             = useMenuStore()
   const { open: openContact }               = useContactStore()
+  const { visible: headerVisible }          = useHeaderVisibilityStore()
 
   return (
     <motion.div
       key="sticky"
-      className="pointer-events-none fixed left-0 right-0 top-5 z-50 flex justify-center px-4"
+      className="pointer-events-none fixed left-0 right-0 z-50 flex justify-center px-4"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
       initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={headerVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -80 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={
+        !headerVisible
+          ? { duration: 0.35, ease: [0.4, 0, 1, 1] }           /* hide: quick ease-in, slides up */
+          : { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] } /* show/mount: same feel as before */
+      }
     >
       <nav
         className="pointer-events-auto flex items-center justify-between px-6 py-4"

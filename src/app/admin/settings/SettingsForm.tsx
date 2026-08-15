@@ -9,11 +9,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import ImageUpload from '@/components/admin/ImageUpload'
 import ArrayInput from '@/components/admin/ArrayInput'
 import GalleryMediaInput from '@/components/admin/GalleryMediaInput'
 import TaxonomyManager from '@/components/admin/TaxonomyManager'
 import MediaField from '@/components/admin/MediaField'
+import PortraitPositionPicker from '@/components/admin/PortraitPositionPicker'
 import FormSection from '@/components/admin/FormSection'
 import { X, Plus } from 'lucide-react'
 
@@ -33,6 +33,12 @@ interface Stat {
   label: string
 }
 
+interface ImagePosition {
+  x: number
+  y: number
+  zoom: number
+}
+
 interface SettingsData {
   hero: {
     heading: string
@@ -42,6 +48,8 @@ interface SettingsData {
     availabilityStatus: boolean
     availabilityText: string
     portraitImage: string
+    portraitPositionDesktop: ImagePosition
+    portraitPositionMobile: ImagePosition
   }
   about: {
     storyParagraph1: string
@@ -77,7 +85,13 @@ interface SettingsData {
 }
 
 const EMPTY: SettingsData = {
-  hero: { heading: '', bio: '', marqueeText: '', location: '', availabilityStatus: true, availabilityText: '', portraitImage: '' },
+  hero: {
+    heading: '', bio: '', marqueeText: '', location: '', availabilityStatus: true, availabilityText: '', portraitImage: '',
+    /* Matches the previous hardcoded object-position:top default (50% 0%) —
+       existing sites see no visual change until an admin adjusts this. */
+    portraitPositionDesktop: { x: 50, y: 0, zoom: 100 },
+    portraitPositionMobile:  { x: 50, y: 0, zoom: 100 },
+  },
   about: { storyParagraph1: '', storyParagraph2: '', scrollRevealWords: [], stats: [], images: [] },
   footer: { email: '', socialLinks: [], tickerText: '', wordReveal: [], images: [], copyrightName: '', techCredits: '' },
   contact: { interests: [], phonePlaceholder: '' },
@@ -100,7 +114,12 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
   const [data, setData] = useState<SettingsData>({
     ...EMPTY,
     ...initialData,
-    hero: { ...EMPTY.hero, ...initialData.hero },
+    hero: {
+      ...EMPTY.hero,
+      ...initialData.hero,
+      portraitPositionDesktop: { ...EMPTY.hero.portraitPositionDesktop, ...initialData.hero?.portraitPositionDesktop },
+      portraitPositionMobile:  { ...EMPTY.hero.portraitPositionMobile,  ...initialData.hero?.portraitPositionMobile },
+    },
     about: { ...EMPTY.about, ...initialData.about },
     footer: { ...EMPTY.footer, ...initialData.footer },
     contact: { ...EMPTY.contact, ...initialData.contact },
@@ -213,7 +232,30 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
               </div>
               <div className="space-y-2">
                 <Label>Portrait Image</Label>
-                <ImageUpload value={data.hero.portraitImage} onChange={(url) => setHero('portraitImage', url)} />
+                <MediaField value={data.hero.portraitImage} onChange={(url) => setHero('portraitImage', url)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Portrait Position</Label>
+                <p className="text-xs text-neutral-500">
+                  Drag to set the focal point, zoom for pan room — desktop and mobile crop independently,
+                  exactly as they render on the live site.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <PortraitPositionPicker
+                    label="Desktop"
+                    imageUrl={data.hero.portraitImage}
+                    value={data.hero.portraitPositionDesktop}
+                    onChange={(pos) => setHero('portraitPositionDesktop', pos)}
+                    aspectRatio={0.5}
+                  />
+                  <PortraitPositionPicker
+                    label="Mobile"
+                    imageUrl={data.hero.portraitImage}
+                    value={data.hero.portraitPositionMobile}
+                    onChange={(pos) => setHero('portraitPositionMobile', pos)}
+                    aspectRatio={0.68}
+                  />
+                </div>
               </div>
             </FormSection>
           </TabsContent>

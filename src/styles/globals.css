@@ -54,6 +54,31 @@ body {
   scrollbar-width: none;
 }
 
+/* ─── Stack section tabs — thin scroll affordance ────────────────────
+   The tab row scrolls horizontally past 3-4 categories on narrow
+   screens, but the site-wide scrollbar-hiding above leaves no visual
+   cue that more tabs exist. A slim, subtle native scrollbar here
+   signals "scrollable" without breaking the hidden-scrollbar look
+   everywhere else. Scoped to <1024px only — desktop has room for all
+   tabs already, so the hidden-scrollbar look stays untouched there.
+   ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .sk-tabs-row {
+    scrollbar-width: thin;
+  }
+  .sk-tabs-row::-webkit-scrollbar {
+    display: block;
+    height:  3px;
+  }
+  .sk-tabs-row::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sk-tabs-row::-webkit-scrollbar-thumb {
+    background:   rgba(240,238,234,0.18);
+    border-radius: 3px;
+  }
+}
+
 /* ─── Contact Modal ──────────────────────────────────────────────── */
 .cm-panel::-webkit-scrollbar { display: none; }
 
@@ -71,6 +96,62 @@ body {
   color:       #ff4d00;
   font-size:   12px;
   font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  /* The desktop row layout (fixed 110px label beside the input) eats
+     ~200px of a 375px-wide screen before the field's actual value area
+     even starts. For a single-line input that's just tight; for the
+     interest tags it left ~175px to wrap pills into, so every pill
+     over ~150px wide (most of them) landed one per row. Stacking the
+     label above the value gives every field the full row width. */
+  .cm-field { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+  .cm-label { width: auto !important; padding-top: 0 !important; }
+  .cm-tag-btn { font-size: 10px !important; padding: 7px 14px !important; }
+}
+
+/* ─── Menu Overlay ───────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Desktop reveals the thumbnail on hover (width 0 → THUMB_W via
+     GSAP, gated to pointer:fine devices — see MenuOverlay.tsx). There
+     is no real hover on touch, so it never opened at all here, while
+     still reserving its full THUMB_H in the row's height (an
+     items-baseline row grows to fit its tallest child even at 0
+     width) — every row read as oddly tall with a dead gap under the
+     label. Pinning the width open with !important beats GSAP's plain
+     (non-important) inline style, forcing it permanently visible; the
+     row height is then real content, not a reserved-but-invisible gap.
+     Sized down from desktop's 116x72 to fit next to a full-width label
+     on a 375px screen without crowding it. */
+  .mo-item-thumb { width: 72px !important; height: 44px !important; }
+  /* The <img> itself has its own inline width/height (116x72, matching
+     the desktop reveal target) — without this, only the wrapper mask
+     above shrinks, cropping the image's right edge off a still-116px-
+     wide render instead of actually scaling it down. Same 1.6:1 ratio
+     as the desktop size, so this is a clean shrink, not a distortion. */
+  .mo-item-thumb img { width: 72px !important; height: 44px !important; }
+  /* Num + thumb + label gap was tuned for desktop's wider row; tighter
+     here recovers width for the note block on the right so it doesn't
+     end up flush against the label with zero gap between them. */
+  .mo-item-left { gap: 10px !important; }
+  /* Notes ("Home", "What I build", …) only ever appear on hover, so
+     they were permanently invisible on mobile — same fix as the
+     thumbnail above: force them visible instead of hover-gated.
+     Shrunk and wraps (not nowrap) so a long one ("Selected projects")
+     breaks onto a second line instead of stretching the row wide
+     enough to butt against the label with no gap. */
+  .mo-item-note {
+    opacity:     1 !important;
+    font-size:   8px !important;
+    max-width:   56px;
+    text-align:  right;
+    line-height: 1.3;
+  }
+  /* justify-content:space-between only creates room when there's slack
+     to distribute — with a long label AND a long note, both sides can
+     land at their natural width with nothing left between them. gap
+     forces a hard minimum regardless of how much either side claims. */
+  .mo-item { padding-top: 10px !important; padding-bottom: 10px !important; gap: 10px; }
 }
 
 /* ─── Hide native cursor everywhere ─────────────────────────────── */
@@ -132,44 +213,107 @@ section, footer, header, main, div {
    hydration mismatches in Next.js App Router.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── HeroSection ─────────────────────────────────────────────────── */
+/* ── HeroSection ──────────────────────────────────────────────────
+   dvh, not vh: mobile Safari/Chrome measure 100vh as the height with
+   the browser chrome fully collapsed, which is taller than what's
+   actually visible with the address bar showing. That extra height
+   was rendering as dead cream space below the hero content. dvh
+   tracks the real, currently-visible viewport instead.
+   ─────────────────────────────────────────────────────────────────── */
+/* Admin-adjustable portrait focal point — vars set inline on
+   .hj-img-wrap from SiteSettings, default matches the old hardcoded
+   object-top (50% 0%). Desktop var applies by default; the 767px
+   breakpoint below swaps in the mobile-specific var.
+   Zoom: object-fit:cover alone leaves zero pan room on an axis
+   whenever the box aspect ratio is more extreme than the photo's
+   (e.g. the desktop box is ~0.5 w/h vs a ~0.7 w/h portrait photo —
+   cover locks the image to the box height exactly, so no y offset
+   can ever move it). Scaling past cover's minimum, anchored at the
+   same focal point via transform-origin, creates real pan room. */
+.hj-portrait-img {
+  object-position: var(--hero-pos-desktop, 50% 0%);
+  transform: scale(var(--hero-zoom-desktop, 1));
+  transform-origin: var(--hero-pos-desktop, 50% 0%);
+}
+
 @media (max-width: 767px) {
-  .hj-section        { min-height: 100vh !important; }
+  .hj-section        { min-height: 100dvh !important; }
   .hj-meta           { display: none !important; }
+  .hj-portrait-img   {
+    object-position:  var(--hero-pos-mobile, 50% 0%) !important;
+    transform:        scale(var(--hero-zoom-mobile, 1)) !important;
+    transform-origin: var(--hero-pos-mobile, 50% 0%) !important;
+  }
+  /* Top-left collides with the sticky mobile nav — move it to the
+     frame's left-center instead, clear of the header at any scroll
+     position. */
+  .hj-color-toggle {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+  /* border-radius + overflow:hidden live here, not on .hj-img-wrap —
+     this element is static (never rotated/skewed by the water-physics
+     wobble), so it's a stable clip mask: rounded corners stay crisp
+     regardless of the wobble, and padding on all sides comes for free
+     from insetting left/right/top instead of running edge-to-edge. */
   .hj-portrait-outer {
-    width: 100% !important; height: 58vh !important;
-    top: 0 !important; right: 0 !important; transform: none !important;
+    left: 16px !important; right: auto !important; width: calc(100% - 32px) !important;
+    top: 16px !important; height: 62dvh !important; transform: none !important;
+    border-radius: 20px !important; overflow: hidden !important;
   }
   .hj-frame-1, .hj-frame-2 { display: none !important; }
-  .hj-headline       { bottom: auto !important; top: 52vh !important; }
+  /* The water-physics wobble (rotation/skew) is applied to this exact
+     element — if it were sized to match its frame exactly, the
+     rotated rectangle's corners would pull away from the frame at
+     points in the wobble, exposing background behind it. Oversizing
+     it well past the frame (now clipped by the stable .hj-portrait-
+     outer above) means it always fully covers the frame regardless
+     of rotation/skew, with no border-radius needed here since the
+     outer element already clips to rounded corners.
+     -30px wasn't enough margin: skew can spike during fast scroll
+     (the storm multiplier scales the base wave amplitude up to 3x),
+     and on a ~470px-tall frame a few degrees of skew alone shifts an
+     edge by 30-40px. -70px comfortably clears the worst case. */
+  .hj-img-wrap       {
+    top: -70px !important; left: -70px !important;
+    width: calc(100% + 140px) !important; height: calc(100% + 140px) !important;
+    /* The global `div { max-width: 100% }` reset (further up this file,
+       there to stop horizontal overflow site-wide) was silently
+       clamping this intentionally-oversized element straight back down
+       to its container's width — which is exactly why the wobble-gap
+       fix above wasn't actually taking effect despite computing a
+       correct calc() value. */
+    max-width: none !important; max-height: none !important;
+  }
+  .hj-headline       { bottom: auto !important; top: 56dvh !important; }
   .hj-marquee-span   { font-size: clamp(48px, 13vw, 76px) !important; }
-  .hj-left           { top: 62vh !important; left: 5% !important; width: 90% !important; }
+  .hj-left           { top: 66dvh !important; left: 5% !important; width: 90% !important; }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .hj-section        { min-height: 100vh !important; }
+  .hj-section        { min-height: 100dvh !important; }
   .hj-meta           { display: none !important; }
   .hj-portrait-outer {
-    width: 100% !important; height: 55vh !important;
+    width: 100% !important; height: 55dvh !important;
     top: 0 !important; right: 0 !important; transform: none !important;
   }
   .hj-frame-1, .hj-frame-2 { display: none !important; }
-  .hj-headline       { bottom: auto !important; top: 49vh !important; }
+  .hj-headline       { bottom: auto !important; top: 49dvh !important; }
   .hj-marquee-span   { font-size: clamp(60px, 9vw, 100px) !important; }
-  .hj-left           { top: 62vh !important; left: 5% !important; width: 80% !important; }
+  .hj-left           { top: 62dvh !important; left: 5% !important; width: 80% !important; }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .hj-section        { min-height: 100vh !important; }
+  .hj-section        { min-height: 100dvh !important; }
   .hj-meta           { display: none !important; }
   .hj-portrait-outer {
-    width: 100% !important; height: 55vh !important;
+    width: 100% !important; height: 55dvh !important;
     top: 0 !important; right: 0 !important; transform: none !important;
   }
   .hj-frame-1, .hj-frame-2 { display: none !important; }
-  .hj-headline       { bottom: auto !important; top: 49vh !important; }
+  .hj-headline       { bottom: auto !important; top: 49dvh !important; }
   .hj-marquee-span   { font-size: clamp(72px, 8vw, 120px) !important; }
-  .hj-left           { top: 63vh !important; left: 5% !important; width: 70% !important; }
+  .hj-left           { top: 63dvh !important; left: 5% !important; width: 70% !important; }
 }
 
 @media (min-width: 1280px) and (max-width: 1439px) {
@@ -177,12 +321,16 @@ section, footer, header, main, div {
   .hj-left            { width: 47% !important; }
 }
 
-/* ── AboutSection ────────────────────────────────────────────────── */
+/* ── AboutSection ─────────────────────────────────────────────────
+   AboutSection is now rendered as panel 0 inside WorkSection's shared
+   pin/slide-stack (see WorkSection.tsx) — this content div fills a
+   fixed-size panel (height:100% inline) rather than sizing itself, so
+   min-height no longer applies here at all. Just padding remains. */
 @media (max-width: 767px) {
-  .ab-section   { padding: 48px 24px 56px !important; }
-  .ab-title     { font-size: clamp(52px, 14vw, 72px) !important; margin-bottom: 40px !important; }
+  .ab-section   { padding: 32px 24px 56px !important; }
+  .ab-title     { font-size: clamp(40px, 12vw, 56px) !important; margin-bottom: 32px !important; }
   .ab-body      { grid-template-columns: 1fr !important; gap: 36px !important; overflow: hidden !important; }
-  .ab-statement { font-size: clamp(28px, 7.5vw, 40px) !important; overflow: hidden !important; }
+  .ab-statement { font-size: clamp(28px, 7.5vw, 40px) !important; overflow: hidden !important; overflow-wrap: normal !important; word-break: normal !important; }
   .ab-footer    { gap: 24px !important; }
 }
 
@@ -206,7 +354,9 @@ section, footer, header, main, div {
   .sv-section .sv-list {
     padding-left: 24px !important; padding-right: 24px !important; overflow: hidden !important;
   }
-  .sv-heading-wrap { padding-left: 24px !important; padding-right: 24px !important; padding-top: 48px !important; }
+  /* padding-top matches .ab-section's 32px so every section opens with
+     the same top spacing on mobile. */
+  .sv-heading-wrap { padding-left: 24px !important; padding-right: 24px !important; padding-top: 32px !important; }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -220,4 +370,196 @@ section, footer, header, main, div {
 @media (min-width: 1024px) and (max-width: 1279px) {
   .sv-section { overflow-x: hidden !important; }
   .sv-section .sv-list { padding-left: 28vw !important; overflow: hidden !important; }
+}
+
+@media (max-width: 767px) {
+  /* Hover-only preview tag — invisible at rest, but flex-shrink:0 still
+     claims layout width even hidden, tight next to a long service name. */
+  .sv-tag-label  { display: none !important; }
+  /* flex-shrink:0 (desktop) forces the label to its full intrinsic
+     width regardless of space available — long admin-entered service
+     names (e.g. "Performance Optimization") then overflow the row and
+     cause page-level horizontal scroll. Letting it shrink + wrap keeps
+     it inside the row like every other section on mobile.
+     Sizes trimmed down a notch from the previous 18-28px/12-22px so
+     an 8-service list reads as a compact list, not a stack of near
+     full-width headings. */
+  .sv-name-label {
+    font-size: clamp(16px, 5.5vw, 24px) !important;
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  .sv-row { flex-wrap: wrap !important; padding: 10px 0 !important; }
+  /* Match .ab-title so section headings are consistent site-wide on mobile */
+  .sv-title      { font-size: clamp(40px, 12vw, 56px) !important; margin-bottom: 32px !important; }
+  /* The floating hover-preview image is positioned via GSAP-set fixed
+     coordinates keyed to mouse hover — there's no real hover on touch,
+     so on mobile it either never appears or (on a stray synthetic tap)
+     shows up floating over the row it can't meaningfully preview
+     anything for. Hiding it outright is simpler and more correct here
+     than trying to gate every GSAP call behind a pointer:fine check. */
+  .sv-float      { display: none !important; }
+}
+
+/* ── WorkSection ──────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Desktop pulls this section up 120px (inline marginTop) so the next
+     panel visibly peeks up from behind Hero as you start scrolling —
+     tuned for the project panels' decorative cardstack peeking in.
+     Panel 0 is About now, sitting at yPercent:0 with no hidden-until-
+     scrolled offset, and its heading sits only ~46px from this
+     section's own top (14px panel inset + 32px .ab-title padding on
+     mobile) — well inside that 120px, so real readable text was
+     already visible overlapping Hero's bio at page load, before any
+     scrolling. Zero this out on mobile; the overlap was purely a
+     desktop nicety, not load-bearing for the scroll-jack mechanics. */
+  .wk-outer { margin-top: 0 !important; }
+  .wk-sticky { height: 100dvh !important; }
+  /* Top stays flush with the fixed nav bar above it (14px, matching
+     desktop) — a bigger top inset read as an unwanted gap under the
+     nav. Bottom keeps extra room so the card stack isn't flush with
+     the edge. */
+  .wk-panel { inset: 14px 14px 24px 14px !important; }
+  .wk-content-grid {
+    grid-template-columns: 1fr !important;
+    grid-auto-rows: min-content !important;
+    padding: 1.25rem !important;
+    /* col-left (title/CTA) and col-right (type/tags) stack directly on
+       top of each other here — 6px read as one cramped block since on
+       desktop they're side-by-side columns and never actually touch. */
+    gap: 32px !important;
+    /* NOT overflow-y:auto — WorkSection is a scroll-jacked pinned panel
+       (the whole point is that page scroll drives which project shows,
+       via GSAP ScrollTrigger). An inner scrollable div here competes
+       with that: touch-scrolling would drain this container's own
+       scroll first before the gesture ever reaches the page, producing
+       a confusing double-scroll. wk-panel already has overflow:hidden,
+       so if content is ever taller than the panel it clips cleanly
+       instead of creating a second scroll context. */
+    overflow: hidden !important;
+    align-content: center !important;
+  }
+  .wk-ring-wrap { display: none !important; }
+  /* With the ring hidden, the title block becomes col-left's first
+     visible child and lands flush against the grid's own padding —
+     no breathing room above it. Give it a dedicated top gap instead
+     of relying on align-content:center, which can't add space once
+     the stacked content already fills the panel's height. */
+  .wk-title-block { position: relative !important; top: auto !important; padding-top: 28px !important; }
+  /* Smaller heading -> shorter overall content block -> since the grid
+     is align-content:center, the freed-up height distributes as extra
+     breathing room at the top (and bottom) instead of the title
+     crowding right up against the panel edge. */
+  .wk-title-block h3.wk-left { font-size: clamp(24px, 6.5vw, 32px) !important; }
+  .wk-col-right { padding-top: 0 !important; }
+  /* Back cards in the stack peek 58-115px above their own box by design
+     (see WorkSection's STACK y-offsets) — needs clearance above it on
+     mobile's tight single-column stack so the peek doesn't hit the tags. */
+  .wk-cardstack-wrap { position: relative !important; margin-top: 128px !important; }
+}
+
+/* ── FooterSection ────────────────────────────────────────────────
+   Migrated from FooterSection.tsx's inline JSX <style> tag — that
+   pattern is the one this file's convention exists to avoid (see the
+   header comment above): it produced a real SSR/hydration text
+   mismatch when edited. Same class names, same breakpoints.
+   ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* min-height:100dvh (inline style) forces the footer to fill the
+     screen even when stacked content is shorter — same fix as About. */
+  footer { min-height: auto !important; }
+  .ft-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+    /* top matches .ab-section/.sv-heading-wrap/.sk-section's 32px —
+       every section now opens with the same top spacing on mobile. */
+    padding: 32px 24px 40px !important;
+    gap: 24px !important;
+    overflow: hidden !important;
+  }
+  /* Match .ab-title/.sv-title so headings are consistent site-wide */
+  .ft-title { font-size: clamp(40px, 12vw, 56px) !important; }
+  /* Scaled down to match .ft-title's reduced mobile font-size above —
+     the desktop clamp is sized for a 168px-max heading. */
+  .ft-title-gif { width: clamp(48px, 12.5vw, 74px) !important; height: clamp(38px, 10vw, 60px) !important; }
+  /* ft-col-statement is a flex column wrapping ft-statement; flex items
+     default to min-width:auto, which — same as the bare-1fr grid track
+     above — lets the paragraph's content width become a hard floor
+     instead of actually wrapping within the available space.
+     padding-top was tuned for the desktop 3-column row (clearing the
+     nav-level content beside it) — stacked on mobile it's just a gap
+     on top of an already-stacked block, so it's dropped to 0. */
+  .ft-col-statement { min-width: 0 !important; padding-top: 0 !important; }
+  .ft-statement {
+    font-size: clamp(26px, 7.5vw, 38px) !important;
+    min-width: 0 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  .ft-col-right {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 48px !important;
+    align-self: auto !important;
+    /* Same as ft-col-statement above — 140px cleared desktop content
+       that doesn't exist in this stacked layout. */
+    padding-top: 0 !important;
+  }
+  .ft-bottom {
+    padding: 14px 24px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+  .ft-back-btn { display: none !important; }
+  /* clamp(130px,26vw,420px) floors at 130px on mobile — a single
+     4-letter word at that size dominates the whole screen width. */
+  .ft-big-name { font-size: clamp(64px, 22vw, 90px) !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ft-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    padding: 100px 40px 56px !important;
+  }
+  .ft-col-statement { min-width: 0 !important; }
+  .ft-col-right {
+    grid-column: 1 / -1 !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 64px !important;
+    align-self: auto !important;
+    align-items: flex-start !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .ft-body {
+    grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) !important;
+    gap: 32px !important;
+    padding: 100px 48px 56px !important;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .ft-body {
+    grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) minmax(0,0.7fr) !important;
+    gap: 40px !important;
+    padding: 110px 56px 64px !important;
+  }
+}
+
+/* ── StackSection ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Match .ab-title/.sv-title/.ft-title so headings are consistent site-wide */
+  .sk-title { font-size: clamp(40px, 12vw, 56px) !important; }
+  /* No mobile override existed here at all — it was inheriting the
+     desktop clamp(64px,8vw,108px) formula, which floors at 64px on
+     mobile. Matches .ab-section's 32px/24px/56px so every section
+     opens and closes with the same top/bottom spacing. */
+  .sk-section { padding: 32px 24px 56px !important; }
 }

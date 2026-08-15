@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import HeroSection    from '@/components/sections/HeroSection'
-import AboutSection   from '@/components/sections/AboutSection'
 import WorkSection    from '@/components/sections/WorkSection'
 import ServiceSection from '@/components/sections/ServiceSection'
 import StackSection   from '@/components/sections/StackSection'
@@ -39,8 +38,7 @@ export default async function Home() {
   return (
     <main>
       <HeroSection settings={hero} />
-      <AboutSection settings={about} />
-      <WorkSection />
+      <WorkSection aboutSettings={about} />
       <ServiceSection services={services.map(s => ({ num: s.num, label: s.title, tag: s.tag, slug: s.slug, image: s.image }))} />
       <StackSection categories={stackCategories.map(c => ({ num: c.num, label: c.label, desc: c.desc, items: c.items.map(i => ({ name: i.name, slug: i.slug, color: i.color })) }))} />
       <FooterSection settings={footer} />

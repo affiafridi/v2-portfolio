@@ -39,11 +39,21 @@ export default function ImageCycler({
 }) {
   const [active, setActive]   = useState(false)
   const [stack,  setStack]    = useState<Card[]>([])
+  const [hasPointer, setHasPointer] = useState(true)
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null)
   const holdRef    = useRef<ReturnType<typeof setTimeout>  | null>(null)
+  const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const counterRef = useRef(0)
   const imgIdxRef  = useRef(0)
   const cardRefs   = useRef<Map<number, HTMLSpanElement>>(new Map())
+
+  /* Touch devices can synthesize a mouseenter on tap with no matching
+     mouseleave, leaving this hover-only image stack stuck open and
+     covering the text underneath — disable the interaction entirely
+     on touch/coarse-pointer devices instead of chasing that state. */
+  useEffect(() => {
+    setHasPointer(window.matchMedia('(pointer: fine)').matches)
+  }, [])
 
   const pushCard = useCallback(() => {
     const id  = counterRef.current++
@@ -117,13 +127,28 @@ export default function ImageCycler({
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current)
     if (holdRef.current)  clearTimeout(holdRef.current)
+    if (autoStopRef.current) clearTimeout(autoStopRef.current)
   }, [])
+
+  /* Touch has no hover — tap toggles the stack instead. A second tap
+     dismisses it early; otherwise it auto-dismisses on its own so it
+     can never get stuck open the way an unpaired hover event would. */
+  const handleTap = useCallback(() => {
+    if (active) {
+      if (autoStopRef.current) clearTimeout(autoStopRef.current)
+      stop()
+    } else {
+      start()
+      autoStopRef.current = setTimeout(stop, 2600)
+    }
+  }, [active, start, stop])
 
   return (
     <span
       style={{ position: 'relative', display: 'inline' }}
-      onMouseEnter={start}
-      onMouseLeave={stop}
+      onMouseEnter={hasPointer ? start : undefined}
+      onMouseLeave={hasPointer ? stop : undefined}
+      onClick={hasPointer ? undefined : handleTap}
     >
       {children}
 

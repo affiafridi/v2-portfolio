@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { Fragment } from 'react'
 import { useCursorStore } from '@/store/useCursorStore'
+import { useContactStore } from '@/store/useContactStore'
 import ImageCycler       from '@/components/ui/ImageCycler'
 
 /* ─── Images for accent word hover ──────────────────────────────── */
@@ -16,8 +15,6 @@ const ABOUT_IMAGES = [
   'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80', // screen portrait
   'https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=600&q=80', // workspace landscape
 ]
-
-gsap.registerPlugin(ScrollTrigger)
 
 /* ─── Design tokens ──────────────────────────────────────────────── */
 const BG  = '#f0eeea'
@@ -51,108 +48,26 @@ const STATS = [
   { num: '2',   label: 'Disciplines' },
 ]
 
-/* ─── Component ──────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   AboutSection — pure content, no section wrapper, no scroll
+   animation of its own.
+   This used to be a standalone pinned section; it's now rendered as
+   panel 0 inside WorkSection's shared sticky/panel-stack system, so
+   About and the projects share ONE continuous pin — scrolling forward
+   from About slides a project up to cover it exactly the way each
+   project covers the one before it, with no hand-off to normal
+   scroll in between. WorkSection's own gsap.context owns every
+   animation here (selector-scoped to `.ab-word` etc.), timed against
+   the shared scroll-jacked timeline — see WorkSection.tsx.
+   ───────────────────────────────────────────────────────────────── */
 export default function AboutSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
   const aboutImages = (settings.images as string[]) || ABOUT_IMAGES
   const aboutWords  = (settings.scrollRevealWords as W[]) || WORDS
   const aboutStats  = (settings.stats as { num: string; label: string }[]) || STATS
   const storyP1     = (settings.storyParagraph1 as string) || "I didn't learn development in a classroom. I learned it by building projects, solving problems, breaking things, and figuring out how to make them work again. What started as curiosity became a long-term commitment to creating products that are useful, reliable, and enjoyable to use."
   const storyP2     = (settings.storyParagraph2 as string) || 'Being self-taught taught me more than programming. It taught me how to learn, adapt, and solve problems independently. Every project is another opportunity to improve, experiment, and create something meaningful.'
-  const sectionRef = useRef<HTMLElement>(null)
   const { setCursorType } = useCursorStore()
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-
-      /* Big title slides down — on mobile skip ScrollTrigger (Lenis
-         can desync it on touch devices), run immediately on mount    */
-      const isMobile = window.innerWidth < 768
-      gsap.from('.ab-title', {
-        y: isMobile ? -16 : -36,
-        opacity: 0,
-        duration: 1.1,
-        ease: 'power3.out',
-        delay: isMobile ? 0.15 : 0,
-        ...(isMobile ? {} : {
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 82%',
-          },
-        }),
-      })
-
-      /* Left bio blocks stagger in from left */
-      gsap.from('.ab-left-item', {
-        x: isMobile ? -16 : -32,
-        opacity: 0,
-        duration: 0.9,
-        ease: 'power3.out',
-        stagger: 0.18,
-        delay: isMobile ? 0.35 : 0,
-        ...(isMobile ? {} : {
-          scrollTrigger: {
-            trigger: '.ab-body',
-            start: 'top 75%',
-          },
-        }),
-      })
-
-      /* ── Scroll-scrubbed word reveal ────────────────────────────
-         Words start at opacity 0.07 (ghost) and light up in
-         sequence as you scroll through the section. scrub:2 means
-         the animation lags slightly behind the scroll — feels like
-         you're reading the words into existence.
-         ─────────────────────────────────────────────────────────── */
-      gsap.to('.ab-word', {
-        opacity:  1,
-        ease:     'none',
-        stagger:  { each: 0.055, from: 'start' },
-        scrollTrigger: {
-          trigger: '.ab-statement',
-          start:   'top 68%',
-          end:     'bottom 55%',
-          scrub:   2,
-        },
-      })
-
-      /* Stats — sequential blur-in, same technique as WorkSection tags */
-      gsap.fromTo('.ab-stat',
-        { opacity: 0, filter: 'blur(10px)', x: 6 },
-        {
-          opacity:  1,
-          filter:   'blur(0px)',
-          x:        0,
-          duration: 0.45,
-          ease:     'power2.out',
-          stagger:  { each: 0.18, from: 'start' },
-          scrollTrigger: {
-            trigger: '.ab-footer',
-            start:   'top 90%',
-          },
-        }
-      )
-
-      /* CTA — same blur+x as stats, fires after all three settle */
-      gsap.fromTo('.ab-cta',
-        { opacity: 0, filter: 'blur(10px)', x: 6 },
-        {
-          opacity:  1,
-          filter:   'blur(0px)',
-          x:        0,
-          duration: 0.45,
-          ease:     'power2.out',
-          delay:    0.54,   /* 3 stats × 0.18s = 0.54s */
-          scrollTrigger: {
-            trigger: '.ab-footer',
-            start:   'top 90%',
-          },
-        }
-      )
-
-    }, sectionRef)
-
-    return () => ctx.revert()
-  }, [])
+  const { open: openContact } = useContactStore()
 
   /* ── Shared text sizes ── */
   const LABEL_STYLE: React.CSSProperties = {
@@ -166,14 +81,15 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
   }
 
   return (
-    <section
-      ref={sectionRef}
+    <div
       className="ab-section"
       style={{
         background: BG,
-        minHeight:  '100vh',
-        position:   'relative',
-        zIndex:     1,
+        width:      '100%',
+        height:     '100%',
+        display:    'flex',
+        flexDirection:  'column',
+        justifyContent: 'space-between',
         padding:    'clamp(64px, 8vw, 108px) clamp(32px, 6.5vw, 96px)',
       }}
     >
@@ -188,7 +104,6 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
           lineHeight:    0.88,
           color:         INK,
           margin:        0,
-          marginBottom:  'clamp(48px, 7vw, 96px)',
           userSelect:    'none',
         }}
       >
@@ -211,7 +126,6 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
           gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)',
           gap:                 'clamp(40px, 5.5vw, 88px)',
           alignItems:          'end',
-          marginBottom:        'clamp(48px, 6vw, 80px)',
         }}
       >
 
@@ -252,14 +166,12 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
           {aboutWords.map(({ w, italic, accent }, i) => {
             const wordSpan = (
               <span
-                key={i}
                 className="ab-word"
                 style={{
                   display:     'inline',
                   opacity:     accent ? 0.30 : 0.07,
                   fontStyle:   italic ? 'italic'  : 'normal',
                   color:       accent  ? ACC       : INK,
-                  marginRight: '0.22em',
                   ...(accent ? {
                     textDecorationLine:      'underline',
                     textDecorationColor:     ACC,
@@ -272,11 +184,18 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
               </span>
             )
 
-            return accent ? (
-              <ImageCycler key={i} images={aboutImages}>
-                {wordSpan}
-              </ImageCycler>
-            ) : wordSpan
+            /* A real space character between words — not just margin —
+               gives the browser an actual line-break opportunity. Spans
+               with zero whitespace between them (margin-only gap) can't
+               wrap at ordinary word boundaries; on the mobile 1-column
+               layout that showed up as either a mid-word split or, for
+               longer sentences, no wrapping at all (silently clipped). */
+            return (
+              <Fragment key={i}>
+                {accent ? <ImageCycler images={aboutImages}>{wordSpan}</ImageCycler> : wordSpan}
+                {' '}
+              </Fragment>
+            )
           })}
         </p>
 
@@ -327,9 +246,10 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
           ))}
         </div>
 
-        {/* CTA */}
-        <a
-          href="/contact"
+        {/* CTA — opens the contact modal, same as the nav's "Let's talk" */}
+        <button
+          type="button"
+          onClick={openContact}
           className="ab-cta"
           style={{
             display:        'inline-flex',
@@ -340,9 +260,14 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
             letterSpacing:  '0.12em',
             textTransform:  'uppercase',
             color:          INK,
-            textDecoration: 'none',
+            background:     'none',
+            border:         'none',
             borderBottom:   `1px solid ${INK}28`,
+            paddingLeft:    0,
+            paddingRight:   0,
+            paddingTop:     0,
             paddingBottom:  '4px',
+            cursor:         'none',
             transition:     'color 0.2s ease, border-color 0.2s ease',
           }}
           onMouseEnter={(e) => {
@@ -361,10 +286,10 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
             <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </a>
+        </button>
 
       </div>
 
-    </section>
+    </div>
   )
 }

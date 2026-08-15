@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { gsap } from 'gsap'
 import { useMenuStore }    from '@/store/useMenuStore'
 import { useCursorStore }  from '@/store/useCursorStore'
@@ -22,13 +23,14 @@ import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
    CLOSE animation: clipPath bottom 0%   → 100% (snaps back up)
    ───────────────────────────────────────────────────────────────── */
 
-const NAV_ITEMS = [
-  { num: '01', label: 'Index',    href: '/',         note: 'Home'             },
-  { num: '02', label: 'Work',     href: '/work',     note: 'Selected projects'},
-  { num: '03', label: 'Services', href: '/services', note: 'What I build'     },
-  { num: '04', label: 'Blog',     href: '/blog',     note: 'My writing'       },
-  { num: '05', label: 'About',    href: '/about',    note: 'Who I am'         },
-  { num: '06', label: 'Contact',  href: '/contact',  note: 'Let\'s talk'      },
+interface NavItem { num: string; label: string; href: string; note: string; gif?: string }
+
+const NAV_ITEMS: NavItem[] = [
+  { num: '01', label: 'Index',    href: '/',         note: 'Home',              gif: '/uploads/1786797880514-index.gif'        },
+  { num: '02', label: 'Work',     href: '/work',     note: 'Selected projects', gif: '/uploads/1786798419823-work.gif'         },
+  { num: '03', label: 'Services', href: '/services', note: 'What I build',     gif: '/uploads/1786800780051-services.gif'     },
+  { num: '04', label: 'Blog',     href: '/blog',     note: 'My writing',       gif: '/uploads/1786798317843-blog.gif'         },
+  { num: '05', label: 'Contact',  href: '/contact',  note: 'Let\'s talk',      gif: '/uploads/1786796888930-lets-connect.gif' },
 ]
 
 const BG      = '#0d0d0d'
@@ -44,6 +46,49 @@ export default function MenuOverlay() {
 
   const panelRef = useRef<HTMLDivElement>(null)
   const tlRef    = useRef<gsap.core.Timeline | null>(null)
+
+  /* ── Hover thumbnail — reveals inline, before the item's label ──
+     A fixed-size <Image> (not `fill`) sits inside an overflow:hidden
+     wrapper whose width tweens 0 → THUMB_W. Because the image itself
+     never resizes, growing the wrapper just uncovers more of the same
+     static image left→right — a clean wipe, not a rescale/zoom.
+     Landscape, not square — a 56x56 square read as too small next to
+     the heading-sized label text; wider + object-fit:cover keeps the
+     gif's own framing intact instead of squeezing it into a square. */
+  const THUMB_W = 116 // px
+  const THUMB_H = 72  // px
+  const thumbRefs  = useRef<(HTMLSpanElement | null)[]>([])
+  const pointerFine = useRef(true)
+
+  useEffect(() => {
+    pointerFine.current = window.matchMedia('(pointer: fine)').matches
+  }, [])
+
+  const handleRowEnter = (idx: number) => {
+    setCursorType('hover')
+    const thumb = thumbRefs.current[idx]
+    if (!pointerFine.current || !thumb) return
+    gsap.killTweensOf(thumb)
+    /* Height snaps open fast so the row reaches its real final height
+       almost immediately — width keeps animating after that for the
+       slower left-to-right wipe. Without this, height stayed pinned
+       at THUMB_H even at width:0, permanently reserving that space on
+       every row regardless of hover — the "gaps" this was fixing. */
+    gsap.to(thumb, { height: THUMB_H, duration: 0.18, ease: 'power2.out' })
+    gsap.to(thumb, { width: THUMB_W, duration: 0.5, ease: 'power3.out' })
+  }
+
+  const handleRowLeave = (idx: number) => {
+    setCursorType('default')
+    const thumb = thumbRefs.current[idx]
+    if (!pointerFine.current || !thumb) return
+    gsap.killTweensOf(thumb)
+    gsap.to(thumb, { width: 0, height: 0, duration: 0.4, ease: 'power2.inOut' })
+  }
+
+  const resetThumbs = () => {
+    thumbRefs.current.forEach(el => el && gsap.set(el, { width: 0, height: 0 }))
+  }
 
   /* ── Lock body scroll when open ──────────────────────────────── */
   useEffect(() => {
@@ -112,6 +157,7 @@ export default function MenuOverlay() {
         )
 
     } else {
+      resetThumbs()
       const tl = gsap.timeline()
       tlRef.current = tl
 
@@ -143,11 +189,14 @@ export default function MenuOverlay() {
       />
 
       {/* ── Centering wrapper — NOT animated (owns translateX) ── */}
-      {/* top: 20px matches the sticky header's top-5 position   */}
+      {/* Matches StickyHeader's top exactly (Header.tsx) — including the
+         safe-area-inset-top offset for notch/Dynamic Island devices,
+         otherwise this opens a few dozen px below the pill on those
+         phones, exposing background between them. */}
       <div
         className="fixed z-[300]"
         style={{
-          top:           '20px',
+          top:           'calc(env(safe-area-inset-top, 0px) + 12px)',
           left:          '50%',
           transform:     'translateX(-50%)',
           width:         'min(90vw, 500px)',
@@ -237,7 +286,7 @@ export default function MenuOverlay() {
 
           {/* ── NAV ITEMS ──────────────────────────────────────── */}
           <nav className="flex flex-col">
-            {NAV_ITEMS.map((item) => {
+            {NAV_ITEMS.map((item, idx) => {
               const isContact = item.label === 'Contact'
               const handleClick = () => {
                 close()
@@ -245,11 +294,31 @@ export default function MenuOverlay() {
               }
               const inner = (
                 <>
-                  {/* Number + label */}
-                  <div className="flex items-baseline gap-4">
+                  {/* Number + thumb + label */}
+                  <div className="mo-item-left flex items-baseline gap-4">
                     <span className="text-[10px] tabular-nums" style={{ color: ACCENT }}>
                       {item.num}
                     </span>
+                    {item.gif && (
+                      <span
+                        ref={el => { thumbRefs.current[idx] = el }}
+                        className="mo-item-thumb"
+                        style={{
+                          display:      'inline-block',
+                          width:        0,
+                          height:       0,
+                          overflow:     'hidden',
+                          borderRadius: '10px',
+                          flexShrink:   0,
+                          alignSelf:    'center',
+                        }}
+                      >
+                        <Image
+                          src={item.gif} alt="" width={THUMB_W} height={THUMB_H} unoptimized
+                          style={{ display: 'block', width: `${THUMB_W}px`, height: `${THUMB_H}px`, maxWidth: 'none', objectFit: 'cover' }}
+                        />
+                      </span>
+                    )}
                     <span
                       className="text-[clamp(26px,5vw,40px)] font-bold leading-none tracking-tight
                                  transition-transform duration-300 group-hover:translate-x-1.5"
@@ -261,7 +330,7 @@ export default function MenuOverlay() {
                   {/* Note + arrow */}
                   <div className="flex items-center gap-3">
                     <span
-                      className="text-[10px] uppercase tracking-[0.1em]
+                      className="mo-item-note text-[10px] uppercase tracking-[0.1em]
                                  opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       style={{ color: MUTED }}
                     >
@@ -288,8 +357,8 @@ export default function MenuOverlay() {
                   className="mo-item group flex items-center justify-between px-6 py-4
                              transition-colors duration-200 w-full text-left"
                   style={{ borderBottom: `1px solid ${DIVIDER}`, background: 'none', border: `none`, borderBottom: `1px solid ${DIVIDER}`, cursor: 'none' }}
-                  onMouseEnter={() => setCursorType('hover')}
-                  onMouseLeave={() => setCursorType('default')}
+                  onMouseEnter={() => handleRowEnter(idx)}
+                  onMouseLeave={() => handleRowLeave(idx)}
                 >
                   {inner}
                 </button>
@@ -301,8 +370,8 @@ export default function MenuOverlay() {
                   className="mo-item group flex items-center justify-between px-6 py-4
                              transition-colors duration-200"
                   style={{ borderBottom: `1px solid ${DIVIDER}` }}
-                  onMouseEnter={() => setCursorType('hover')}
-                  onMouseLeave={() => setCursorType('default')}
+                  onMouseEnter={() => handleRowEnter(idx)}
+                  onMouseLeave={() => handleRowLeave(idx)}
                 >
                   {inner}
                 </Link>

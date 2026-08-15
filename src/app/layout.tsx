@@ -10,6 +10,7 @@ import { getSeoSettings, absoluteUrl, SITE_URL } from '@/lib/seo'
 
 export const viewport: Viewport = {
   themeColor: '#ff4d00',
+  viewportFit: 'cover',
 }
 
 export async function generateMetadata(): Promise<Metadata> {

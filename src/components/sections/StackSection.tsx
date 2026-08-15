@@ -211,10 +211,22 @@ function TechCard({ tech }: { tech: Tech }) {
 export default function StackSection({ categories }: { categories?: Cat[] }) {
   const stackData = categories && categories.length > 0 ? categories : STACK
   const [activeIdx, setActiveIdx] = useState(0)
+  const [hasPointer, setHasPointer] = useState(true)
   const sectionRef = useRef<HTMLElement>(null)
   const gridRef    = useRef<HTMLDivElement>(null)
   const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { setCursorType } = useCursorStore()
+
+  /* Tabs switch on hover for mouse users, but touch synthesizes a
+     mouseenter on tap with no reliable per-tab boundary — swiping
+     across the (now horizontally-scrollable) tab row fires it on
+     every tab the finger crosses, rapidly switching categories with
+     different item counts each time, which is exactly the transient
+     "grid grows then shrinks back" glitch during a scroll/swipe.
+     Hover-switch is disabled on touch; tap (onClick) drives it instead. */
+  useEffect(() => {
+    setHasPointer(window.matchMedia('(pointer: fine)').matches)
+  }, [])
 
   /* Debounced switch — 80ms prevents triggering on fast mouse passes   */
   const switchCategory = useCallback((idx: number) => {
@@ -232,12 +244,20 @@ export default function StackSection({ categories }: { categories?: Cat[] }) {
     const cards = grid.querySelectorAll<HTMLElement>('.sk-logo-card')
     if (!cards.length) return
 
+    /* filter:blur() is one of the most GPU-expensive CSS properties to
+       animate, and with a category holding 6-7 cards, the 0.055s
+       stagger against a 0.42s duration means several are mid-blur
+       simultaneously at any moment — a real jank source on mobile,
+       right at the point a category (or the section) first renders.
+       Opacity+x alone is dramatically cheaper and reads almost the
+       same at this scale. */
+    const isMobile = window.innerWidth < 768
     gsap.killTweensOf([...cards])
     gsap.fromTo(
       [...cards],
-      { opacity: 0, filter: 'blur(10px)', x: 8 },
+      isMobile ? { opacity: 0, x: 8 } : { opacity: 0, filter: 'blur(10px)', x: 8 },
       {
-        opacity: 1, filter: 'blur(0px)', x: 0,
+        opacity: 1, ...(isMobile ? {} : { filter: 'blur(0px)' }), x: 0,
         duration: 0.42, stagger: { each: 0.055, from: 'start' },
         ease: 'power2.out', overwrite: true,
       },
@@ -272,6 +292,7 @@ export default function StackSection({ categories }: { categories?: Cat[] }) {
   return (
     <section
       ref={sectionRef}
+      className="sk-section"
       style={{
         backgroundColor: DARK,
         backgroundImage: 'radial-gradient(rgba(240,238,234,0.030) 1px, transparent 1px)',
@@ -322,21 +343,28 @@ export default function StackSection({ categories }: { categories?: Cat[] }) {
           marginBottom: -1px lets the active tab's 2px border sit
           flush over the row's 1px border-bottom for a clean underline.
       */}
-      <div style={{
+      {/* data-lenis-prevent: without it, Lenis's global scroll-jacking
+          captures touch drags over this row too — even set to
+          vertical-only orientation, it still intercepts the gesture
+          before native horizontal scroll gets it, feeling like a
+          drag instead of a scroll. touch-action:pan-x reinforces the
+          same intent at the browser level. */}
+      <div className="sk-tabs-row" data-lenis-prevent style={{
         display:      'flex',
         alignItems:   'flex-end',
         overflowX:    'auto',
+        touchAction:  'pan-x',
         borderBottom: '1px solid rgba(240,238,234,0.08)',
         marginBottom: 'clamp(28px, 3.5vw, 48px)',
         gap:          0,
-        scrollbarWidth: 'none',
       }}>
         {stackData.map((c, i) => (
           <div
             key={c.num}
             className="sk-tab"
-            onMouseEnter={() => { switchCategory(i); setCursorType('hover') }}
-            onMouseLeave={() => setCursorType('default')}
+            onClick={() => switchCategory(i)}
+            onMouseEnter={hasPointer ? () => { switchCategory(i); setCursorType('hover') } : undefined}
+            onMouseLeave={hasPointer ? () => setCursorType('default') : undefined}
             style={{
               display:        'flex',
               alignItems:     'center',
