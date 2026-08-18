@@ -30,6 +30,7 @@ export default function WorkPageHero() {
   return (
     <section
       ref={sectionRef}
+      className="wph-section"
       style={{
         background:     CREAM,
         height:         '100vh',

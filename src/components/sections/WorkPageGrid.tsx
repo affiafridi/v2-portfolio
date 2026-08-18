@@ -103,7 +103,7 @@ export default function WorkPageGrid({ projects }: { projects?: WorkProject[] })
       ref={sectionRef}
       style={{ background: CREAM, position: 'relative', zIndex: 2 }}
     >
-      <div style={{
+      <div className="wpg-grid" style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: 'clamp(10px, 1.2vw, 16px)',

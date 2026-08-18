@@ -7,21 +7,52 @@ import { usePageTransitionStore } from '@/store/usePageTransitionStore'
 
 const EASE: [number, number, number, number] = [0.76, 0, 0.24, 1]
 
+// Must match circleTransition.duration below (in ms) — the reveal effect
+// uses this to guarantee it never fires before the cover animation has
+// actually finished, regardless of how fast the underlying navigation
+// resolves (see that effect's comment for why this matters now that
+// TransitionLink fires router.push() immediately instead of waiting
+// out this same duration first).
+const COVER_DURATION_MS = 620
+
 export default function PageTransitionOverlay() {
   const active = usePageTransitionStore((s) => s.active)
   const origin = usePageTransitionStore((s) => s.origin)
   const end    = usePageTransitionStore((s) => s.end)
   const pathname = usePathname()
-  const prevPathname = useRef(pathname)
+  const prevPathname   = useRef(pathname)
+  const activeStartedAt = useRef<number | null>(null)
+
+  // Stamp the moment the cover animation actually started, so the
+  // reveal effect below can measure real elapsed time against it.
+  useEffect(() => {
+    if (active) activeStartedAt.current = Date.now()
+  }, [active])
 
   // The overlay lives above the layout that swaps pages, so it survives
   // the navigation. Once the pathname actually changes underneath it
-  // (meaning the destination route has rendered), hold briefly for the
-  // paint to settle, then reveal it.
+  // (meaning the destination route has rendered), reveal it — but not
+  // before the cover animation itself has had time to finish covering
+  // the screen. TransitionLink now fires router.push() immediately on
+  // click (not after waiting out the cover duration first), so a route
+  // that's already prefetched/cached can resolve in a handful of ms —
+  // without this floor, that would reveal the destination mid-bloom,
+  // snapping the circle open before it had even finished growing.
+  // Slow routes (their own DB query, or a cold uncached one) are the
+  // opposite case this whole change targets: previously the fetch
+  // didn't start until the cover animation was already done, so the
+  // dots kept spinning for however long the fetch took AFTER that —
+  // reading as "the animation finished, then it just sat there before
+  // eventually redirecting". Starting the fetch immediately instead
+  // gives it the cover animation's own duration as real head-start
+  // time, so it's far more often already done by the time this floor
+  // is reached.
   useEffect(() => {
     if (active && pathname !== prevPathname.current) {
-      const t = setTimeout(() => end(), 200)
       prevPathname.current = pathname
+      const elapsed   = activeStartedAt.current ? Date.now() - activeStartedAt.current : COVER_DURATION_MS
+      const remaining = Math.max(0, COVER_DURATION_MS - elapsed)
+      const t = setTimeout(() => end(), remaining + 200)
       return () => clearTimeout(t)
     }
     prevPathname.current = pathname

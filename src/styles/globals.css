@@ -943,3 +943,147 @@ section, footer, header, main, div {
      opens and closes with the same top/bottom spacing. */
   .sk-section { padding: 32px 24px 56px !important; }
 }
+
+/* ── /work page (WorkPageHero / WorkPageGrid / WorkPageList) ─────────
+   No responsive CSS existed for this page at all before this pass —
+   below 768px it had real, measured overflow (document body wider than
+   the viewport, not just a tight fit), from three independent causes:
+   the "Selected Work" heading's font floor, the featured-project grid
+   staying 2 columns at any width, and the project-list row's title
+   font floor plus an invisible (opacity:0, hover-only) type badge that
+   still claimed layout width it was never visible to justify on touch.
+   768px and up were already fine as built (verified: zero overflow at
+   768/1024/1280/1440, 2-column grid included), so everything below is
+   scoped to mobile only. ───────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* clamp(80px,16vw,240px) floors at 80px — "Selected" alone doesn't
+     fit an 80px-tall line under ~370px wide (measured: overflowed its
+     own box, not just tight against it) at anything narrower than
+     ~380px wide. */
+  .wph-line1, .wph-line2 { font-size: clamp(48px, 14vw, 240px) !important; }
+
+  /* 2 columns of a 4:3 card leaves ~180px width at a 390px phone —
+     title + description + tag pills all overlaid on that card were
+     measured overflowing the card's own top edge by ~90px (the text
+     block needed roughly double the height the narrow card actually
+     had). Single column roughly doubles each card's width, which is
+     what actually fixes it — the text needs the width to wrap onto
+     fewer lines, not just a bigger box. */
+  .wpg-grid { grid-template-columns: 1fr !important; }
+
+  /* clamp(40px,6.5vw,100px) floors at 40px regardless of title length
+     — combined with the (invisible until hover) .wpl-type badge below
+     still claiming its full flexShrink:0 width, longer titles measured
+     real overflow past the row's own box on every project tested.
+     minWidth:0 on .wpl-row-inner (see WorkPageList.tsx) is what actually
+     lets the title shrink/wrap at all — flex items default to
+     min-width:auto (their own content's natural width as a hard floor)
+     otherwise, the same "won't actually shrink no matter how small you
+     set the font" bug hit elsewhere on this site. */
+  .wpl-row-inner { gap: 12px !important; }
+  .wpl-name      { font-size: clamp(24px, 8vw, 48px) !important; }
+  /* Only ever appears on hover (opacity 0 → 1), which doesn't exist on
+     touch — same as .sv-tag-label elsewhere, hiding it outright is
+     simpler and more correct than an interaction that can never fire.
+     It was also the direct cause of the row overflow above: opacity:0
+     still reserves real layout width via flexShrink:0. */
+  .wpl-type  { display: none !important; }
+  /* Fixed-position hover preview, same reasoning as .sv-float — no
+     real hover on touch, so it's dead weight at best; hiding it avoids
+     any chance of a stray synthetic-tap mouseenter leaving it stuck
+     visible over the page (the exact bug already fixed for ImageCycler
+     elsewhere this session). */
+  .wpl-float { display: none !important; }
+}
+
+/* WorkPageHero's section is a fixed height:100vh on every width — full
+   screen makes sense as an entrance moment on desktop, but on mobile/
+   tablet the heading + scroll cue only ever fill a small middle chunk
+   of that box, leaving a huge dead cream gap above and below (measured:
+   ~550-580px of empty space top+bottom combined at 390x844). Capping it
+   to a shorter min-height instead of a full viewport keeps it reading
+   as a real "cover" section — generous, not cramped — without forcing
+   that much unused space. height:auto so it can still grow past
+   min-height if a very short viewport ever needed more room for the
+   content itself; verified no overlap between the heading and the
+   scroll indicator at 390x844 and 768x1024. Desktop (1024px+) keeps
+   the original full-height entrance untouched. */
+@media (max-width: 1023px) {
+  .wph-section { height: auto !important; min-height: 60dvh !important; }
+}
+
+/* .wpl-name/.wpl-num start dim (~13%/18% opacity) and only reach full
+   color/opacity via handleEnter's GSAP tween on mouseenter — on mobile
+   and tablet there's no real hover to ever trigger that, so every
+   title just sits permanently faded (measured: this is a real stuck
+   state, not a timing thing — nothing on these devices ever fires the
+   event that would brighten it). !important here beats the inline
+   color/opacity GSAP set directly on the element, same as any other
+   inline-style override on this site. */
+@media (max-width: 1023px) {
+  .wpl-name { color: #1a1a1a !important; }
+  .wpl-num  { opacity: 0.65 !important; }
+}
+
+/* ── /work/[slug] single project page (ProjectDetail.tsx) ────────────
+   No responsive CSS existed here either. Nothing overflowed outright
+   at mobile widths (unlike the /work listing page), but four grid
+   layouts stayed at their desktop column counts regardless of width,
+   which is its own kind of broken: stats forced 4 equal columns
+   squeezed "E-commerce Website" onto 3 wrapped lines while "2024" sat
+   in the same row with 100px of empty space around it (measured:
+   124.5px tall row driven entirely by the one wrapping cell); the
+   gallery forced up to 5 columns, shrinking thumbnails to ~69px —
+   smaller than the number badges elsewhere on the page; brief's
+   description+tags and each feature's number+title+description did
+   the same thing at a narrower scale. 768px+ measured fine as built
+   (192px stat cells, 144px gallery thumbnails, comfortable column
+   widths throughout) so this is mobile-only. */
+@media (max-width: 1023px) {
+  /* Same "shouldn't force a full 100vh" fix as WorkPageHero and for
+     the same reason — the title/type tag/meta only ever fill a small
+     middle chunk of a full-screen box, even for long project names. */
+  .pd-hero-section { height: auto !important; min-height: 60dvh !important; }
+}
+
+@media (max-width: 767px) {
+  /* N → 2 columns. Cell count varies (4-6) since Role/Duration only
+     render when a project actually has them set, so this can't assume
+     a fixed 2x2 grid — it has to redraw the "+" divider pattern for
+     however many rows the cell count produces. Right border on every
+     left-column cell, none on right-column cells; bottom border on
+     every cell except the last row, using the standard "last row in
+     an N-column grid" nth-child trick (last cell alone in odd-total
+     grids vs. the last two cells in even-total ones) so it stays
+     correct whether the last row ends up with 1 or 2 cells. */
+  .pd-stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .pd-stat:nth-child(odd)  { border-right: 1px solid rgba(26,26,26,0.1) !important; }
+  .pd-stat:nth-child(2n)   { border-right: none !important; }
+  .pd-stat { border-bottom: 1px solid rgba(26,26,26,0.1) !important; }
+  .pd-stat:nth-last-child(1):nth-child(odd)  { border-right: none !important; border-bottom: none !important; }
+  .pd-stat:nth-last-child(1):nth-child(even),
+  .pd-stat:nth-last-child(2):nth-child(odd)  { border-bottom: none !important; }
+
+  /* Description | Tech Stack stack instead of splitting a 390px row
+     into two ~165px columns. */
+  .pd-brief-bottom { grid-template-columns: 1fr !important; }
+
+  /* Was number | title | description as 3 side-by-side columns
+     (measured: title column only 112px, description 157px, wrapping
+     onto 4-5 lines each). Restructured via grid-template-areas to
+     number+title sharing a line and description spanning full width
+     below — same content, laid out the way the mobile menu overlay's
+     rows already read (short label line, longer text below it). */
+  .pd-feat-row {
+    grid-template-columns: 32px 1fr !important;
+    grid-template-areas: "num title" "desc desc" !important;
+    gap: 6px 12px !important;
+  }
+  .pd-feat-num   { grid-area: num !important; }
+  .pd-feat-title { grid-area: title !important; }
+  .pd-feat-desc  { grid-area: desc !important; margin-top: 6px !important; }
+
+  /* Up to 5 equal columns → 2. However many images a project has,
+     390px ÷ 5 was never going to read as a real gallery. */
+  .pd-gallery-grid { grid-template-columns: 1fr 1fr !important; }
+}

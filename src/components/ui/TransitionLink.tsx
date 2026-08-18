@@ -7,13 +7,6 @@ import { useRouter, usePathname } from 'next/navigation'
 import type { AnchorHTMLAttributes, MouseEvent } from 'react'
 import { usePageTransitionStore } from '@/store/usePageTransitionStore'
 
-/* How long the reveal takes to fully cover the screen — must match
-   PageTransitionOverlay's own circleTransition.duration (620ms)
-   exactly, not just roughly; router.push() fires right at that mark,
-   so the actual page swap happens exactly as the circle finishes
-   covering the screen, not noticeably before or after it. */
-const COVER_DELAY = 620
-
 type TransitionLinkProps = LinkProps &
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps | 'href'>
 
@@ -60,7 +53,26 @@ const TransitionLink = forwardRef<HTMLAnchorElement, TransitionLinkProps>(
             return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
           })()
       start(origin)
-      setTimeout(() => router.push(hrefStr), COVER_DELAY)
+      /* Fire the navigation immediately instead of waiting out the
+         cover animation first (the previous COVER_DELAY-timed call).
+         That delay assumed navigation itself was ~instant, so router.
+         push() was scheduled to land right as the circle finished
+         covering the screen. When a route actually has to do work
+         first — a dynamic project page's own DB query, or a route
+         that hasn't been prefetched — the fetch didn't even START
+         until the cover animation was already done, so the "loading"
+         dots kept spinning with no visible cause: from the user's
+         side, the animation had finished and the page just sat there
+         before eventually redirecting.
+         Starting the fetch now gives it the full cover-animation
+         window as real head-start time instead of dead time. This is
+         safe against the opposite problem (revealing before the
+         cover animation has visually finished, on a fast/cached
+         route that resolves in a few ms) because PageTransitionOverlay's
+         reveal is gated on the cover duration having elapsed as well
+         as the route having changed — see its onPathnameChange
+         effect. */
+      router.push(hrefStr)
     }
 
     return (

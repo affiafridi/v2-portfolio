@@ -144,14 +144,25 @@ function StickyHeader() {
           : { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] } /* show/mount: same feel as before */
       }
     >
+      {/* Background/border/text opacities all bumped up from their
+         original values — on a page whose own hero is already near-
+         black (ProjectDetail's `#0d0d0d`, essentially the same value
+         as this pill's old rgba(10,10,10,0.90) background), the pill
+         had almost no visible edge against it and its 38%-opacity idle
+         text read as barely-there. A lighter pill fill + stronger
+         border gives it a real boundary against any backdrop — dark
+         hero or light cream — rather than needing to know what's
+         behind it, and the brighter idle text is easier to read
+         everywhere, not just on the dark-hero pages this was reported
+         from. */}
       <nav
         className="pointer-events-auto flex items-center justify-between px-6 py-4"
         style={{
           width:                'min(90vw, 500px)',
-          background:           'rgba(10,10,10,0.90)',
+          background:           'rgba(30,30,30,0.92)',
           backdropFilter:       'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          border:               '1px solid rgba(240,240,240,0.08)',
+          border:               '1px solid rgba(240,240,240,0.16)',
           borderRadius:         '20px',
         }}
       >
@@ -159,9 +170,9 @@ function StickyHeader() {
         <button
           onClick={openContact}
           className="text-[11px] font-medium uppercase tracking-[0.15em]"
-          style={{ color: 'rgba(240,240,240,0.38)', transition: 'color 0.2s ease', background: 'none', border: 'none', cursor: 'none', padding: 0 }}
+          style={{ color: 'rgba(240,240,240,0.62)', transition: 'color 0.2s ease', background: 'none', border: 'none', cursor: 'none', padding: 0 }}
           onMouseEnter={(e) => { e.currentTarget.style.color = '#f0f0f0'; setCursorType('hover') }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(240,240,240,0.38)'; setCursorType('default') }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(240,240,240,0.62)'; setCursorType('default') }}
         >
           Let&apos;s talk
         </button>
@@ -170,9 +181,9 @@ function StickyHeader() {
         <Link
           href="/"
           aria-label="Home"
-          style={{ color: 'rgba(240,240,240,0.55)', transition: 'color 0.2s ease' }}
+          style={{ color: 'rgba(240,240,240,0.70)', transition: 'color 0.2s ease' }}
           onMouseEnter={(e) => { e.currentTarget.style.color = '#f0f0f0'; setCursorType('hover') }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(240,240,240,0.55)'; setCursorType('default') }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(240,240,240,0.70)'; setCursorType('default') }}
         >
           <LogoMark />
         </Link>
@@ -180,14 +191,24 @@ function StickyHeader() {
         {/* Right: Menu toggle — hover to open */}
         <button
           className="flex items-center gap-2.5 text-[11px] font-medium uppercase tracking-[0.15em]"
-          style={{ color: 'rgba(240,240,240,0.38)', transition: 'color 0.2s ease' }}
+          style={{ color: 'rgba(240,240,240,0.62)', transition: 'color 0.2s ease' }}
           aria-label="Toggle menu"
           aria-expanded={isOpen}
           onMouseEnter={(e) => { cancelMenuClose(); open(); e.currentTarget.style.color = '#f0f0f0'; setCursorType('hover') }}
-          onMouseLeave={(e) => { scheduleMenuClose(close); e.currentTarget.style.color = 'rgba(240,240,240,0.38)'; setCursorType('default') }}
+          onMouseLeave={(e) => { scheduleMenuClose(close); e.currentTarget.style.color = 'rgba(240,240,240,0.62)'; setCursorType('default') }}
         >
           Menu
-          <span className="flex flex-col gap-[4px]" aria-hidden="true">
+          {/* Fixed h-6 w-6 — same box MenuOverlay's Close "×" circle uses
+             (h-6 w-6 rounded-full). The two buttons share this exact
+             right-side padding (px-6) in visually-identical containers,
+             so matching the icon's own bounding box too is what makes
+             the right edge land on the same pixel in both states —
+             before this, the hamburger's lines sized to their own
+             ~16px content instead of a fixed box, landing a few px
+             short of where the close circle's edge sits, so opening
+             read as a small jump instead of the label/icon swapping
+             in place. */}
+          <span className="flex h-6 w-6 flex-col items-center justify-center gap-[4px]" aria-hidden="true">
             <motion.span
               className="block h-px w-4 bg-current"
               animate={isOpen ? { rotate: 45, y: 3.5 } : { rotate: 0, y: 0 }}

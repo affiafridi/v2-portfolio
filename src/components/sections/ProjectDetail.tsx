@@ -178,11 +178,23 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
     return () => ctx.revert()
   }, [])
 
+  /* Role/Duration only appear when set from the admin dashboard — an
+     empty stat column would otherwise show up blank on projects that
+     never had those fields filled in. */
+  const statEntries = [
+    { label: 'Type', value: project.type ?? 'Website' },
+    { label: 'Year', value: String(project.year) },
+    ...(project.role ? [{ label: 'Role', value: project.role }] : []),
+    ...(project.duration ? [{ label: 'Duration', value: project.duration }] : []),
+    { label: 'Client', value: project.client ?? 'Personal Project' },
+  ]
+
   return (
     <main ref={sectionRef}>
 
       {/* ══ 1. HERO ════════════════════════════════════════════════ */}
       <section
+        className="pd-hero-section"
         style={{
           height: '100vh', background: DARK, position: 'relative',
           display: 'flex', flexDirection: 'column',
@@ -249,16 +261,12 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
       <section className="pd-stats" style={{
         background: CREAM, borderTop: `1px solid ${INK}10`,
       }}>
-        <div style={{
+        <div className="pd-stats-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: `repeat(${statEntries.length + 1}, 1fr)`,
         }}>
           {/* Type */}
-          {[
-            { label: 'Type',   value: project.type   ?? 'Website'         },
-            { label: 'Year',   value: String(project.year)                },
-            { label: 'Client', value: project.client ?? 'Personal Project' },
-          ].map((stat, i) => (
+          {statEntries.map((stat, i) => (
             <div key={stat.label} className="pd-stat" style={{
               padding: 'clamp(20px,2.8vw,36px) clamp(20px,3vw,44px)',
               borderRight: `1px solid ${INK}10`,
@@ -372,7 +380,7 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
         }} />
 
         {/* Bottom 2-col: challenge + tags */}
-        <div style={{
+        <div className="pd-brief-bottom" style={{
           display: 'grid',
           gridTemplateColumns: project.challenge ? 'minmax(0,1.1fr) minmax(0,0.9fr)' : '1fr',
           gap: 'clamp(40px,6vw,100px)',
@@ -466,7 +474,7 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
                     height: '1px', background: 'rgba(255,255,255,0.08)',
                     transformOrigin: 'left center',
                   }} />
-                  <div style={{
+                  <div className="pd-feat-row" style={{
                     display: 'grid',
                     gridTemplateColumns: 'clamp(40px,5vw,72px) 1fr 1.4fr',
                     gap: 'clamp(16px,2.5vw,40px)',
@@ -514,7 +522,7 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
         <section className="pd-gallery" style={{
           background: CREAM, padding: 'clamp(40px,5vw,72px) clamp(10px,1.2vw,16px)',
         }}>
-          <div style={{
+          <div className="pd-gallery-grid" style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${Math.min(project.gallery.length, 5)}, 1fr)`,
             gap: 'clamp(6px,0.8vw,10px)',

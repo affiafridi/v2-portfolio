@@ -49,11 +49,32 @@ export default function Cursor() {
       gsap.set(dw, { x: mouseX, y: mouseY })
     }
 
+    /* The ring's own lerp (below) is a deliberate trailing-follow feel,
+       but it means the ring can sit visibly behind the true pointer
+       position during/just after fast movement — reported as the
+       click-anchored page transition (TransitionLink/PageTransition-
+       Overlay) not "starting from where I clicked" on mouse specifically
+       (never on touch, which has no cursor ring to compare against).
+       That circle already grows from the real click event's clientX/
+       clientY, unrelated to this ring at all — the mismatch was purely
+       the ring lagging behind the spot the user was actually looking
+       at when they clicked. Snapping the ring to the exact position on
+       mousedown (before the resulting click/transition fires) closes
+       that gap right when it's visually being judged, without touching
+       the lerped feel during normal movement. */
+    const onDown = (e: MouseEvent) => {
+      mouseX = e.clientX
+      mouseY = e.clientY
+      ringX = mouseX
+      ringY = mouseY
+      gsap.set(rw, { x: ringX, y: ringY })
+    }
+
     const tick = () => {
       /* deltaRatio(60) normalises the lerp to 60 fps so it feels the
          same on 60 Hz, 120 Hz, and 144 Hz displays.                  */
       const dr = gsap.ticker.deltaRatio(60)
-      const lerp = 0.10 * dr
+      const lerp = 0.32 * dr
       ringX += (mouseX - ringX) * lerp
       ringY += (mouseY - ringY) * lerp
       gsap.set(rw, { x: ringX, y: ringY })
@@ -61,6 +82,7 @@ export default function Cursor() {
 
     gsap.ticker.add(tick)
     window.addEventListener('mousemove', onMove)
+    window.addEventListener('mousedown', onDown)
 
     /* Hide ring when cursor leaves the window */
     const onLeave  = () => gsap.to(ringRef.current,  { opacity: 0, duration: 0.2 })
@@ -71,6 +93,7 @@ export default function Cursor() {
     return () => {
       gsap.ticker.remove(tick)
       window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mousedown', onDown)
       document.removeEventListener('mouseleave', onLeave)
       document.removeEventListener('mouseenter', onEnter)
     }

@@ -219,8 +219,14 @@ export default function MenuOverlay() {
         >
 
           {/* ── TOP BAR ────────────────────────────────────────── */}
+          {/* py-4, not py-5 — StickyHeader's nav (Header.tsx) uses py-4;
+             the extra py-5 padding here made this row taller, which
+             pushed its vertically-centered content (the Close button)
+             a few px lower than where the Menu button sits in the
+             shorter row — read as the icon landing "too far down" when
+             the menu opens instead of swapping in place. */}
           <div
-            className="mo-topbar flex items-center justify-between px-6 py-5"
+            className="mo-topbar flex items-center justify-between px-6 py-4"
             style={{ borderBottom: `1px solid ${DIVIDER}` }}
           >
             {/* Availability pulse */}
@@ -244,11 +250,17 @@ export default function MenuOverlay() {
             </div>
 
             {/* Close */}
+            {/* translateX(-3px) — a measured-by-feel nudge on top of the
+               py-4 fix above and the icon's own h-6 w-6 box (matching
+               size to Header.tsx's Menu icon) — those two accounted for
+               the bulk of the offset from the Menu button's position,
+               this closes the last couple of px so the icon lands on
+               the same spot instead of just close to it. */}
             <button
               onClick={close}
               className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em]
                          transition-colors duration-200"
-              style={{ color: MUTED }}
+              style={{ color: MUTED, transform: 'translateX(-3px)' }}
               onMouseEnter={(e) => { e.currentTarget.style.color = CREAM; setCursorType('hover') }}
               onMouseLeave={(e) => { e.currentTarget.style.color = MUTED; setCursorType('default') }}
               aria-label="Close menu"

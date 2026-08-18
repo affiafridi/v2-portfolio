@@ -180,14 +180,16 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
             <div key={project.slug}>
               <Link
                 href={`/work/${project.slug}`}
+                className="wpl-row"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: 'clamp(16px,2vw,28px) 0', textDecoration: 'none', cursor: 'none' }}
                 onMouseEnter={() => handleEnter(i)}
               >
                 {/* Number + Name */}
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(16px,2vw,28px)', flex: 1 }}>
+                <div className="wpl-row-inner" style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(16px,2vw,28px)', flex: 1, minWidth: 0 }}>
                   <span
                     ref={el => { numRefs.current[i] = el }}
+                    className="wpl-num"
                     style={{ fontSize: 'clamp(10px,0.85vw,12px)', fontWeight: 700,
                       letterSpacing: '0.14em', color: ACC, flexShrink: 0,
                       fontVariantNumeric: 'tabular-nums' }}
@@ -196,6 +198,7 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
                   </span>
                   <span
                     ref={el => { nameRefs.current[i] = el }}
+                    className="wpl-name"
                     style={{ fontSize: 'clamp(40px,6.5vw,100px)', fontWeight: 800,
                       letterSpacing: '-0.04em', lineHeight: 1, textTransform: 'uppercase',
                       color: `${INK}22`, userSelect: 'none' }}
@@ -204,6 +207,7 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
                   </span>
                   <span
                     ref={el => { tagRefs.current[i] = el }}
+                    className="wpl-type"
                     style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em',
                       textTransform: 'uppercase', color: ACC, opacity: 0, flexShrink: 0 }}
                   >
@@ -224,6 +228,7 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
       {/* ── Floating image preview ──────────────────────────────── */}
       <div
         ref={floatRef}
+        className="wpl-float"
         style={{ position: 'fixed', top: '50%', right: '6vw', transform: 'translateY(-50%)',
           width: 'min(28vw, 420px)', aspectRatio: '16/10',
           pointerEvents: 'none', zIndex: 200,
