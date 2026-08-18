@@ -95,8 +95,8 @@ export default function ContactModal() {
 
   useContactUrl(isOpen, close)
 
-  const panelRef = useRef<HTMLDivElement>(null)
-  const tlRef    = useRef<gsap.core.Timeline | null>(null)
+  const panelRef  = useRef<HTMLDivElement>(null)
+  const tlRef     = useRef<gsap.core.Timeline | null>(null)
 
   const [form, setForm] = useState({
     name:      '',
@@ -117,20 +117,79 @@ export default function ContactModal() {
         : [...prev.interests, tag],
     }))
 
-  /* ── Lock scroll (Lenis-aware) ────────────────────────────────── */
+  /* ── Close on Escape ──────────────────────────────────────────── */
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, close])
+
+  /* ── Lock scroll — event-based, not layout-based ──────────────────
+     A previous version of this lock used position:fixed on <body> to
+     freeze the page, then restored scroll position (via Lenis) on
+     close. That reliably blocked scroll on every device, but
+     position:fixed changes body's own box model while it's applied —
+     and WorkSection's scroll-jacked panel stack (a GSAP ScrollTrigger
+     pinning + scrubbing the whole About/projects sequence) re-measures
+     its cached trigger bounds whenever it notices a layout change
+     nearby. Closing the modal from partway through that section was
+     landing back at the very first panel instead of wherever the user
+     actually was — exactly what a mid-lock bounds recalculation would
+     cause, and no amount of care restoring the scroll position
+     afterward could fix it, since the trigger's own bounds were what
+     went stale, not just the scroll value.
+     Intercepting the events that actually cause scrolling — wheel,
+     touch drag, and scroll-relevant keys — blocks it just as
+     completely on every device, without the page ever moving or
+     resizing at all while the modal is open. Nothing here for
+     ScrollTrigger to notice, so nothing for it to recalculate against,
+     and no restore step is needed afterward since scroll position
+     never left where it was. */
   useEffect(() => {
     const lenis = (window as unknown as Record<string, unknown>).__lenis as
       | { stop: () => void; start: () => void }
       | undefined
 
-    if (isOpen) {
-      lenis ? lenis.stop() : (document.body.style.overflow = 'hidden')
-    } else {
-      lenis ? lenis.start() : (document.body.style.overflow = '')
+    if (!isOpen) {
+      lenis?.start()
+      return
     }
 
+    lenis?.stop()
+
+    const isInsideModal = (target: EventTarget | null) =>
+      target instanceof Node && !!panelRef.current?.contains(target)
+
+    /* The modal's own panel scrolls internally (data-lenis-prevent,
+       see below) when its content is taller than the viewport — this
+       lock is only for the page BEHIND it, so events starting inside
+       the panel pass through untouched. */
+    const preventScroll = (e: Event) => {
+      if (isInsideModal(e.target)) return
+      e.preventDefault()
+    }
+
+    const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])
+    const preventKeyScroll = (e: KeyboardEvent) => {
+      if (!SCROLL_KEYS.has(e.key)) return
+      const target = e.target as HTMLElement | null
+      const isFormField = !!target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable)
+      if (isFormField) return
+      e.preventDefault()
+    }
+
+    window.addEventListener('wheel', preventScroll, { passive: false })
+    window.addEventListener('touchmove', preventScroll, { passive: false })
+    window.addEventListener('keydown', preventKeyScroll, { passive: false })
+
     return () => {
-      lenis ? lenis.start() : (document.body.style.overflow = '')
+      window.removeEventListener('wheel', preventScroll)
+      window.removeEventListener('touchmove', preventScroll)
+      window.removeEventListener('keydown', preventKeyScroll)
+      lenis?.start()
     }
   }, [isOpen])
 

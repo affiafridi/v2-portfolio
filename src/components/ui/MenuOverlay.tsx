@@ -239,7 +239,7 @@ export default function MenuOverlay() {
                 className="text-[10px] uppercase tracking-[0.18em]"
                 style={{ color: MUTED }}
               >
-                Available for freelance
+                Open for work
               </span>
             </div>
 
@@ -293,7 +293,7 @@ export default function MenuOverlay() {
               className="mt-1 text-[10px] uppercase tracking-[0.22em]"
               style={{ color: 'rgba(240,238,234,0.25)' }}
             >
-              Creative Developer
+              Full-Stack Developer
             </span>
           </div>
 

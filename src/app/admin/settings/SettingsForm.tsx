@@ -49,6 +49,7 @@ interface SettingsData {
     availabilityText: string
     portraitImage: string
     portraitPositionDesktop: ImagePosition
+    portraitPositionTablet: ImagePosition
     portraitPositionMobile: ImagePosition
   }
   about: {
@@ -90,6 +91,7 @@ const EMPTY: SettingsData = {
     /* Matches the previous hardcoded object-position:top default (50% 0%) —
        existing sites see no visual change until an admin adjusts this. */
     portraitPositionDesktop: { x: 50, y: 0, zoom: 100 },
+    portraitPositionTablet:  { x: 50, y: 0, zoom: 100 },
     portraitPositionMobile:  { x: 50, y: 0, zoom: 100 },
   },
   about: { storyParagraph1: '', storyParagraph2: '', scrollRevealWords: [], stats: [], images: [] },
@@ -118,6 +120,7 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
       ...EMPTY.hero,
       ...initialData.hero,
       portraitPositionDesktop: { ...EMPTY.hero.portraitPositionDesktop, ...initialData.hero?.portraitPositionDesktop },
+      portraitPositionTablet:  { ...EMPTY.hero.portraitPositionTablet,  ...initialData.hero?.portraitPositionTablet },
       portraitPositionMobile:  { ...EMPTY.hero.portraitPositionMobile,  ...initialData.hero?.portraitPositionMobile },
     },
     about: { ...EMPTY.about, ...initialData.about },
@@ -237,8 +240,9 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
               <div className="space-y-2">
                 <Label>Portrait Position</Label>
                 <p className="text-xs text-neutral-500">
-                  Drag to set the focal point, zoom for pan room — desktop and mobile crop independently,
-                  exactly as they render on the live site.
+                  Drag to set the focal point, zoom for pan room — desktop, tablet, and mobile crop
+                  independently, exactly as they render on the live site. Tablet covers both portrait
+                  and landscape tablet widths (768-1279px), which share one crop box on the frontend.
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <PortraitPositionPicker
@@ -247,6 +251,13 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
                     value={data.hero.portraitPositionDesktop}
                     onChange={(pos) => setHero('portraitPositionDesktop', pos)}
                     aspectRatio={0.5}
+                  />
+                  <PortraitPositionPicker
+                    label="Tablet"
+                    imageUrl={data.hero.portraitImage}
+                    value={data.hero.portraitPositionTablet}
+                    onChange={(pos) => setHero('portraitPositionTablet', pos)}
+                    aspectRatio={1.3}
                   />
                   <PortraitPositionPicker
                     label="Mobile"

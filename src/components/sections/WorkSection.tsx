@@ -362,6 +362,7 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
      one single source of truth, so it's bidirectional by construction
      — no separate "reset and replay" logic needed at all. */
   const aboutWordTl = useRef<gsap.core.Timeline | null>(null)
+  const aboutWordsForcedRef = useRef(false)
   const P          = PROJECTS.length            // project count (4)
   /* PIN_UNITS is how many "slots" the pinned timeline actually plays
      through (ABOUT_HOLD_UNITS dead time + P transitions = 6) — this is
@@ -396,6 +397,18 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
         if (idx === 0) {
           if (!aboutIntroShown.current) {
             aboutIntroShown.current = true
+            /* Mobile/tablet only — on desktop the stats sit in their own
+               row, visually separate enough that starting them while the
+               statement is still animating in reads as parallel motion,
+               not a race. Stacked single-column on mobile/tablet, stats
+               sit directly under the statement, so the same overlap read
+               as everything animating at once instead of a clear
+               sequence. Pushing stats/CTA out until the statement's own
+               fade (delay 0.45 + duration 0.9 = finishes ~1.35s) is done
+               makes it step through: heading → stats one by one (still
+               the same blur-in-and-stagger treatment as the project
+               tags) → CTA. */
+            const isMobileOrTablet = window.innerWidth < 1280
             gsap.fromTo('.ab-title',
               { y: -36, opacity: 0 },
               { y: 0, opacity: 1, duration: 1.1, ease: 'power3.out' }
@@ -404,13 +417,30 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
               { x: -32, opacity: 0 },
               { x: 0, opacity: 1, duration: 0.9, ease: 'power3.out', stagger: 0.18, delay: 0.3 }
             )
+            /* .ab-statement's own opacity is left alone here — that's the
+               PARENT <p>, separate from the per-word ghost/reveal opacity
+               the scroll-scrubbed aboutWordTl already drives on the child
+               .ab-word spans. Fading the parent in as its own step means
+               the statement (even at its dim resting "ghost" state) stays
+               fully invisible until title/bio have already appeared,
+               instead of being visible — however faintly — the instant
+               any sliver of the panel scrolls into view, well before
+               revealPanel(0) even fires (opacity is real CSS opacity, not
+               gated by anything pre-reveal, so it was reading as "the
+               statement peeks in before the heading does"). Opacity
+               multiplies with the children's own, so this doesn't
+               interfere with their independent ghost/scrub values. */
+            gsap.fromTo('.ab-statement',
+              { y: 20, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out', delay: 0.45 }
+            )
             gsap.fromTo('.ab-stat',
               { opacity: 0, filter: 'blur(10px)', x: 6 },
-              { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', stagger: { each: 0.18, from: 'start' }, delay: 0.6 }
+              { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', stagger: { each: 0.18, from: 'start' }, delay: isMobileOrTablet ? 1.4 : 0.6 }
             )
             gsap.fromTo('.ab-cta',
               { opacity: 0, filter: 'blur(10px)', x: 6 },
-              { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', delay: 1.14 }
+              { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', delay: isMobileOrTablet ? 2.25 : 1.14 }
             )
           }
           return
@@ -482,6 +512,7 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
          content, revealed via revealPanel(0) above. */
       gsap.set('.ab-title',     { opacity: 0, y: -36 })
       gsap.set('.ab-left-item', { opacity: 0, x: -32 })
+      gsap.set('.ab-statement', { opacity: 0, y: 20 })
       gsap.set('.ab-stat',      { opacity: 0, filter: 'blur(10px)', x: 6 })
       gsap.set('.ab-cta',       { opacity: 0, filter: 'blur(10px)', x: 6 })
 
@@ -522,11 +553,17 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
         onLeaveBack: () => resetPanels(),
       })
 
-      /* Mobile only — the sticky nav pill sits over enough of the panel
-         that it crowds the project content. Hide it for the duration of
-         this section's scroll-jacked range, show it again once the user
-         has scrolled past (either direction). */
-      if (isMobile) {
+      /* Mobile AND tablet-portrait (<1024) — the sticky nav pill sits
+         over enough of the panel (About's title, or a project's ring/
+         tags) that it crowds the content at these widths too, same as
+         mobile. A separate check from isMobile above (which stays
+         768px — that one only tunes scrub feel for touch, unrelated to
+         this) so this doesn't accidentally change animation timing.
+         Hide it for the duration of this section's scroll-jacked
+         range, show it again once the user has scrolled past (either
+         direction). */
+      const hideNavThroughWork = window.innerWidth < 1024
+      if (hideNavThroughWork) {
         ScrollTrigger.create({
           trigger: sectionRef.current!,
           start:   'top top',
@@ -581,9 +618,27 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
              currentUnit each frame rather than replaying a one-shot
              tween. Clamped past ABOUT_HOLD_UNITS so it stays fully
              revealed (not reset) while scrolled into the projects. */
-          aboutWordTl.current?.progress(
-            gsap.utils.clamp(0, 1, currentUnit / ABOUT_HOLD_UNITS)
-          )
+          const wordProgress = gsap.utils.clamp(0, 1, currentUnit / ABOUT_HOLD_UNITS)
+          aboutWordTl.current?.progress(wordProgress)
+
+          /* Belt-and-suspenders: a couple of specific words (reported:
+             "a" and the accent "C++") were staying visually stuck at
+             their dim resting opacity even once scrolled well past
+             this point, on every browser tested — not a timing/stagger
+             race that ever catches up on its own. Rather than chase
+             the exact cause inside GSAP's stagger internals, force
+             every word to its fully-revealed end state directly once
+             scroll has genuinely moved past the hold phase, bypassing
+             the timeline/stagger machinery entirely for this case. Ref-
+             gated so it's one hard correction, not a per-frame write. */
+          if (wordProgress >= 1) {
+            if (!aboutWordsForcedRef.current) {
+              aboutWordsForcedRef.current = true
+              gsap.set('.ab-word', { opacity: 1 })
+            }
+          } else {
+            aboutWordsForcedRef.current = false
+          }
 
           /* These dots represent "which project" — meaningless while
              About (idx 0) is active, since it isn't one of them. They

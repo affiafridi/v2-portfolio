@@ -27,6 +27,21 @@ export default function PageTransitionOverlay() {
     prevPathname.current = pathname
   }, [pathname, active, end])
 
+  // Safety net: this whole mechanism depends on `pathname` changing to
+  // fire the effect above — if a navigation ever fails to change route
+  // (a thrown error mid-render, a redirect back to the same path, or
+  // any edge case that doesn't trip Next's router the way expected),
+  // there's nothing left to end() the overlay and it stays covering
+  // the screen indefinitely. This forces it closed a couple of seconds
+  // after the reveal should have finished no matter what happened
+  // underneath, so a broken navigation degrades to "overlay clears
+  // early" instead of "page is stuck covered forever".
+  useEffect(() => {
+    if (!active) return
+    const t = setTimeout(() => end(), 3000)
+    return () => clearTimeout(t)
+  }, [active, end])
+
   // Point the reveal grows from — the click position (see TransitionLink),
   // falling back to viewport center for triggers with no click to read a
   // position from (e.g. the admin login redirect). Memoized on `origin`
@@ -68,7 +83,14 @@ export default function PageTransitionOverlay() {
         // up visibly. Nesting both inside one tracked wrapper means
         // there's only ever one mount/unmount cycle for AnimatePresence
         // to manage, not two independently-timed ones.
-        <div key="page-transition" style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none' }}>
+        // This wrapper is itself a motion.div (not a plain div) even
+        // though it has no animated properties of its own — a plain
+        // element as AnimatePresence's direct child, with only its
+        // *nested* children animating, is a less standard pattern and
+        // one place AnimatePresence has been seen to lose track of
+        // when the exit animation actually finished, leaving the whole
+        // subtree mounted (and covering the screen) indefinitely.
+        <motion.div key="page-transition" style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none' }}>
           <motion.div
             initial={{ clipPath: `circle(0px at ${point.x}px ${point.y}px)` }}
             animate={{ clipPath: `circle(${maxRadius}px at ${point.x}px ${point.y}px)` }}
@@ -105,46 +127,7 @@ export default function PageTransitionOverlay() {
               <span className="pt-dot" style={{ animationDelay: '0.3s' }} />
             </motion.div>
           </motion.div>
-
-          {/* Leading-edge ring — clip-path has no stroke of its own, so
-              on two pages with similar background colors the reveal's
-              boundary can be almost invisible, making the bloom hard to
-              actually see happening. This is a separate, unclipped
-              circle (not nested inside the div above — being clipped
-              along with it would cut its own border off right at the
-              same edge it's meant to trace) driven by the exact same
-              transition config, so its edge stays locked to the reveal
-              boundary the whole time.
-              Sized at its FINAL diameter from the start (left/top/width/
-              height are all static, computed once) and animated purely
-              via `scale` — animating width/height directly forces a
-              browser layout recalc on every frame, and under any frame
-              pressure that shows up as the border visibly doubling/
-              smearing ("stacking") instead of tracing one clean edge.
-              scale is a transform, so it's compositor-only: no layout
-              work per frame, and it scales from the element's own
-              center by default, which (since the box is already
-              centered on `point`) keeps the edge exactly where the
-              clip-path's edge is throughout. */}
-          <motion.div
-            aria-hidden
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{    scale: 0, opacity: 0 }}
-            transition={circleTransition}
-            style={{
-              position:      'absolute',
-              left:          point.x - maxRadius,
-              top:           point.y - maxRadius,
-              width:         maxRadius * 2,
-              height:        maxRadius * 2,
-              borderRadius:  '50%',
-              border:        '1.5px solid rgba(120,120,120,0.4)',
-              boxSizing:     'border-box',
-              willChange:    'transform',
-            }}
-          />
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   )

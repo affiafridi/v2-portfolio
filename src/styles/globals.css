@@ -160,24 +160,20 @@ body {
      here recovers width for the note block on the right so it doesn't
      end up flush against the label with zero gap between them. */
   .mo-item-left { gap: 10px !important; }
-  /* Notes ("Home", "What I build", …) only ever appear on hover, so
-     they were permanently invisible on mobile — same fix as the
-     thumbnail above: force them visible instead of hover-gated.
-     Shrunk and wraps (not nowrap) so a long one ("Selected projects")
-     breaks onto a second line instead of stretching the row wide
-     enough to butt against the label with no gap. */
-  .mo-item-note {
-    opacity:     1 !important;
-    font-size:   8px !important;
-    max-width:   56px;
-    text-align:  right;
-    line-height: 1.3;
+  /* Notes ("Home", "What I build", …) only ever appear on hover.
+     Tried forcing them visible three different ways (right-aligned,
+     stacked below, inline after the label) — every placement either
+     cramped against the label or, once some notes were short enough to
+     stay inline and others weren't, read as inconsistent row-to-row.
+     Simplest fix, and the one actually asked for: just don't show them
+     on mobile — number, thumbnail, and label carry the row fine on
+     their own without a caption fighting for space. */
+  .mo-item-note { display: none !important; }
+  .mo-item {
+    justify-content: flex-start !important;
+    padding-top:     10px !important;
+    padding-bottom:  10px !important;
   }
-  /* justify-content:space-between only creates room when there's slack
-     to distribute — with a long label AND a long note, both sides can
-     land at their natural width with nothing left between them. gap
-     forces a hard minimum regardless of how much either side claims. */
-  .mo-item { padding-top: 10px !important; padding-bottom: 10px !important; gap: 10px; }
 }
 
 /* ─── Hide native cursor everywhere ─────────────────────────────── */
@@ -356,30 +352,96 @@ section, footer, header, main, div {
   .hj-cta             { margin-top: 1.1rem !important; padding: 12px 22px !important; }
 }
 
+/* Short-viewport phones (iPhone SE/5, ~568px tall, and similar) — the
+   767px rule above sizes the portrait at 62dvh and starts .hj-left at
+   64dvh+18px, leaving just enough room for heading+bio+CTA at a 812px-
+   tall viewport. At 568px tall that same math pushes the CTA button's
+   natural (post-entrance-animation) position ~21px past the bottom of
+   the viewport — real content, just rendering below the fold, where it
+   also visually collides with the next section's (About's) title
+   sitting immediately below Hero in normal document flow. Shrinking the
+   portrait and shifting .hj-left up recovers that room; the heading/
+   bio/CTA trims on top of that add margin so this isn't a hairline fit. */
+@media (max-width: 767px) and (max-height: 620px) {
+  .hj-portrait-outer { height: 54dvh !important; }
+  .hj-left            { top: calc(56dvh + 14px) !important; }
+  .hj-heading         { font-size: clamp(24px, 7vw, 30px) !important; margin-bottom: 0.5rem !important; }
+  .hj-bio-text        { font-size: 12px !important; line-height: 1.45 !important; }
+  .hj-cta             { margin-top: 0.7rem !important; padding: 10px 20px !important; }
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
   .hj-section        { min-height: 100dvh !important; }
   .hj-meta           { display: none !important; }
   .hj-portrait-outer {
-    width: 100% !important; height: 55dvh !important;
+    width: 100% !important; height: 60dvh !important;
     top: 0 !important; right: 0 !important; transform: none !important;
   }
+  /* Tablet gets its own admin-adjustable focal point/zoom, same as
+     mobile and desktop already have — the shared desktop var was
+     leaving the face out of frame on tablet-portrait widths, with no
+     way to correct it short of editing code. */
+  .hj-portrait-img {
+    object-position:  var(--hero-pos-tablet, 50% 0%) !important;
+    transform:        scale(var(--hero-zoom-tablet, 1)) !important;
+    transform-origin: var(--hero-pos-tablet, 50% 0%) !important;
+  }
   .hj-frame-1, .hj-frame-2 { display: none !important; }
-  .hj-headline       { bottom: auto !important; top: 49dvh !important; }
+  .hj-headline       { bottom: auto !important; top: 54dvh !important; }
   .hj-marquee-span   { font-size: clamp(60px, 9vw, 100px) !important; }
-  .hj-left           { top: 62dvh !important; left: 5% !important; width: 80% !important; }
+  .hj-left           { top: 67dvh !important; left: 5% !important; width: 80% !important; }
+  /* Same collision as mobile, same fix — the portrait spans the full
+     section width here too (see .hj-portrait-outer above), so these
+     desktop corner positions (14px from each edge of what used to be a
+     narrower, right-aligned box) now land directly under the fixed
+     header instead of inside a clear portrait frame: the toggle
+     overlapping "Aftab", the badge's full text colliding with "Menu".
+     isMobile in HeroSection.tsx now also collapses the badge to just
+     its dot at this width (tap to open), same as real mobile. */
+  .hj-color-toggle {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+  .hj-avail-badge {
+    top: auto !important; bottom: calc(22px + 10%) !important;
+    left: 50% !important; right: auto !important;
+    transform: translateX(-50%) !important;
+  }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
   .hj-section        { min-height: 100dvh !important; }
   .hj-meta           { display: none !important; }
   .hj-portrait-outer {
-    width: 100% !important; height: 55dvh !important;
+    width: 100% !important; height: 60dvh !important;
     top: 0 !important; right: 0 !important; transform: none !important;
   }
+  .hj-portrait-img {
+    object-position:  var(--hero-pos-tablet, 50% 0%) !important;
+    transform:        scale(var(--hero-zoom-tablet, 1)) !important;
+    transform-origin: var(--hero-pos-tablet, 50% 0%) !important;
+  }
   .hj-frame-1, .hj-frame-2 { display: none !important; }
-  .hj-headline       { bottom: auto !important; top: 49dvh !important; }
+  .hj-headline       { bottom: auto !important; top: 54dvh !important; }
   .hj-marquee-span   { font-size: clamp(72px, 8vw, 120px) !important; }
+  /* .hj-left stays at its original top (not shifted down to match the
+     taller portrait above) — at a short-height "small laptop" combo
+     like 1024x768 it's already at essentially zero spare below the
+     CTA (measured: fits, but with no margin to give up); the portrait
+     height/hj-left gap has enough slack on its own (23px+ measured)
+     without needing to push hj-left down too. */
   .hj-left           { top: 63dvh !important; left: 5% !important; width: 60% !important; }
+  /* Same fix as the 768-1023 tier above — full-width portrait collides
+     with the fixed header at this width too. */
+  .hj-color-toggle {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+  .hj-avail-badge {
+    top: auto !important; bottom: calc(22px + 10%) !important;
+    left: 50% !important; right: auto !important;
+    transform: translateX(-50%) !important;
+  }
 }
 
 @media (min-width: 1280px) and (max-width: 1439px) {
@@ -421,8 +483,23 @@ section, footer, header, main, div {
      longer drift based on how much room happens to be left over. */
   .ab-section   { justify-content: flex-start !important; }
   .ab-title     { font-size: clamp(40px, 12vw, 56px) !important; margin-bottom: 20px !important; }
-  .ab-body      { grid-template-columns: 1fr !important; gap: 24px !important; overflow: hidden !important; flex-shrink: 0 !important; min-height: max-content !important; margin-bottom: 22px !important; }
-  .ab-statement { font-size: clamp(24px, 7vw, 34px) !important; overflow: hidden !important; overflow-wrap: normal !important; word-break: normal !important; }
+  /* gap (space above the statement) and margin-bottom (space below it,
+     before the stats) bumped up from 24/22 — measured ~91px of spare
+     room at a standard 390x812 phone (the statement text got shorter
+     since these were last tuned), room enough to give the statement
+     real breathing space instead of reading almost flush against the
+     stats below it. The three shorter-viewport tiers further down this
+     file (850px+/700px/620px height) redefine gap/margin-bottom again
+     with their own tighter, already-verified-safe values and come
+     later in the cascade, so they still win at those heights — this
+     change only actually reaches the standard-height case. */
+  .ab-body      { grid-template-columns: 1fr !important; gap: 34px !important; overflow: hidden !important; flex-shrink: 0 !important; min-height: max-content !important; margin-bottom: 42px !important; }
+  /* justify, not left — the bio paragraphs above already use
+     text-align:justify (flush on both edges); the statement never had
+     it, so its ragged-right wrap read as narrower than the fully-
+     justified paragraph above it even though both are the same 100%-
+     width grid column. */
+  .ab-statement { font-size: clamp(24px, 7vw, 34px) !important; overflow: hidden !important; overflow-wrap: normal !important; word-break: normal !important; text-align: justify !important; }
   /* gap here is the space between the stat counters and the CTA
      button — .ab-footer wraps them onto separate lines on mobile
      (they no longer fit on one row with justify-content:space-between
@@ -477,18 +554,78 @@ section, footer, header, main, div {
   .ab-footer      { gap: 20px !important; padding-top: 6px !important; }
 }
 
+/* Even shorter phones (iPhone SE/5, ~568px tall) — the 700px tier above
+   is tuned for ~667px-tall viewports (measured: fits with ~10px to
+   spare there). At 568px tall the same rules still overflow the fixed-
+   height panel by ~47px, and since .ab-body has flex-shrink:0 (see the
+   767px rule's comment — required to stop the internal text-overlap
+   bug) that excess doesn't compress, it overflows .ab-section's own
+   bottom edge and gets clipped by wk-panel's overflow:hidden, taking
+   the footer's stat numbers with it. This tier layers tighter spacing
+   and slightly smaller title/statement sizes on top (measured: ~33px
+   to spare at 568px tall, so not a hairline fit). */
+@media (max-width: 767px) and (max-height: 620px) {
+  .ab-section     { padding: 18px 18px 14px !important; }
+  .ab-title       { margin-bottom: 10px !important; font-size: clamp(34px, 10.5vw, 50px) !important; }
+  .ab-body        { gap: 16px !important; margin-bottom: 12px !important; }
+  .ab-bio-col     { gap: 0.65rem !important; }
+  .ab-left-item p { line-height: 1.45 !important; font-size: 12.5px !important; }
+  .ab-statement   { font-size: clamp(21px, 6vw, 28px) !important; }
+  .ab-footer      { gap: 18px !important; padding-top: 5px !important; }
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
-  .ab-section   { padding: 56px 40px 56px !important; }
-  .ab-title     { font-size: clamp(56px, 9vw, 88px) !important; margin-bottom: 48px !important; }
-  .ab-body      { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) !important; gap: 40px !important; overflow: hidden !important; }
-  .ab-statement { font-size: clamp(28px, 4vw, 52px) !important; overflow: hidden !important; }
+  /* Same root cause as the mobile fix below: .ab-section's inline style
+     is justify-content:space-between, sized for a 3-item flex column
+     (title/body/footer) that's much shorter than the fixed 100dvh
+     panel it lives in. The mobile tier below already overrides this to
+     flex-start; this tier never did, so space-between spread the whole
+     panel's leftover height as gaps between those 3 blocks — that's
+     the oversized gap under "About" seen at 768-1023px. The 2-column
+     body split (bio | statement) also reads as a lopsided, half-empty
+     row at this width — single column, same as mobile, reads cleaner
+     and leaves comfortable room to spare (measured: ~490px unused at
+     768x1024, ~600px+ at 820x1180). */
+  .ab-section   { padding: 40px 40px 32px !important; justify-content: center !important; }
+  .ab-title     { font-size: clamp(56px, 9vw, 88px) !important; margin-bottom: 24px !important; }
+  /* Same gap/margin bump and same reasoning as the mobile tier above —
+     even more headroom here (~260px+ measured spare at 768x1024). */
+  .ab-body      { grid-template-columns: minmax(0, 1fr) !important; gap: 40px !important; margin-bottom: 44px !important; overflow: hidden !important; flex-shrink: 0 !important; }
+  .ab-statement { font-size: clamp(28px, 4vw, 44px) !important; overflow: hidden !important; text-align: justify !important; }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
   .ab-section   { padding: clamp(56px, 6vw, 80px) clamp(32px, 5vw, 64px) !important; }
   .ab-title     { margin-bottom: clamp(40px, 5vw, 64px) !important; }
   .ab-body      { grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) !important; gap: clamp(32px, 4vw, 56px) !important; overflow: hidden !important; }
-  .ab-statement { overflow: hidden !important; }
+  /* No font-size override existed at this tier, so the statement
+     inherited the base clamp(40px,5.8vw,88px) — ~59px at 1024px wide.
+     At 5+ lines that pushed past the fixed-height panel and got
+     clipped at the bottom, taking the stats with it (same overflow-
+     clipped-by-wk-panel failure mode as the mobile short-viewport
+     case above, just from font-size instead of viewport height this
+     time). Measured with this smaller clamp: ~61px to spare at
+     1024x768, not a hairline fit. */
+  .ab-statement { font-size: clamp(28px, 3.6vw, 44px) !important; overflow: hidden !important; }
+}
+
+/* No tier at all existed here before, so 1280-1439px fell through to
+   the base inline clamp(40px,5.8vw,88px) — ~74px at 1280px wide,
+   which measured a real -28px overflow (not just tight: the stats row
+   was genuinely being clipped by wk-panel's overflow:hidden), same
+   failure mode as the 1024-1279 tier above just one breakpoint over. */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .ab-statement { font-size: clamp(32px, 4.2vw, 54px) !important; overflow: hidden !important; }
+}
+
+/* 1280-1439's tier was the last one that existed — 1440px and up fell
+   all the way through to the base inline clamp(40px,5.8vw,88px), which
+   at 1440px wide (~84px) doesn't overflow the panel (still ~76px to
+   spare) but reads oversized next to the rest of the section. Purely a
+   size/proportion request here, not an overflow bug like the tiers
+   below 1440px. */
+@media (min-width: 1440px) {
+  .ab-statement { font-size: clamp(36px, 4.6vw, 64px) !important; }
 }
 
 /* ── ServiceSection ──────────────────────────────────────────────── */
@@ -612,6 +749,46 @@ section, footer, header, main, div {
   .wk-cardstack-wrap { position: relative !important; margin-top: 128px !important; }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Same single-column, stacked "one project element after another"
+     treatment as the mobile tier above — the desktop 2-column split
+     (title/desc on the left, tags + card stack on the right) reads as
+     two half-empty columns at this width instead of a real 2-column
+     layout. Ring counter dropped same as mobile: with everything
+     stacked, it's decorative weight the layout doesn't need. Measured
+     with plenty of room to spare (a project panel's content needs
+     ~610px including padding against an available ~936-1090px panel
+     height across 768x1024-820x1180), so no overflow risk. */
+  .wk-content-grid {
+    grid-template-columns: 1fr !important;
+    grid-auto-rows: min-content !important;
+    padding: 2rem !important;
+    gap: 28px !important;
+    overflow: hidden !important;
+    /* start left col-left (title/desc) at the top, then space-between
+       pushes col-right (tags + gallery image) down to use the panel's
+       leftover height as the gap BETWEEN them instead of dead space
+       below everything — that leftover was reading as a big empty
+       stretch under the gallery image. */
+    align-content: space-between !important;
+  }
+  .wk-ring-wrap { display: none !important; }
+  .wk-title-block { position: relative !important; top: auto !important; padding-top: 20px !important; }
+  .wk-title-block h3.wk-left { font-size: clamp(32px, 5.5vw, 48px) !important; }
+  .wk-col-right { padding-top: 0 !important; }
+  /* col-right is the grid's last row, so align-content:space-between
+     above only ever inserts space BEFORE it (between it and col-left) —
+     its own bottom edge always lands flush at the grid's bottom
+     regardless of how tall col-right's content is. That means this
+     margin-top directly controls how much of that flexible space
+     shows as a visible gap above the gallery image, without giving any
+     of it back as dead space below the image (measured: bottom stays
+     ~30px either way). 80px read as barely-there stacked-together at
+     this width; 140px gives a real, visible gap while keeping the
+     image anchored low. */
+  .wk-cardstack-wrap { position: relative !important; margin-top: 140px !important; }
+}
+
 /* ── FooterSection ────────────────────────────────────────────────
    Migrated from FooterSection.tsx's inline JSX <style> tag — that
    pattern is the one this file's convention exists to avoid (see the
@@ -673,35 +850,87 @@ section, footer, header, main, div {
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
+  /* The 2-column split (left/statement sharing a row, right dropped to
+     its own full-width row below) reads as a lopsided, gappy layout at
+     tablet-portrait widths — there's enough width for 2 tracks but not
+     enough content in each to fill the min-height:100dvh footer forces,
+     so alignContent:start left large dead gaps between the rows. Same
+     fix as mobile: stack everything into one column and let the footer
+     size to its actual (denser) content instead of being forced to a
+     full screen height. */
+  footer { min-height: auto !important; }
   .ft-body {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    padding: 100px 40px 56px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 72px 40px 48px !important;
+    gap: 40px !important;
   }
-  .ft-col-statement { min-width: 0 !important; }
+  .ft-title { font-size: clamp(64px, 13vw, 96px) !important; }
+  .ft-title-gif { width: clamp(56px, 11vw, 84px) !important; height: clamp(44px, 9vw, 68px) !important; }
+  .ft-col-statement { min-width: 0 !important; padding-top: 0 !important; }
+  .ft-statement {
+    font-size: clamp(32px, 5.5vw, 48px) !important;
+    min-width: 0 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
   .ft-col-right {
-    grid-column: 1 / -1 !important;
     flex-direction: row !important;
     justify-content: flex-start !important;
     gap: 64px !important;
     align-self: auto !important;
     align-items: flex-start !important;
+    padding-top: 0 !important;
   }
+  .ft-big-name { font-size: clamp(120px, 20vw, 200px) !important; }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
+  /* No .ft-title override existed at this tier either, so it inherited
+     the base clamp(72px,11.5vw,168px) — ~118px at 1024px wide, rendered
+     into a column (minmax(0,1fr) of the 1fr/1.4fr/0.7fr split) that's
+     only ~279px wide. "Reach"/"Out" at that size don't fit a column
+     that narrow and spilled straight across into the statement column
+     next to it. Same min-height fix as the tablet tier above — this
+     one was still forcing the footer to a full 100dvh, which is what
+     produced the large empty gap before the "AFFI" wordmark further
+     down. Measured this smaller clamp fits its ~279px column exactly
+     (scrollWidth === clientWidth, no overflow) at 1024px wide. */
+  footer { min-height: auto !important; }
   .ft-body {
     grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) !important;
     gap: 32px !important;
     padding: 100px 48px 56px !important;
   }
+  .ft-title     { font-size: clamp(48px, 7.5vw, 76px) !important; }
+  .ft-title-gif { width: clamp(40px, 8vw, 64px) !important; height: clamp(32px, 6.5vw, 52px) !important; }
 }
 
 @media (min-width: 1280px) and (max-width: 1439px) {
+  /* Same bug as the 1024-1279 tier, one breakpoint over: no .ft-title
+     override here either, so it inherited the base clamp(72px,11.5vw,
+     168px) — ~147px at 1280px wide, in a ~340px-wide column. "Reach"/
+     "Out" at that size don't fit and spilled across into the statement
+     column. Also the same forced-min-height gap before "AFFI". */
+  footer { min-height: auto !important; }
   .ft-body {
     grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) minmax(0,0.7fr) !important;
     gap: 40px !important;
     padding: 110px 56px 64px !important;
   }
+  .ft-title     { font-size: clamp(56px, 8vw, 88px) !important; }
+  .ft-title-gif { width: clamp(48px, 8.5vw, 76px) !important; height: clamp(38px, 7vw, 62px) !important; }
+}
+
+/* Same bug as the two tiers below, one more breakpoint over: nothing
+   existed past 1439px, so it fell through to the base clamp(72px,
+   11.5vw,168px) — ~166px at 1440px wide, in a ~363px column. Still too
+   big to fit "Reach"/"Out" without spilling into the statement column
+   (measured: real overflow, not just tight), plus the same forced-
+   min-height gap before "AFFI". */
+@media (min-width: 1440px) {
+  footer { min-height: auto !important; }
+  .ft-title     { font-size: clamp(64px, 7.5vw, 108px) !important; }
+  .ft-title-gif { width: clamp(52px, 8vw, 92px) !important; height: clamp(42px, 6.5vw, 74px) !important; }
 }
 
 /* ── StackSection ─────────────────────────────────────────────────── */

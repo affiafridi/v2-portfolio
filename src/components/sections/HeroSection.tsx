@@ -65,6 +65,7 @@ interface HeroSettings {
   availabilityText?: string
   portraitImage?: string
   portraitPositionDesktop?: ImagePosition
+  portraitPositionTablet?: ImagePosition
   portraitPositionMobile?: ImagePosition
 }
 
@@ -77,12 +78,15 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
     availabilityText: (settings.availabilityText as string)|| 'Currently available for Freelance projects.',
     portraitImage:    (settings.portraitImage as string)    || '/images/aftab.jpg',
     portraitPositionDesktop: (settings.portraitPositionDesktop as ImagePosition) || { x: 50, y: 0 },
+    portraitPositionTablet:  (settings.portraitPositionTablet as ImagePosition)  || { x: 50, y: 0 },
     portraitPositionMobile:  (settings.portraitPositionMobile as ImagePosition)  || { x: 50, y: 0 },
   }
 
   const posDesktop  = `${s.portraitPositionDesktop!.x}% ${s.portraitPositionDesktop!.y}%`
+  const posTablet   = `${s.portraitPositionTablet!.x}% ${s.portraitPositionTablet!.y}%`
   const posMobile   = `${s.portraitPositionMobile!.x}% ${s.portraitPositionMobile!.y}%`
   const zoomDesktop = (s.portraitPositionDesktop!.zoom ?? 100) / 100
+  const zoomTablet  = (s.portraitPositionTablet!.zoom ?? 100) / 100
   const zoomMobile  = (s.portraitPositionMobile!.zoom ?? 100) / 100
 
   const color   = useHeroColorStore((st) => st.color)
@@ -124,7 +128,14 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
   const badgeCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    setIsMobile(window.innerWidth < 768)
+    /* Below 1280px the portrait spans the section's full width (see the
+       768-1023 and 1024-1279 HeroSection breakpoints in globals.css),
+       same as mobile — the always-open badge collides with the fixed
+       header sitting right on top of it there too, not just at true
+       mobile widths. This is the only thing isMobile drives in this
+       component (the badge's collapsed/tap-to-open behavior), so
+       widening it doesn't touch anything else. */
+    setIsMobile(window.innerWidth < 1280)
   }, [])
 
   const handleBadgeTap = () => {
@@ -424,8 +435,10 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
             zIndex: 3,
             willChange: 'transform',
             ['--hero-pos-desktop' as string]:  posDesktop,
+            ['--hero-pos-tablet' as string]:   posTablet,
             ['--hero-pos-mobile' as string]:   posMobile,
             ['--hero-zoom-desktop' as string]: zoomDesktop,
+            ['--hero-zoom-tablet' as string]:  zoomTablet,
             ['--hero-zoom-mobile' as string]:  zoomMobile,
           } as CSSProperties}
         >

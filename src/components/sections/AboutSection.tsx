@@ -25,21 +25,20 @@ const ACC = '#ff4d00'
 type W = { w: string; italic?: boolean; accent?: boolean }
 
 const WORDS: W[] = [
-  { w: 'A'              },
-  { w: 'developer'      },
-  { w: 'who',    italic: true },
-  { w: 'learned', italic: true },
-  { w: 'by',     italic: true },
-  { w: 'building.', italic: true },
-  { w: 'Not'            },
-  { w: 'in'             },
-  { w: 'a'              },
-  { w: 'classroom', accent: true },
-  { w: '—'              },
-  { w: 'in'             },
-  { w: 'the'            },
-  { w: 'real'           },
-  { w: 'world.'         },
+  { w: 'I'               },
+  { w: 'taught',   italic: true },
+  { w: 'myself',   italic: true },
+  { w: 'by',       italic: true },
+  { w: 'building', italic: true },
+  { w: 'things.',  italic: true },
+  { w: 'It'              },
+  { w: 'started'         },
+  { w: 'with'            },
+  { w: 'a'                },
+  { w: 'C++', accent: true },
+  { w: 'project'         },
+  { w: 'in'              },
+  { w: '2016.'           },
 ]
 
 const STATS = [
@@ -62,7 +61,11 @@ const STATS = [
    ───────────────────────────────────────────────────────────────── */
 export default function AboutSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
   const aboutImages = (settings.images as string[]) || ABOUT_IMAGES
-  const aboutWords  = (settings.scrollRevealWords as W[]) || WORDS
+  /* Static, not settings-driven — this was flipping back to stale DB
+     content (an old version of this line) even after being updated
+     there directly; hardcoding it removes that path entirely so what's
+     in WORDS above is always exactly what renders. */
+  const aboutWords  = WORDS
   const aboutStats  = (settings.stats as { num: string; label: string }[]) || STATS
   const storyP1     = (settings.storyParagraph1 as string) || "I didn't learn development in a classroom. I learned it by building projects, solving problems, breaking things, and figuring out how to make them work again. What started as curiosity became a long-term commitment to creating products that are useful, reliable, and enjoyable to use."
   const storyP2     = (settings.storyParagraph2 as string) || 'Being self-taught taught me more than programming. It taught me how to learn, adapt, and solve problems independently. Every project is another opportunity to improve, experiment, and create something meaningful.'

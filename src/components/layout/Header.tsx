@@ -242,6 +242,19 @@ export default function Header() {
       const range = document.createRange()
       range.selectNodeContents(el)
       const rect = range.getBoundingClientRect()
+      /* Guard against a degenerate (all-zero) measurement — this is
+         what was actually causing the dot to render off in a corner
+         disconnected from "Aftab" entirely: an early call landing
+         before layout had settled (React 18 Strict Mode double-
+         invokes effects in dev, and the very first of the two could
+         race the text's own layout) measured an empty {0,0,0,0} rect
+         and *committed* it as the dot's position. Skipping a
+         degenerate result here just leaves the previous (or no) dot
+         position in place until the next legitimate measurement — the
+         ResizeObserver fires again as soon as the element's real size
+         is established, which self-corrects within the same frame or
+         two rather than ever showing the wrong spot. */
+      if (rect.width === 0 && rect.height === 0 && rect.left === 0 && rect.bottom === 0) return
       setDotPos({ left: rect.right, bottom: rect.bottom })
     }
     measure()
@@ -253,8 +266,18 @@ export default function Header() {
 
   useEffect(() => {
     const handler = () => {
-      // Mobile: always show sticky — no room for the full horizontal nav
-      if (window.innerWidth < 768) { setScrolled(true); return }
+      /* Below 1280px the Hero portrait spans the section's full width and
+         sits flush at the top (see the 768-1023 and 1024-1279 HeroSection
+         breakpoints in globals.css) — right where this header renders. The
+         scroll-triggered DefaultHeader uses dark ink nav text (unless on a
+         /work/slug page), which reads as fine over the desktop's narrower,
+         right-aligned portrait but goes invisible over that full-width dark
+         photo: not actually missing, just unreadable until scrolling 80px
+         past it into the dark StickyHeader pill. Below 1280px there's no
+         width where the portrait DOESN'T sit under the header, so — same
+         as mobile — always show the sticky pill instead of waiting on
+         scroll position. */
+      if (window.innerWidth < 1280) { setScrolled(true); return }
       setScrolled(window.scrollY > 80)
     }
     handler()
