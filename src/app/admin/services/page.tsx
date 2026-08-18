@@ -4,6 +4,7 @@ import AdminHeader from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import AdminDataTable, { type AdminTableColumn, type AdminTableRow } from '@/components/admin/AdminDataTable'
+import FeaturedToggle from '@/components/admin/FeaturedToggle'
 import { Plus } from 'lucide-react'
 import ServiceActions from './ServiceActions'
 
@@ -11,6 +12,7 @@ const columns: AdminTableColumn[] = [
   { header: 'Num' },
   { header: 'Title' },
   { header: 'Tag' },
+  { header: 'Featured' },
   { header: 'Status' },
   { header: 'Actions', headClassName: 'w-[130px]' },
 ]
@@ -25,6 +27,7 @@ export default async function ServicesPage() {
       s.num,
       <span key="title" className="font-medium">{s.title}</span>,
       s.tag,
+      <FeaturedToggle key="featured" id={s.id} initialFeatured={s.featured} endpoint="/api/admin/services" />,
       <Badge key="status" variant={s.published ? 'success' : 'secondary'}>
         {s.published ? 'Published' : 'Draft'}
       </Badge>,

@@ -7,6 +7,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useHeroColorStore } from '@/store/useHeroColorStore'
 import { useCursorStore } from '@/store/useCursorStore'
+import { useContactStore } from '@/store/useContactStore'
 
 /* ─────────────────────────────────────────────────────────────────
    HeroSection — Light-theme editorial hero
@@ -30,6 +31,7 @@ gsap.registerPlugin(ScrollTrigger)
 
 const BG  = '#f0eeea'
 const INK = '#1a1a1a'
+const ACC = '#ff4d00'
 
 /* ─── Live clock ─────────────────────────────────────────────────── */
 function useClock() {
@@ -88,6 +90,61 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
   const hydrate = useHeroColorStore((st) => st.hydrate)
   useLayoutEffect(() => { hydrate() }, [hydrate])
   const { setCursorType } = useCursorStore()
+  const { open: openContact } = useContactStore()
+
+  /* ── Hero CTA: magnetic pull + diagonal wipe ──────────────────── */
+  const [ctaHover, setCtaHover] = useState(false)
+  const ctaRef  = useRef<HTMLButtonElement>(null)
+  const ctaXTo  = useRef<((v: number) => void) | null>(null)
+  const ctaYTo  = useRef<((v: number) => void) | null>(null)
+
+  useEffect(() => {
+    if (!ctaRef.current) return
+    ctaXTo.current = gsap.quickTo(ctaRef.current, 'x', { duration: 0.5, ease: 'power3.out' })
+    ctaYTo.current = gsap.quickTo(ctaRef.current, 'y', { duration: 0.5, ease: 'power3.out' })
+  }, [])
+
+  const handleCtaMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const el = ctaRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    ctaXTo.current?.((e.clientX - (r.left + r.width / 2)) * 0.3)
+    ctaYTo.current?.((e.clientY - (r.top + r.height / 2)) * 0.3)
+  }
+
+  /* ── Availability badge: dot-only on mobile, taps open to the full
+     label ──────────────────────────────────────────────────────────
+     On mobile the full pill sat over the portrait no matter where it
+     went, always covering some part of the photo. Collapsing it down
+     to just the pulsing dot leaves the photo clear by default, same
+     "tap to reveal, auto-dismiss" interaction already used for the
+     accent-word hover images elsewhere on the site (ImageCycler). */
+  const [isMobile, setIsMobile] = useState(false)
+  const [badgeOpen, setBadgeOpen] = useState(false)
+  const badgeCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768)
+  }, [])
+
+  const handleBadgeTap = () => {
+    if (badgeCollapseRef.current) clearTimeout(badgeCollapseRef.current)
+    setBadgeOpen(prev => {
+      const next = !prev
+      if (next) badgeCollapseRef.current = setTimeout(() => setBadgeOpen(false), 2600)
+      return next
+    })
+  }
+
+  const badgeShowText = !isMobile || badgeOpen
+  const badgeShowRadar = isMobile && !badgeOpen
+
+  const handleCtaLeave = () => {
+    setCtaHover(false)
+    setCursorType('default')
+    ctaXTo.current?.(0)
+    ctaYTo.current?.(0)
+  }
 
   const headingParts = s.heading!.split('*')
   const headingMain  = headingParts[0]
@@ -461,45 +518,90 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
             <path d="M8 1.6a6.4 6.4 0 0 1 0 12.8V1.6z" fill={INK} />
           </svg>
         </button>
+
+        {/* Availability badge — replaces the old sublabel that used to
+            sit above the heading; now floats over the portrait itself,
+            same as the color toggle sitting outside .hj-img-wrap so
+            the water-physics wobble doesn't drag it around.
+            On mobile it starts collapsed to just the pulsing dot —
+            tap to open the full label, auto-collapses after 2.6s (or
+            tap again to close early). Desktop stays a static, always-
+            open pill (badgeShowText/badgeShowRadar are both fixed
+            true/false there via the !isMobile check). */}
+        <button
+          type="button"
+          className="hj-avail-badge"
+          onClick={isMobile ? handleBadgeTap : undefined}
+          onMouseEnter={() => setCursorType(isMobile ? 'default' : 'hover')}
+          onMouseLeave={() => setCursorType('default')}
+          aria-label={s.availabilityText}
+          style={{
+            position:             'absolute',
+            top:                  '14px',
+            right:                '14px',
+            zIndex:               15,
+            display:              'flex',
+            alignItems:           'center',
+            gap:                  badgeShowText ? '8px' : '0px',
+            maxWidth:             'calc(100% - 28px)',
+            padding:              badgeShowText ? '9px 14px' : '9px',
+            borderRadius:         '100px',
+            border:               'none',
+            background:           'rgba(20,20,20,0.55)',
+            backdropFilter:       'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            boxShadow:            '0 4px 16px rgba(0,0,0,0.18)',
+            cursor:               isMobile ? 'pointer' : 'none',
+            transition:           'padding 0.4s cubic-bezier(0.16,1,0.3,1), gap 0.4s ease',
+          }}
+        >
+          {/* Dot — plus two expanding/fading rings behind it (radar
+              ping) only while collapsed; hidden once open so the
+              label reads cleanly without a pulsing distraction. */}
+          <span style={{ position: 'relative', width: '7px', height: '7px', flexShrink: 0 }}>
+            {badgeShowRadar && (
+              <>
+                <span aria-hidden className="hj-radar-ring" style={{ animationDelay: '0s' }} />
+                <span aria-hidden className="hj-radar-ring" style={{ animationDelay: '0.9s' }} />
+              </>
+            )}
+            <span
+              aria-hidden
+              style={{
+                position:     'absolute', inset: 0,
+                borderRadius: '50%',
+                background:   '#3ddc73',
+                boxShadow:    '0 0 0 3px rgba(61,220,115,0.22)',
+              }}
+            />
+          </span>
+          <span
+            style={{
+              maxWidth:      badgeShowText ? '240px' : '0px',
+              opacity:       badgeShowText ? 1 : 0,
+              overflow:      'hidden',
+              whiteSpace:    'nowrap',
+              fontSize:      '11px',
+              fontWeight:    600,
+              letterSpacing: '0.01em',
+              color:         '#fff',
+              lineHeight:    1.3,
+              transition:    'max-width 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease',
+            }}
+          >
+            {s.availabilityText}
+          </span>
+        </button>
       </div>
 
       {/* ── Left column ────────────────────────────────────────── */}
-      <div className="hj-left absolute z-20" style={{ top: '30%', left: '5%', width: '46%' }}>
-
-        {/* Sublabel — matches brand label style */}
-        <div
-          className="hj-bio"
-          style={{
-            display:       'flex',
-            alignItems:    'center',
-            gap:           '8px',
-            marginBottom:  '1.2rem',
-          }}
-        >
-          <span style={{
-            display:      'inline-block',
-            width:        '6px',
-            height:       '6px',
-            borderRadius: '50%',
-            background:   '#ff4d00',
-            flexShrink:   0,
-          }} />
-          <span style={{
-            fontSize:      '10px',
-            fontWeight:    700,
-            letterSpacing: '0.20em',
-            textTransform: 'uppercase',
-            color:         `${INK}40`,
-          }}>
-            {s.availabilityText}
-          </span>
-        </div>
+      <div className="hj-left absolute z-20" style={{ top: '30%', left: '5%', width: '38%' }}>
 
         {/* Heading — 800 weight, tight tracking, editorial */}
         <p
-          className="hj-bio"
+          className="hj-bio hj-heading"
           style={{
-            fontSize:      'clamp(34px, 4.0vw, 62px)',
+            fontSize:      'clamp(40px, 4.8vw, 78px)',
             fontWeight:    800,
             letterSpacing: '-0.04em',
             lineHeight:    1.04,
@@ -513,7 +615,7 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
 
         {/* Para — clean, correct, on-brand */}
         <p
-          className="hj-bio"
+          className="hj-bio hj-bio-text"
           style={{
             fontSize:      '13px',
             fontWeight:    500,
@@ -527,6 +629,98 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
         >
           {s.bio}
         </p>
+
+        {/* CTA — magnetic pull toward the cursor + a diagonal accent
+            wipe that fills in on hover (instead of a flat color swap),
+            with the label doing a one-line conveyor swap in sync. */}
+        <button
+          ref={ctaRef}
+          type="button"
+          className="hj-bio hj-cta"
+          onClick={openContact}
+          onMouseEnter={() => { setCtaHover(true); setCursorType('hover') }}
+          onMouseLeave={handleCtaLeave}
+          onMouseMove={handleCtaMove}
+          style={{
+            position:       'relative',
+            display:        'inline-flex',
+            alignItems:     'center',
+            gap:            '10px',
+            marginTop:      '2.2rem',
+            padding:        '15px 30px',
+            borderRadius:   '100px',
+            border:         `1.5px solid ${INK}22`,
+            background:     'transparent',
+            overflow:       'hidden',
+            cursor:         'none',
+          }}
+        >
+          {/* Diagonal wipe fill — oversized + skewed so its leading
+              edge is a diagonal line, not a flat one, then clipped
+              back to the pill shape by the button's own overflow:hidden. */}
+          <span
+            aria-hidden
+            style={{
+              position:  'absolute',
+              inset:     '-40% -20%',
+              background: ACC,
+              transform:  ctaHover ? 'translateX(0%) skewX(-10deg)' : 'translateX(-130%) skewX(-10deg)',
+              transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1)',
+              zIndex:     0,
+            }}
+          />
+
+          {/* Label — two stacked copies; the whole pair slides up one
+              line on hover so the ink-colored label exits the top and
+              an identical white copy (readable once the wipe has
+              filled behind it) enters from below. */}
+          <span
+            style={{
+              position: 'relative', zIndex: 1, overflow: 'hidden', display: 'inline-block',
+              /* 1em height/translate below only clip and slide by
+                 exactly one line if "1em" resolves against the SAME
+                 font-size the label text actually uses — without an
+                 explicit fontSize here, this wrapper (and the sliding
+                 column inside it) inherited the page's default size
+                 instead of the label's 12px, so the clip window and
+                 the slide distance were both slightly off from the
+                 real line height, letting a sliver of the other
+                 line's text show through in both states. */
+              fontSize: '12px', lineHeight: 1, height: '1em',
+            }}
+          >
+            <span
+              style={{
+                display:   'flex',
+                flexDirection: 'column',
+                transform:  ctaHover ? 'translateY(-1em)' : 'translateY(0)',
+                transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
+              }}
+            >
+              <span style={{ height: '1em', lineHeight: 1, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: INK }}>
+                Let&apos;s talk
+              </span>
+              <span style={{ height: '1em', lineHeight: 1, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#fff' }}>
+                Let&apos;s talk
+              </span>
+            </span>
+          </span>
+
+          {/* Arrow — nudges up-right on hover, same "launch" motion
+              as the wipe/label direction. */}
+          <svg
+            width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden
+            style={{
+              position:   'relative',
+              zIndex:     1,
+              color:      ctaHover ? '#fff' : INK,
+              transform:  ctaHover ? 'translate(2px, -2px)' : 'translate(0, 0)',
+              transition: 'transform 0.35s ease, color 0.3s ease',
+            }}
+          >
+            <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       </div>
 
       {/* ── Oversized marquee headline ─────────────────────────────

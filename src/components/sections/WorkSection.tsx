@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
@@ -25,277 +26,72 @@ const STACK = [
 
 /* ─── Projects ───────────────────────────────────────────────────── */
 interface Project {
-  id: string; title: string; type: string
-  stack: string[]; desc: string; url: string
-  bg: string; blobA: string; blobB: string
+  id: string; slug: string; title: string; type: string
+  stack: string[]; desc: string
+  url: string // internal /work/[slug] detail page — see page.tsx
+  image: string; gallery: string[]
 }
 
-const PROJECTS: Project[] = [
+
+/* Shown only when no projects are marked "Featured" in the admin yet —
+   same fallback-to-demo-content pattern already used by ServiceSection
+   and StackSection when their own DB-backed props are empty. */
+const FALLBACK_PROJECTS: Project[] = [
   {
-    id: '01', title: 'Modevelle', type: 'Ecommerce Website',
+    id: '01', slug: '', title: 'Modevelle', type: 'Ecommerce Website',
     stack: ['Next.js', 'Shopify API', 'GSAP'],
     desc: "A demo e-commerce website for women's fashion — product listings, cart functionality, and user authentication. Built with Next.js and the Shopify Storefront API.",
-    url: '#', bg: '#241c14',
-    blobA: 'rgba(195,130,55,0.72)', blobB: 'rgba(100,60,18,0.55)',
+    url: '#', image: '', gallery: [],
   },
   {
-    id: '02', title: 'The Shear Room', type: 'Booking Website',
+    id: '02', slug: '', title: 'The Shear Room', type: 'Booking Website',
     stack: ['Next.js', 'Supabase', 'GSAP'],
     desc: 'A demo booking website for a unisex salon brand — service listings, end-to-end booking workflow, and user authentication. Built with Next.js and Supabase.',
-    url: '#', bg: '#101820',
-    blobA: 'rgba(45,105,185,0.70)', blobB: 'rgba(15,48,95,0.55)',
+    url: '#', image: '', gallery: [],
   },
   {
-    id: '03', title: 'Matilda Cake', type: 'Brand Website',
+    id: '03', slug: '', title: 'Matilda Cake', type: 'Brand Website',
     stack: ['Next.js', 'Sanity CMS', 'Framer Motion'],
     desc: 'A premium brand website for a boutique cake studio — dynamic product gallery, custom order builder, and a seamless client inquiry flow.',
-    url: '#', bg: '#1e1018',
-    blobA: 'rgba(185,75,155,0.68)', blobB: 'rgba(90,30,80,0.55)',
+    url: '#', image: '', gallery: [],
   },
   {
-    id: '04', title: 'Portfolio v1', type: 'Personal Portfolio',
+    id: '04', slug: '', title: 'Portfolio v1', type: 'Personal Portfolio',
     stack: ['React', 'GSAP', 'Three.js'],
     desc: 'First iteration of my personal portfolio — advanced scroll animations, 3D canvas elements, and creative web interactions at the edge of the web.',
-    url: '#', bg: INK,
-    blobA: 'rgba(255,77,0,0.55)', blobB: 'rgba(255,140,40,0.28)',
+    url: '#', image: '', gallery: [],
   },
 ]
 
-/* ─── Per-project website screenshot frames (browser-window scale) ── */
+/* ─── Per-project preview frames — real gallery screenshots ─────────
+   Cycles through the project's admin-uploaded gallery images (falling
+   back to its cover image, then to a plain "no preview" placeholder if
+   it has neither yet) to fill the 3-card rotating stack. Always
+   returns exactly 3 frames regardless of how many images exist. */
 function getFrames(p: Project): React.ReactNode[] {
-  const F = { fontFamily: 'system-ui, -apple-system, sans-serif' }
-
-  /* ══ MODEVELLE ══════════════════════════════════════════════════ */
-  if (p.id === '01') return [
-    /* Hero */
-    <div key="a" style={{ ...F, background:'#f7f5f2', height:'100%', overflow:'hidden' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 18px', borderBottom:'1px solid rgba(0,0,0,0.07)' }}>
-        <span style={{ fontSize:'11px', fontWeight:800, color:'#111', letterSpacing:'-0.02em' }}>Modevelle</span>
-        <div style={{ display:'flex', gap:'16px' }}>
-          {['Shop','New In','About','Cart'].map(n=><span key={n} style={{ fontSize:'8px', color:'#aaa' }}>{n}</span>)}
+  const imgs = p.gallery.length > 0 ? p.gallery : p.image ? [p.image] : []
+  return Array.from({ length: 3 }).map((_, i) => (
+    <div key={i} style={{ position: 'relative', width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)' }}>
+      {imgs.length > 0 ? (
+        // eslint-disable-next-line @next/next/no-img-element -- gallery
+        // images can be arbitrary admin-entered URLs (MediaField allows
+        // pasting any URL, not just local uploads), which next/image
+        // would reject unless every possible host were pre-whitelisted
+        // in next.config.js. A plain img works for any host immediately.
+        <img
+          src={imgs[i % imgs.length]}
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.18)' }}>
+            No preview
+          </span>
         </div>
-      </div>
-      <div style={{ display:'flex', padding:'18px 18px 0', gap:'14px', alignItems:'flex-start' }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:'clamp(26px,5vw,42px)', fontWeight:900, lineHeight:0.86, color:'#0d0d0d', letterSpacing:'-0.05em', marginBottom:'10px' }}>Modevelle</div>
-          <div style={{ fontSize:'9px', color:'#bbb', lineHeight:1.6, maxWidth:'140px' }}>Where timeless style meets modern grace — discover outfits for every moment.</div>
-          <div style={{ marginTop:'12px', display:'inline-flex', background:'#0d0d0d', borderRadius:'100px', padding:'6px 14px' }}>
-            <span style={{ fontSize:'8px', color:'#fff', fontWeight:600, letterSpacing:'0.06em' }}>Shop Now →</span>
-          </div>
-        </div>
-        <div style={{ width:'35%', flexShrink:0, aspectRatio:'2/3', background:'linear-gradient(160deg,#e0dbd4,#cbc5bc)', borderRadius:'8px', overflow:'hidden', position:'relative' }}>
-          <div style={{ position:'absolute', bottom:0, left:'50%', transform:'translateX(-50%)', width:'55%', height:'76%', background:'rgba(0,0,0,0.08)', borderRadius:'50% 50% 0 0' }} />
-        </div>
-      </div>
-    </div>,
-
-    /* Product grid */
-    <div key="b" style={{ ...F, background:'#f7f5f2', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
-      <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'#bbb', marginBottom:'12px' }}>New Collection</div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'7px' }}>
-        {[['#dedad3','Midi Dress','AED 420'],['#d3cec7','Blazer','AED 680'],['#cac5bc','Pants','AED 340'],['#d8d3cc','Silk Top','AED 290']].map(([c,n,price])=>(
-          <div key={n} style={{ background:String(c), borderRadius:'6px', overflow:'hidden', position:'relative', aspectRatio:'2/3' }}>
-            <div style={{ position:'absolute', bottom:0, left:'50%', transform:'translateX(-50%)', width:'52%', height:'70%', background:'rgba(0,0,0,0.07)', borderRadius:'50% 50% 0 0' }} />
-            <div style={{ position:'absolute', bottom:'5px', left:'4px', right:'4px', background:'rgba(255,255,255,0.88)', borderRadius:'3px', padding:'3px 5px' }}>
-              <div style={{ fontSize:'7px', color:'#555', fontWeight:600 }}>{n}</div>
-              <div style={{ fontSize:'7px', color:'#999' }}>{price}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>,
-
-    /* Product detail */
-    <div key="c" style={{ ...F, background:'#fff', height:'100%', overflow:'hidden', display:'flex' }}>
-      <div style={{ flex:'0 0 48%', background:'linear-gradient(160deg,#ece8e2,#d8d3cc)', position:'relative', overflow:'hidden' }}>
-        <div style={{ position:'absolute', bottom:'6%', left:'50%', transform:'translateX(-50%)', width:'52%', height:'72%', background:'rgba(0,0,0,0.08)', borderRadius:'50% 50% 0 0' }} />
-      </div>
-      <div style={{ flex:1, padding:'20px 16px', display:'flex', flexDirection:'column', justifyContent:'center', gap:'10px' }}>
-        <span style={{ fontSize:'7px', color:'#ccc', letterSpacing:'0.14em', textTransform:'uppercase' }}>Modevelle Studio</span>
-        <div style={{ fontSize:'22px', fontWeight:800, color:'#111', lineHeight:1.0, letterSpacing:'-0.04em' }}>Silk Wrap<br/>Dress</div>
-        <div style={{ fontSize:'16px', fontWeight:700, color:'#111' }}>AED 380</div>
-        <div style={{ display:'flex', gap:'6px' }}>
-          {['XS','S','M','L'].map((s,i)=>(
-            <div key={s} style={{ width:'26px', height:'26px', borderRadius:'50%', border: i===1 ? '2px solid #111' : '1px solid #ddd', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <span style={{ fontSize:'8px', color: i===1 ? '#111' : '#bbb', fontWeight:600 }}>{s}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ background:'#111', borderRadius:'100px', padding:'8px 18px', display:'inline-flex', alignItems:'center', justifyContent:'center', alignSelf:'flex-start' }}>
-          <span style={{ fontSize:'9px', color:'#fff', fontWeight:600, letterSpacing:'0.06em' }}>Add to Cart</span>
-        </div>
-      </div>
-    </div>,
-  ]
-
-  /* ══ THE SHEAR ROOM ════════════════════════════════════════════ */
-  if (p.id === '02') return [
-    /* Hero */
-    <div key="a" style={{ ...F, background:'#0c141e', height:'100%', overflow:'hidden' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 18px', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontSize:'10px', fontWeight:700, color:'#e0e0e0', letterSpacing:'0.07em' }}>THE SHEAR ROOM</span>
-        <div style={{ display:'flex', gap:'16px' }}>
-          {['Services','Book','About'].map(n=><span key={n} style={{ fontSize:'8px', color:'rgba(255,255,255,0.35)' }}>{n}</span>)}
-        </div>
-      </div>
-      <div style={{ padding:'18px 18px 0', display:'flex', gap:'14px', alignItems:'flex-start' }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:'8px', color:'rgba(255,255,255,0.28)', letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:'8px' }}>· Your look</div>
-          <div style={{ fontSize:'clamp(20px,4vw,34px)', fontWeight:800, lineHeight:0.92, color:'#fff', letterSpacing:'-0.04em', marginBottom:'12px' }}>Always Here<br/>for Our Clients</div>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:'8px', background:'#fff', borderRadius:'100px', padding:'6px 14px' }}>
-            <div style={{ width:'16px', height:'16px', borderRadius:'50%', background:'#111', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <span style={{ fontSize:'9px', color:'#fff' }}>↗</span>
-            </div>
-            <span style={{ fontSize:'9px', color:'#111', fontWeight:600 }}>Book now</span>
-          </div>
-        </div>
-        <div style={{ width:'34%', flexShrink:0, aspectRatio:'3/4', borderRadius:'8px', overflow:'hidden', background:'#1a2535', position:'relative' }}>
-          <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(45,105,185,0.4),rgba(15,48,95,0.6))' }} />
-        </div>
-      </div>
-    </div>,
-
-    /* Services */
-    <div key="b" style={{ ...F, background:'#0c141e', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
-      <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(255,255,255,0.28)', marginBottom:'14px' }}>Our Services</div>
-      {[['Haircut & Style','AED 85'],['Beard Trim','AED 55'],['Color & Highlights','AED 150'],['Scalp Treatment','AED 95']].map(([name,price])=>(
-        <div key={name} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ fontSize:'11px', color:'rgba(255,255,255,0.68)', fontWeight:500 }}>{name}</span>
-          <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-            <span style={{ fontSize:'10px', color:'rgba(255,255,255,0.30)' }}>{price}</span>
-            <div style={{ width:'22px', height:'22px', borderRadius:'50%', border:'1px solid rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <span style={{ fontSize:'11px', color:'rgba(255,255,255,0.35)' }}>→</span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>,
-
-    /* Footer brand */
-    <div key="c" style={{ ...F, background:'#0c141e', height:'100%', overflow:'hidden', display:'flex', flexDirection:'column' }}>
-      <div style={{ flex:1, padding:'14px 18px', display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:'8px', alignContent:'start' }}>
-        {[['Menu',['About','Services','Reviews','Location']],['Explore',['Trends','Stylists']],['Contact',['rshn@gmail.com','+91 98765']]].map(([title,items])=>(
-          <div key={String(title)}>
-            <div style={{ fontSize:'7px', color:'rgba(255,255,255,0.28)', letterSpacing:'0.10em', textTransform:'uppercase', marginBottom:'8px' }}>{title}</div>
-            {(items as string[]).map(item=><div key={item} style={{ fontSize:'9px', color:'rgba(255,255,255,0.50)', marginBottom:'5px', lineHeight:1.4 }}>{item}</div>)}
-          </div>
-        ))}
-      </div>
-      <div style={{ height:'44%', background:'#06080f', overflow:'hidden', position:'relative', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(20,40,70,0.7),rgba(5,12,25,0.95))' }} />
-        <span style={{ fontSize:'clamp(20px,3.5vw,40px)', fontWeight:900, color:'rgba(255,255,255,0.82)', letterSpacing:'-0.04em', textTransform:'uppercase', position:'relative', zIndex:1 }}>THE SHEAR ROOM</span>
-      </div>
-    </div>,
-  ]
-
-  /* ══ MATILDA CAKE ══════════════════════════════════════════════ */
-  if (p.id === '03') return [
-    /* Hero */
-    <div key="a" style={{ ...F, background:'#fdf6f0', height:'100%', overflow:'hidden' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 18px', borderBottom:'1px solid rgba(139,58,82,0.08)' }}>
-        <span style={{ fontSize:'11px', fontWeight:700, color:'#8b3a52', fontStyle:'italic' }}>Matilda Cake</span>
-        <div style={{ display:'flex', gap:'16px' }}>
-          {['Menu','Order','Gallery'].map(n=><span key={n} style={{ fontSize:'8px', color:'#c07080' }}>{n}</span>)}
-        </div>
-      </div>
-      <div style={{ padding:'18px 18px 0', display:'flex', gap:'14px', alignItems:'flex-start' }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:'8px', color:'rgba(139,58,82,0.38)', letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:'8px' }}>— artisan cakes</div>
-          <div style={{ fontSize:'clamp(24px,4.5vw,38px)', fontWeight:800, lineHeight:0.88, color:'#3a1a22', letterSpacing:'-0.04em', marginBottom:'10px' }}>Baked<br/>with love.</div>
-          <div style={{ fontSize:'9px', color:'#b08090', lineHeight:1.6, maxWidth:'130px', marginBottom:'12px' }}>Custom cakes for every occasion — beautifully designed.</div>
-          <div style={{ display:'inline-flex', alignItems:'center', border:'1.5px solid rgba(139,58,82,0.30)', borderRadius:'100px', padding:'6px 14px' }}>
-            <span style={{ fontSize:'8px', color:'#8b3a52', fontWeight:600 }}>Order Now →</span>
-          </div>
-        </div>
-        <div style={{ width:'34%', flexShrink:0, aspectRatio:'1/1', borderRadius:'50%', background:'linear-gradient(145deg,#f4c8d4,#e8a0b8,#d48898)', overflow:'hidden', position:'relative' }}>
-          <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.45), transparent 60%)' }} />
-        </div>
-      </div>
-    </div>,
-
-    /* Flavours */
-    <div key="b" style={{ ...F, background:'#fdf6f0', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
-      <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(139,58,82,0.38)', marginBottom:'12px' }}>Seasonal Flavours</div>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
-        {[['#fce4ea','Rose Lychee','Classic elegance'],['#fef3d0','Lemon Verbena','Citrus-bright'],['#e0eed0','Pistachio Rose','Nutty & floral'],['#d8e4f8','Blueberry Cream','Bold & fruity']].map(([bg,name,desc])=>(
-          <div key={name} style={{ background:String(bg), borderRadius:'10px', padding:'14px' }}>
-            <div style={{ fontSize:'11px', fontWeight:700, color:'#3a1a22', marginBottom:'4px' }}>{name}</div>
-            <div style={{ fontSize:'9px', color:'rgba(58,26,34,0.50)', lineHeight:1.4 }}>{desc}</div>
-          </div>
-        ))}
-      </div>
-    </div>,
-
-    /* Order form */
-    <div key="c" style={{ ...F, background:'#fdf6f0', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
-      <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(139,58,82,0.38)', marginBottom:'12px' }}>Build Your Cake</div>
-      {[['Size','6 inch · 8 inch · 10 inch'],['Flavour','Rose Lychee'],['Tiers','Single · Double'],['Occasion','Birthday']].map(([label,value])=>(
-        <div key={label} style={{ marginBottom:'8px' }}>
-          <div style={{ fontSize:'7px', color:'rgba(139,58,82,0.40)', letterSpacing:'0.10em', textTransform:'uppercase', marginBottom:'4px' }}>{label}</div>
-          <div style={{ background:'rgba(139,58,82,0.06)', border:'1px solid rgba(139,58,82,0.12)', borderRadius:'6px', padding:'7px 10px' }}>
-            <span style={{ fontSize:'10px', color:'#8b3a52' }}>{value}</span>
-          </div>
-        </div>
-      ))}
-      <div style={{ background:'#8b3a52', borderRadius:'100px', padding:'8px 20px', display:'inline-flex', marginTop:'8px' }}>
-        <span style={{ fontSize:'9px', color:'#fff', fontWeight:600 }}>Place Order →</span>
-      </div>
-    </div>,
-  ]
-
-  /* ══ PORTFOLIO V1 ══════════════════════════════════════════════ */
-  return [
-    /* Hero */
-    <div key="a" style={{ ...F, background:'#0c0c0c', height:'100%', overflow:'hidden' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 18px', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-        <span style={{ fontSize:'11px', fontWeight:700, color:'#e8e8e8', letterSpacing:'0.04em' }}>Aftab.</span>
-        <div style={{ display:'flex', gap:'16px' }}>
-          {['Work','About','Contact'].map(n=><span key={n} style={{ fontSize:'8px', color:'rgba(255,255,255,0.30)' }}>{n}</span>)}
-        </div>
-      </div>
-      <div style={{ padding:'18px 18px 0' }}>
-        <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.22)', letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:'8px' }}>Creative Developer</div>
-        <div style={{ fontSize:'clamp(26px,5vw,44px)', fontWeight:900, lineHeight:0.88, color:'#f0f0f0', letterSpacing:'-0.05em', marginBottom:'12px' }}>
-          Building<br/><span style={{ color:'#ff4d00' }}>the web.</span>
-        </div>
-        <div style={{ height:'52px', background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:'8px', position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          {[...Array(5)].map((_,i)=>(
-            <div key={i} style={{ position:'absolute', width:`${20+i*16}px`, height:`${20+i*16}px`, border:`1px solid rgba(255,77,0,${0.10+i*0.05})`, borderRadius:'50%' }} />
-          ))}
-          <span style={{ fontSize:'8px', color:'rgba(255,255,255,0.14)', letterSpacing:'0.14em', position:'relative', zIndex:1 }}>THREE.JS CANVAS</span>
-        </div>
-      </div>
-    </div>,
-
-    /* Work list */
-    <div key="b" style={{ ...F, background:'#0c0c0c', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
-      <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(255,255,255,0.20)', marginBottom:'14px' }}>Selected Work</div>
-      {[['01','Modevelle','Ecommerce · 2024'],['02','The Shear Room','Booking · 2024'],['03','Matilda Cake','Brand · 2023']].map(([num,name,type])=>(
-        <div key={num} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
-            <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.18)', fontWeight:600 }}>{num}</span>
-            <span style={{ fontSize:'16px', color:'rgba(255,255,255,0.75)', fontWeight:700, letterSpacing:'-0.02em' }}>{name}</span>
-          </div>
-          <span style={{ fontSize:'8px', color:'rgba(255,255,255,0.25)', letterSpacing:'0.08em' }}>{type}</span>
-        </div>
-      ))}
-    </div>,
-
-    /* Terminal */
-    <div key="c" style={{ ...F, background:'#0c0c0c', height:'100%', overflow:'hidden', padding:'16px 18px' }}>
-      <div style={{ fontSize:'8px', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(255,255,255,0.20)', marginBottom:'12px' }}>About</div>
-      <div style={{ background:'#111', border:'1px solid rgba(255,255,255,0.07)', borderRadius:'8px', padding:'16px 18px', fontFamily:'var(--font-geist-mono), monospace' }}>
-        <div style={{ fontSize:'10px', color:'rgba(255,77,0,0.85)', marginBottom:'10px' }}>$ whoami</div>
-        <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.60)', lineHeight:1.8 }}>
-          Creative developer + designer.<br/>
-          Based in Dubai 🇦🇪<br/>
-          5+ years · 40+ projects<br/>
-          <span style={{ color:'rgba(255,255,255,0.25)' }}>React · Next.js · GSAP · Three.js</span>
-        </div>
-        <div style={{ display:'inline-block', width:'8px', height:'14px', background:'rgba(255,77,0,0.75)', marginTop:'10px', borderRadius:'1px' }} />
-      </div>
-    </div>,
-  ]
+      )}
+    </div>
+  ))
 }
 
 /* ─── Card stack — "next, next, next" queue animation ───────────────
@@ -406,23 +202,24 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
   return (
     <div
       className={`wk-panel wk-panel-${panelIdx}`}
-      style={{ position:'absolute', inset:'14px', borderRadius:'32px', overflow:'hidden', background:p.bg, willChange:'transform' }}
+      style={{ position:'absolute', inset:'14px', borderRadius:'32px', overflow:'hidden', background:INK, willChange:'transform' }}
     >
-      {/* Blurred first-frame background */}
+      {/* Blurred cover photo — the panel's only source of color now.
+          No fixed palette tint, no brand-color blobs: whatever mood
+          the background has comes entirely from the project's own
+          image, not a color assigned by its position in the stack. */}
       <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', zIndex:0 }}>
-        <div style={{ position:'absolute', inset:'-12%', filter:'blur(80px)', opacity:0.55, transform:'scale(1.18)', mixBlendMode:'overlay' }}>
+        <div style={{ position:'absolute', inset:'-12%', filter:'blur(80px) brightness(0.55)', transform:'scale(1.18)' }}>
           {getFrames(p)[0]}
         </div>
       </div>
 
-      {/* Brand colour blobs */}
-      <div aria-hidden style={{ position:'absolute', inset:0, zIndex:1, background:`radial-gradient(ellipse 72% 62% at 22% 14%, ${p.blobA}, transparent 62%), radial-gradient(ellipse 58% 68% at 84% 82%, ${p.blobB}, transparent 62%)` }} />
-      {/* Vignette */}
-      <div aria-hidden style={{ position:'absolute', inset:0, zIndex:2, background:'radial-gradient(ellipse 85% 85% at 50% 50%, transparent 35%, rgba(0,0,0,0.48) 100%)' }} />
+      {/* Vignette — for text legibility over the photo, not for color */}
+      <div aria-hidden style={{ position:'absolute', inset:0, zIndex:1, background:'radial-gradient(ellipse 85% 85% at 50% 50%, transparent 35%, rgba(0,0,0,0.48) 100%)' }} />
 
       {/* Content grid */}
       <div className="wk-content-grid" style={{
-        position:'absolute', inset:0, zIndex:3,
+        position:'absolute', inset:0, zIndex:2,
         display:'grid',
         gridTemplateColumns:'minmax(0,1.6fr) minmax(0,1fr)',
         padding:'clamp(1.8rem,2.4vw,2.6rem)',
@@ -458,9 +255,9 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
 
           {/* Title + desc + CTA — positioned at green mark (upper-middle of left col) */}
           <div className="wk-title-block" style={{ position:'absolute', top:'46%', left:0, right:0 }}>
-            <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem' }}>{p.title}</h3>
-            <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px' }}>{p.desc}</p>
-            <a href={p.url} className="wk-left"
+            <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem', textAlign:'justify', textWrap:'balance', wordBreak:'normal', overflowWrap:'normal' } as React.CSSProperties}>{p.title}</h3>
+            <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px', textAlign:'justify' }}>{p.desc}</p>
+            <Link href={p.url} className="wk-left"
               style={{
                 display:'inline-flex', alignItems:'center', gap:'10px',
                 fontSize:'12px', fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase',
@@ -472,11 +269,11 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
               onMouseEnter={e=>{ e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='rgba(255,255,255,0.75)'; setCursorType('hover') }}
               onMouseLeave={e=>{ e.currentTarget.style.color='rgba(255,255,255,0.72)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.28)'; setCursorType('default') }}
             >
-              Visit site
+              View Details
               <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
                 <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -539,11 +336,32 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
    "too much scroll to reach the project section" complaint. */
 const ABOUT_HOLD_UNITS  = 0.35  // slots reserved for About before transitions start
 
-export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<string, unknown> }) {
+export default function WorkSection({ aboutSettings, projects }: { aboutSettings?: Record<string, unknown>; projects?: Project[] }) {
+  /* Admin's "Featured" star-toggle drives this — falls back to demo
+     content only if nothing's been marked featured yet. */
+  const PROJECTS        = projects && projects.length > 0 ? projects : FALLBACK_PROJECTS
   const sectionRef     = useRef<HTMLElement>(null)
   const progressRef    = useRef<(HTMLDivElement | null)[]>([])
+  const progressWrapRef = useRef<HTMLDivElement>(null)
   const prevActiveIdx  = useRef<number>(-1)
   const animatedPanels = useRef<Set<number>>(new Set())
+  /* About's title/bio/stats/CTA should only ever reveal once per page
+     load — unlike animatedPanels (which resetPanels() clears whenever
+     you scroll back above the whole section), this never resets, so
+     once shown they just stay visible for the rest of the session. */
+  const aboutIntroShown = useRef(false)
+  /* The word statement's own scrub timeline — separate from the main
+     panel-stack tl below (which drives yPercent/scale for the whole
+     card stack). Kept as its own paused timeline instead of a second
+     ScrollTrigger with its own scrub value: two independent scrubbed
+     ScrollTriggers reading the same Lenis-driven scroll each apply
+     their own lag/smoothing, and they don't reconcile with each other
+     — that mismatch was the "works scrolling down, breaks scrolling
+     up" bug. Driving .progress() directly off the exact same
+     currentUnit already computed in the main onUpdate ties both to
+     one single source of truth, so it's bidirectional by construction
+     — no separate "reset and replay" logic needed at all. */
+  const aboutWordTl = useRef<gsap.core.Timeline | null>(null)
   const P          = PROJECTS.length            // project count (4)
   /* PIN_UNITS is how many "slots" the pinned timeline actually plays
      through (ABOUT_HOLD_UNITS dead time + P transitions = 6) — this is
@@ -566,44 +384,40 @@ export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<
       const isMobile = window.innerWidth < 768
 
       function revealPanel(idx: number) {
-        if (animatedPanels.current.has(idx)) return
-        animatedPanels.current.add(idx)
-
         /* Panel 0 is About — a completely different layout/content
            from the project panels, so it gets its own reveal instead
            of the generic wk-content/wk-left/wk-type selectors below
-           (which simply don't exist inside it and would no-op). */
+           (which simply don't exist inside it and would no-op).
+           The word statement itself is NOT handled here — it's scrub-
+           driven straight off scroll position in the main onUpdate
+           below (see aboutWordTl), which is what makes it replay
+           correctly in both directions. This function only handles
+           the title/bio/stats/CTA, which reveal once and then stay. */
         if (idx === 0) {
-          gsap.fromTo('.ab-title',
-            { y: -36, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1.1, ease: 'power3.out' }
-          )
-          /* Word reveal — time-based, not scroll-scrubbed. It used to
-             scrub across a dedicated scroll distance, which meant the
-             panel could be fully in view with the heading still mostly
-             unlit, and the user had to keep scrolling just to finish
-             reading it — extra scrolling for no reason once the panel
-             is already pinned and full-screen. This just plays out on
-             its own the moment the panel activates, like every other
-             reveal here. */
-          gsap.to('.ab-word', {
-            opacity: 1, ease: 'none', duration: 0.5, delay: 0.2,
-            stagger: { each: 0.05, from: 'start' },
-          })
-          gsap.fromTo('.ab-left-item',
-            { x: -32, opacity: 0 },
-            { x: 0, opacity: 1, duration: 0.9, ease: 'power3.out', stagger: 0.18, delay: 0.3 }
-          )
-          gsap.fromTo('.ab-stat',
-            { opacity: 0, filter: 'blur(10px)', x: 6 },
-            { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', stagger: { each: 0.18, from: 'start' }, delay: 0.6 }
-          )
-          gsap.fromTo('.ab-cta',
-            { opacity: 0, filter: 'blur(10px)', x: 6 },
-            { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', delay: 1.14 }
-          )
+          if (!aboutIntroShown.current) {
+            aboutIntroShown.current = true
+            gsap.fromTo('.ab-title',
+              { y: -36, opacity: 0 },
+              { y: 0, opacity: 1, duration: 1.1, ease: 'power3.out' }
+            )
+            gsap.fromTo('.ab-left-item',
+              { x: -32, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.9, ease: 'power3.out', stagger: 0.18, delay: 0.3 }
+            )
+            gsap.fromTo('.ab-stat',
+              { opacity: 0, filter: 'blur(10px)', x: 6 },
+              { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', stagger: { each: 0.18, from: 'start' }, delay: 0.6 }
+            )
+            gsap.fromTo('.ab-cta',
+              { opacity: 0, filter: 'blur(10px)', x: 6 },
+              { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.45, ease: 'power2.out', delay: 1.14 }
+            )
+          }
           return
         }
+
+        if (animatedPanels.current.has(idx)) return
+        animatedPanels.current.add(idx)
 
         /* Ring counter — fades up independently */
         gsap.fromTo(`.wk-panel-${idx} .wk-content`,
@@ -649,10 +463,12 @@ export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<
       function resetPanels() {
         animatedPanels.current.clear()
         prevActiveIdx.current = -1
-        gsap.set('.ab-title',     { opacity: 0, y: -36 })
-        gsap.set('.ab-left-item', { opacity: 0, x: -32 })
-        gsap.set('.ab-stat',      { opacity: 0, filter: 'blur(10px)', x: 6 })
-        gsap.set('.ab-cta',       { opacity: 0, filter: 'blur(10px)', x: 6 })
+        /* .ab-title/.ab-left-item/.ab-stat/.ab-cta are deliberately NOT
+           reset here — they're gated by aboutIntroShown instead, which
+           never clears, so hiding them again on every onLeaveBack would
+           strand them at opacity:0 forever the next time revealPanel(0)
+           runs (it would see aboutIntroShown already true and skip
+           re-revealing them). */
         panels.forEach((_, i) => {
           gsap.set(`.wk-panel-${i} .wk-content`, { opacity: 0, y: 16 })
           gsap.set(`.wk-panel-${i} .wk-type`,    { opacity: 0, filter: 'blur(8px)', y: 8 })
@@ -668,6 +484,20 @@ export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<
       gsap.set('.ab-left-item', { opacity: 0, x: -32 })
       gsap.set('.ab-stat',      { opacity: 0, filter: 'blur(10px)', x: 6 })
       gsap.set('.ab-cta',       { opacity: 0, filter: 'blur(10px)', x: 6 })
+
+      /* Word statement — built once as a paused timeline, then scrubbed
+         via .progress() from the main onUpdate below using the exact
+         same currentUnit the rest of the section already drives off.
+         .to() here captures each word's CURRENT opacity (the ghost
+         0.07/0.30 set inline in AboutSection.tsx) as the animation's
+         start value, so scrubbing to progress 0 always lands back on
+         that resting ghost state, not fully invisible — matches how it
+         looks before you've ever scrolled to it. */
+      aboutWordTl.current = gsap.timeline({ paused: true })
+        .to('.ab-word', {
+          opacity: 1, ease: 'none',
+          stagger: { each: 0.05, from: 'start' },
+        })
 
       panels.forEach((_, i) => {
         if (i > 0) {
@@ -746,6 +576,23 @@ export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<
             activeIdx = Math.min(Math.floor(transitionUnit + 0.06) + 1, P)
           }
 
+          /* Scrub the word statement directly off scroll position —
+             bidirectional by construction, since it's just reading
+             currentUnit each frame rather than replaying a one-shot
+             tween. Clamped past ABOUT_HOLD_UNITS so it stays fully
+             revealed (not reset) while scrolled into the projects. */
+          aboutWordTl.current?.progress(
+            gsap.utils.clamp(0, 1, currentUnit / ABOUT_HOLD_UNITS)
+          )
+
+          /* These dots represent "which project" — meaningless while
+             About (idx 0) is active, since it isn't one of them. They
+             used to just sit there dim from the very start instead of
+             only appearing once there's an actual project to point at. */
+          if (progressWrapRef.current) {
+            progressWrapRef.current.style.opacity = activeIdx === 0 ? '0' : '1'
+          }
+
           progressRef.current.forEach((bar, i) => {
             if (!bar) return
             const isActive = activeIdx - 1 === i // dot i represents project i (activeIdx 1..P)
@@ -794,10 +641,11 @@ export default function WorkSection({ aboutSettings }: { aboutSettings?: Record<
 
         {PROJECTS.map((p,i) => <Panel key={p.id} p={p} panelIdx={i+1} ringIdx={i} ringTotal={P} />)}
 
-        {/* Progress dots — represent the 4 projects only; About has no
-            dot of its own, so all start dim until the first transition
-            begins. */}
-        <div style={{ position:'absolute', top:'2.5rem', right:'2.5rem', display:'flex', alignItems:'flex-end', gap:'4px', zIndex:20 }}>
+        {/* Progress dots — represent the projects only, not About.
+            Hidden (opacity 0, see onUpdate above) until the first
+            project becomes active, since they're meaningless before
+            that — there's no "project" for them to be pointing at yet. */}
+        <div ref={progressWrapRef} style={{ position:'absolute', top:'2.5rem', right:'2.5rem', display:'flex', alignItems:'flex-end', gap:'4px', zIndex:20, opacity:0, transition:'opacity 0.3s ease' }}>
           {PROJECTS.map((_,i) => (
             <div key={i} ref={el=>{ progressRef.current[i]=el }}
               style={{ width:'2.5px', height:'16px', background:'rgba(255,255,255,0.20)', borderRadius:'2px', transition:'height 0.3s ease, background 0.3s ease' }}

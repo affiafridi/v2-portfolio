@@ -52,6 +52,7 @@ model Service {
   points       String[]
   deliverables String[]
   image        String?
+  featured     Boolean  @default(false)
   published    Boolean  @default(true)
   sortOrder    Int      @default(0)
   seoTitle       String?

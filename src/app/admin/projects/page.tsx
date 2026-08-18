@@ -27,7 +27,7 @@ export default async function ProjectsPage() {
       <span key="title" className="font-medium">{p.title}</span>,
       p.type,
       p.year,
-      <FeaturedToggle key="featured" id={p.id} initialFeatured={p.featured} />,
+      <FeaturedToggle key="featured" id={p.id} initialFeatured={p.featured} endpoint="/api/admin/projects" />,
       <Badge key="status" variant={p.published ? 'success' : 'secondary'}>
         {p.published ? 'Published' : 'Draft'}
       </Badge>,

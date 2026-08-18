@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import Link from '@/components/ui/TransitionLink'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCursorStore } from '@/store/useCursorStore'
@@ -134,7 +134,7 @@ function StickyHeader() {
     <motion.div
       key="sticky"
       className="pointer-events-none fixed left-0 right-0 z-50 flex justify-center px-4"
-      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 18px)' }}
       initial={{ opacity: 0, y: -20 }}
       animate={headerVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -80 }}
       exit={{ opacity: 0, y: -20 }}
@@ -210,6 +210,47 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const { setCursorType } = useCursorStore()
 
+  /* ── Logo dot: positioned independently of "Aftab" ────────────────
+     mix-blend-mode has to live on the fixed+z-indexed link itself (see
+     comment below) — putting it on an inner span instead traps the
+     blend inside the stacking context that position:fixed + z-index
+     already creates, so it stops blending against the real page and
+     just renders as flat white. But mix-blend-mode on the link also
+     blends EVERYTHING painted inside it as one unit, so a literal
+     orange dot placed inside would get run through the same
+     difference math as "Aftab" and stop looking orange. Rendering the
+     dot as a separate, non-blended sibling element — positioned at
+     "Aftab"'s measured right edge — is what lets both things be true
+     at once. */
+  const [logoHover, setLogoHover] = useState(false)
+  const aftabRef = useRef<HTMLAnchorElement>(null)
+  const [dotPos, setDotPos] = useState<{ left: number; bottom: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const el = aftabRef.current
+    if (!el) return
+    /* Measuring the link's own box (getBoundingClientRect on the <a>)
+       and estimating the dot's vertical position from an em-multiple
+       of that box put the dot noticeably off — a couple of guessed
+       constants away from where the text glyphs actually sit. Using a
+       Range over the link's text content instead gives the real,
+       tight glyph bounding box (its .bottom lands right on the text
+       baseline), so "left"/"bottom" here come from measurement, not
+       an estimate. ResizeObserver re-measures on any box change (font
+       load, hot-reload layout shift), not just window resize. */
+    const measure = () => {
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const rect = range.getBoundingClientRect()
+      setDotPos({ left: rect.right, bottom: rect.bottom })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    window.addEventListener('resize', measure, { passive: true })
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
+  }, [])
+
   useEffect(() => {
     const handler = () => {
       // Mobile: always show sticky — no room for the full horizontal nav
@@ -229,10 +270,16 @@ export default function Header() {
     <>
       {/* ── Logo — standalone fixed, NEVER inside a Framer Motion parent.
            An animated opacity/transform ancestor traps mix-blend-mode into
-           its own stacking context, breaking the inversion. This element
-           has no compositing ancestor so it blends directly against the page. */}
+           its own stacking context, breaking the inversion — same reason
+           mixBlendMode has to stay on THIS element (position:fixed + an
+           explicit z-index already creates a stacking context of its own)
+           rather than on an inner span; a version of this that nested it
+           one level deeper rendered as flat white instead of blending
+           against the page. This element has no compositing ancestor so
+           it blends directly against the page. */}
       {/* Logo — hidden on mobile (sticky header has its own logo) */}
       <Link
+        ref={aftabRef}
         href="/"
         className="hidden md:block"
         style={{
@@ -246,13 +293,39 @@ export default function Header() {
           color:         '#ffffff',
           mixBlendMode:  'difference',
           pointerEvents: 'auto',
+          opacity:       logoHover ? 0.65 : 1,
           transition:    'opacity 0.2s ease',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.65'; setCursorType('hover') }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '1';    setCursorType('default') }}
+        onMouseEnter={() => { setLogoHover(true);  setCursorType('hover')   }}
+        onMouseLeave={() => { setLogoHover(false); setCursorType('default') }}
       >
-        Aftab.
+        Aftab
       </Link>
+
+      {/* Dot — a separate, unblended sibling positioned from "Aftab"'s
+          measured glyph box (left/bottom, both real measurements — see
+          the ResizeObserver above, not estimated). Being outside the
+          link's own stacking context is what keeps it a true, literal
+          orange instead of getting swept into the difference blend. */}
+      {dotPos !== null && (
+        <span
+          aria-hidden
+          className="hidden md:block"
+          style={{
+            position:      'fixed',
+            left:          dotPos.left + 4,
+            top:           dotPos.bottom - 5,
+            zIndex:        60,
+            width:         '5px',
+            height:        '5px',
+            borderRadius:  '50%',
+            background:    '#ff4d00',
+            pointerEvents: 'none',
+            opacity:       logoHover ? 0.65 : 1,
+            transition:    'opacity 0.2s ease',
+          }}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         {scrolled ? <StickyHeader key="sticky" /> : <DefaultHeader key="default" />}

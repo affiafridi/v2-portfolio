@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import Link from 'next/link'
+import Link from '@/components/ui/TransitionLink'
 import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -68,7 +68,7 @@ const SOCIAL_LINKS = [
 
 /* ─── Component ──────────────────────────────────────────────────── */
 export default function FooterSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
-  const footerEmail       = (settings.email as string)       || 'aftab@matildacake.com'
+  const footerEmail       = (settings.email as string)       || 'affiafridi.dev@gmail.com'
   const footerSocials     = (settings.socialLinks as { label: string; url: string }[]) || SOCIAL_LINKS.map(l => ({ label: l.label, url: l.href }))
   const footerWords       = (settings.wordReveal as W[])     || WORDS
   const footerImages      = (settings.images as string[])    || FOOTER_IMAGES
@@ -244,6 +244,14 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
         {/* ── Col 1: heading + email + CTA ─────────────────────── */}
         <div className="ft-col-left" style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem' }}>
 
+          {/* Two lines always — "Reach" alone, then the gif + "Out" —
+              rather than one flex row that happens to wrap based on
+              available width. flexWrap-based wrapping put all 3 items
+              (word, gif, word) on one line whenever the viewport was
+              wide enough to fit them, and an awkward break (gif
+              stranded alone before "Out") whenever it wasn't quite
+              wide enough — neither of which is this deliberate 2-line
+              layout, on any screen size. */}
           <h2
             className="ft-title"
             style={{
@@ -254,36 +262,34 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
               color:         INK,
               margin:        0,
               userSelect:    'none',
-              display:       'flex',
-              alignItems:    'center',
-              gap:           '0.14em',
-              flexWrap:      'wrap',
             }}
           >
-            Reach
-            <span
-              className="ft-title-gif"
-              style={{
-                display:      'inline-block',
-                width:        'clamp(72px, 10vw, 150px)',
-                height:       'clamp(58px, 8.2vw, 128px)',
-                borderRadius: '10px',
-                overflow:     'hidden',
-                verticalAlign: 'middle',
-                flexShrink:   0,
-                position:     'relative',
-              }}
-            >
-              <Image
-                src="/uploads/1786797195871-reach-out.gif"
-                alt=""
-                fill
-                unoptimized
-                sizes="130px"
-                className="object-cover object-center"
-              />
+            <span style={{ display: 'block', marginBottom: '0.08em' }}>Reach</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.14em' }}>
+              <span
+                className="ft-title-gif"
+                style={{
+                  display:      'inline-block',
+                  width:        'clamp(72px, 10vw, 150px)',
+                  height:       'clamp(58px, 8.2vw, 128px)',
+                  borderRadius: '10px',
+                  overflow:     'hidden',
+                  verticalAlign: 'middle',
+                  flexShrink:   0,
+                  position:     'relative',
+                }}
+              >
+                <Image
+                  src="/uploads/1786797195871-reach-out.gif"
+                  alt=""
+                  fill
+                  unoptimized
+                  sizes="130px"
+                  className="object-cover object-center"
+                />
+              </span>
+              Out
             </span>
-            Out
           </h2>
 
           <div className="ft-left-item" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -299,15 +305,15 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
                 fontSize:       'clamp(14px, 1.5vw, 22px)',
                 fontWeight:     700,
                 letterSpacing:  '-0.02em',
-                color:          INK,
+                color:          ACC,
                 textDecoration: 'none',
-                borderBottom:   `2px solid ${INK}18`,
+                borderBottom:   `2px solid ${ACC}40`,
                 paddingBottom:  '5px',
                 width:          'fit-content',
                 transition:     'color 0.22s ease, border-color 0.22s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
-              onMouseLeave={e => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = `${INK}18`; setCursorType('default') }}
+              onMouseEnter={e => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = INK; setCursorType('hover') }}
+              onMouseLeave={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = `${ACC}40`; setCursorType('default') }}
             >
               {footerEmail}
             </a>

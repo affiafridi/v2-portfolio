@@ -104,12 +104,21 @@ export default function SmoothScrollProvider({
        ─────────────────────────────────────────────────────────── */
     lenis.on('scroll', ScrollTrigger.update)
 
-    /* ── Refresh ScrollTrigger after Lenis is ready ─────────── */
-    ScrollTrigger.refresh()
+    /* ── Refresh ScrollTrigger after Lenis is ready ───────────
+       Deferred one frame (not called synchronously here) so it runs
+       after the browser's first paint instead of blocking it — this
+       fires at the same moment every section's own mount-time
+       gsap.context()/ScrollTrigger.create() calls do too, and with a
+       page this animation-heavy, doing all of that plus a full
+       ScrollTrigger.refresh() (which measures live layout for every
+       registered trigger) synchronously in one go delayed how soon
+       Hero's entrance animation could even start. */
+    const rafId = requestAnimationFrame(() => ScrollTrigger.refresh())
 
     return () => {
       gsap.ticker.remove(onTick)
       lenis.destroy()
+      cancelAnimationFrame(rafId)
     }
   }, [])
 

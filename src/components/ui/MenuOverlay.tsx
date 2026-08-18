@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Link from 'next/link'
+import Link from '@/components/ui/TransitionLink'
 import Image from 'next/image'
 import { gsap } from 'gsap'
 import { useMenuStore }    from '@/store/useMenuStore'
@@ -196,7 +196,7 @@ export default function MenuOverlay() {
       <div
         className="fixed z-[300]"
         style={{
-          top:           'calc(env(safe-area-inset-top, 0px) + 12px)',
+          top:           'calc(env(safe-area-inset-top, 0px) + 18px)',
           left:          '50%',
           transform:     'translateX(-50%)',
           width:         'min(90vw, 500px)',
@@ -271,7 +271,23 @@ export default function MenuOverlay() {
               className="text-[28px] font-bold tracking-tight"
               style={{ color: CREAM }}
             >
-              Aftab.
+              Aftab
+              {/* A literal "." glyph at this weight/size renders as a
+                  blocky square, not a dot — a real circle reads as the
+                  same round "stop" used elsewhere on the site (footer
+                  big-name dot, hero availability dot). */}
+              <span
+                aria-hidden
+                style={{
+                  display:      'inline-block',
+                  width:        '0.16em',
+                  height:       '0.16em',
+                  borderRadius: '50%',
+                  background:   ACCENT,
+                  marginLeft:   '0.06em',
+                  marginBottom: '0.02em',
+                }}
+              />
             </span>
             <span
               className="mt-1 text-[10px] uppercase tracking-[0.22em]"
@@ -401,7 +417,7 @@ export default function MenuOverlay() {
                 onMouseEnter={(e) => { e.currentTarget.style.color = CREAM; setCursorType('hover') }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = MUTED; setCursorType('default') }}
               >
-                aftab@matildacake.com
+                affiafridi.dev@gmail.com
               </a>
             </div>
 

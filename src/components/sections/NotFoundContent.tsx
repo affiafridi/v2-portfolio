@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import Link from 'next/link'
+import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { useCursorStore } from '@/store/useCursorStore'
 

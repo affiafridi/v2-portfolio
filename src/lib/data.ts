@@ -21,6 +21,13 @@ export const getServices = cache(async () => {
   return prisma.service.findMany({ where: { published: true }, orderBy: { sortOrder: 'asc' } })
 })
 
+export const getFeaturedServices = cache(async () => {
+  return prisma.service.findMany({
+    where: { featured: true, published: true },
+    orderBy: { sortOrder: 'asc' },
+  })
+})
+
 export const getServiceBySlug = cache(async (slug: string) => {
   return prisma.service.findFirst({ where: { slug, published: true } })
 })

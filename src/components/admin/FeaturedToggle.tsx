@@ -6,7 +6,9 @@ import { Star, Loader2 } from 'lucide-react'
 import { useToastStore } from '@/store/useToastStore'
 import { cn } from '@/lib/utils'
 
-export default function FeaturedToggle({ id, initialFeatured }: { id: string; initialFeatured: boolean }) {
+export default function FeaturedToggle({
+  id, initialFeatured, endpoint = '/api/admin/projects',
+}: { id: string; initialFeatured: boolean; endpoint?: string }) {
   const router = useRouter()
   const toast = useToastStore((s) => s.add)
   const [featured, setFeatured] = useState(initialFeatured)
@@ -15,7 +17,7 @@ export default function FeaturedToggle({ id, initialFeatured }: { id: string; in
   const toggle = async () => {
     const next = !featured
     setLoading(true)
-    const res = await fetch(`/api/admin/projects/${id}`, {
+    const res = await fetch(`${endpoint}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ featured: next }),

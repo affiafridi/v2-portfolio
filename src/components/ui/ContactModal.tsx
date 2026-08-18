@@ -236,6 +236,17 @@ export default function ContactModal() {
     <div
       ref={panelRef}
       className="cm-panel"
+      /* This panel scrolls natively (overflowY:auto below), not
+         through Lenis — but Lenis's own touch/wheel listeners are
+         global and hijack the gesture before it ever reaches this
+         element's native scroll, even while lenis.stop() has it
+         paused (stop() freezes Lenis's own animation, it doesn't
+         release the gesture back to the browser). On mobile, with a
+         tall form, that silently made the bottom of the form —
+         Send button included — unreachable: swiping down did
+         nothing. data-lenis-prevent exempts this element from that
+         interception so the browser's native scroll handles it. */
+      data-lenis-prevent
       style={{
         position:       'fixed',
         inset:          0,
@@ -253,10 +264,15 @@ export default function ContactModal() {
       {/* ── Close button ─────────────────────────────────────────── */}
       <button
         onClick={close}
+        className="cm-close"
         style={{
           position:      'fixed',
-          top:           '1.8rem',
-          right:         '2.5rem',
+          /* env(safe-area-inset-*) pads out from the notch/status-bar
+             on devices that have one — without it, a plain rem offset
+             can land the button flush against (or under) the status
+             bar area since it doesn't know that space exists. */
+          top:           'calc(env(safe-area-inset-top, 0px) + clamp(14px, 3.5vw, 1.8rem))',
+          right:         'calc(env(safe-area-inset-right, 0px) + clamp(16px, 4.5vw, 2.5rem))',
           zIndex:        9600,
           fontSize:      '11px',
           fontWeight:    700,
@@ -291,7 +307,7 @@ export default function ContactModal() {
         </span>
       </button>
 
-      <div style={{
+      <div className="cm-content" style={{
         padding:       'clamp(60px,7vw,100px) clamp(32px,6.5vw,96px) clamp(40px,5vw,64px)',
         flex:          1,
         display:       'flex',
@@ -302,7 +318,7 @@ export default function ContactModal() {
       }}>
 
         {/* ── Heading ────────────────────────────────────────────── */}
-        <div style={{ marginBottom: 'clamp(36px,5vw,64px)' }}>
+        <div className="cm-heading" style={{ marginBottom: 'clamp(36px,5vw,64px)' }}>
 
           {/* Line 1 */}
           <div
@@ -358,8 +374,38 @@ export default function ContactModal() {
                 className="object-cover object-center"
               />
             </span>
-            together
-            <span style={{ color: ACC }}>.</span>
+            {/* "together" and the dot are wrapped in one flex item so
+                .cm-line2's own gap:0.18em (meant for the space after
+                the portrait image) doesn't also land here, pushing the
+                dot away from the text. display:inline-flex with
+                alignItems:flex-end instead of relying on the dot's
+                default vertical-align:baseline — this heading's
+                lineHeight:0.88 (deliberately tight for the display
+                type) compresses the line box below the font's natural
+                height, which throws off baseline-relative alignment by
+                tens of pixels; aligning to the flex container's own
+                bottom edge instead sits right where the text visually
+                ends, regardless of that font-metric quirk. */}
+            <span style={{ display: 'inline-flex', alignItems: 'baseline' }}>
+              together
+              {/* A literal "." glyph at this weight/size renders as a
+                  blocky square, not a dot — a real circle span reads
+                  as the same round "stop" used elsewhere (footer
+                  big-name dot, hero availability dot), not a font-
+                  dependent shape. */}
+              <span
+                aria-hidden
+                style={{
+                  display:      'inline-block',
+                  width:        '0.14em',
+                  height:       '0.14em',
+                  borderRadius: '50%',
+                  background:   ACC,
+                  marginLeft:   '0.05em',
+                  marginBottom: '0.06em',
+                }}
+              />
+            </span>
           </div>
         </div>
 

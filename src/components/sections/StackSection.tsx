@@ -343,13 +343,27 @@ export default function StackSection({ categories }: { categories?: Cat[] }) {
           marginBottom: -1px lets the active tab's 2px border sit
           flush over the row's 1px border-bottom for a clean underline.
       */}
-      {/* data-lenis-prevent: without it, Lenis's global scroll-jacking
-          captures touch drags over this row too — even set to
-          vertical-only orientation, it still intercepts the gesture
-          before native horizontal scroll gets it, feeling like a
-          drag instead of a scroll. touch-action:pan-x reinforces the
-          same intent at the browser level. */}
-      <div className="sk-tabs-row" data-lenis-prevent style={{
+      {/* data-lenis-prevent-horizontal (not the blanket data-lenis-
+          prevent): without some form of this, Lenis's global scroll-
+          jacking captures horizontal drags/swipes over this row too,
+          feeling like a drag instead of a scroll. The blanket
+          attribute matched regardless of gesture direction though —
+          Lenis checks it per wheel/touch event, and on a match it
+          just returns without calling preventDefault(), so that one
+          tick falls through to a raw native scroll instead of Lenis's
+          smoothed one. Any ordinary vertical mouse-wheel scroll that
+          happened to land while the cursor was resting over the tabs
+          (a natural place for it, right after browsing them) got an
+          instant unsmoothed jump spliced into an otherwise lerped
+          scroll — read as a stutter/lag, worse right at this section
+          since it's a likely cursor-rest spot. The "-horizontal"
+          variant only matches when *that specific event's* own delta
+          is horizontal-dominant, so real tab swipes/drags still get
+          the native-scroll exemption while vertical wheel scrolling
+          over this row passes through to Lenis untouched.
+          touch-action:pan-x reinforces the same intent at the browser
+          level. */}
+      <div className="sk-tabs-row" data-lenis-prevent-horizontal style={{
         display:      'flex',
         alignItems:   'flex-end',
         overflowX:    'auto',

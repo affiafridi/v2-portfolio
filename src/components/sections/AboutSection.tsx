@@ -130,11 +130,11 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
       >
 
         {/* ── Left: bio blocks ──────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem' }}>
+        <div className="ab-bio-col" style={{ display: 'flex', flexDirection: 'column', gap: '2.4rem' }}>
 
           <div className="ab-left-item">
             <span style={LABEL_STYLE}>My Story</span>
-            <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0 }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0, textAlign: 'justify' }}>
               {storyP1}
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
             className="ab-left-item"
             style={{ borderLeft: `2px solid ${ACC}`, paddingLeft: '16px' }}
           >
-            <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0 }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0, textAlign: 'justify' }}>
               {storyP2}
             </p>
           </div>

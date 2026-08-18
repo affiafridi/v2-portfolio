@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Link from 'next/link'
+import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
@@ -31,169 +31,6 @@ const IMG_OFFSETS = [
   { left: '4.0vw'  },
   { left: '3.0vw'  },
 ]
-
-/* ─── Mockup previews ────────────────────────────────────────────── */
-function ImgWebDev() {
-  return (
-    <div style={{ width:'100%', height:'100%', background:'#0c0c0c', fontFamily:'system-ui,sans-serif', overflow:'hidden', display:'flex', flexDirection:'column' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 12px', background:'#181818', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-        {['rgba(255,90,90,0.8)','rgba(255,200,0,0.6)','rgba(50,205,100,0.6)'].map(c => <div key={c} style={{ width:'7px', height:'7px', borderRadius:'50%', background:c }}/>)}
-        <div style={{ flex:1, marginLeft:'6px', background:'rgba(255,255,255,0.05)', borderRadius:'3px', padding:'3px 8px' }}>
-          <span style={{ fontSize:'7px', color:'rgba(255,255,255,0.22)', fontFamily:'var(--font-geist-mono), monospace' }}>localhost:3000</span>
-        </div>
-      </div>
-      <div style={{ flex:1, padding:'18px 16px 0', display:'flex', gap:'14px' }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:'7px', color:'rgba(255,77,0,0.65)', letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:'8px' }}>Creative Developer</div>
-          <div style={{ fontSize:'clamp(16px,3vw,28px)', fontWeight:900, color:'#f0f0f0', letterSpacing:'-0.04em', lineHeight:0.9, marginBottom:'12px' }}>
-            Building<br/><span style={{ color:'#ff4d00' }}>the web.</span>
-          </div>
-          <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' }}>
-            {['Next.js','GSAP','TS','Tailwind'].map(t => (
-              <span key={t} style={{ fontSize:'6px', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:'100px', padding:'2px 7px', color:'rgba(255,255,255,0.32)' }}>{t}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{ width:'38%', background:'linear-gradient(145deg,rgba(255,77,0,0.10),rgba(255,77,0,0.03))', borderRadius:'8px 8px 0 0', position:'relative', overflow:'hidden' }}>
-          {[...Array(3)].map((_,i) => <div key={i} style={{ position:'absolute', border:`1px solid rgba(255,77,0,${0.07+i*0.06})`, borderRadius:'50%', width:`${55+i*35}%`, height:`${55+i*35}%`, top:'50%', left:'50%', transform:'translate(-50%,-50%)' }}/>)}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ImgUIUX() {
-  return (
-    <div style={{ width:'100%', height:'100%', background:'#fafaf8', fontFamily:'system-ui,sans-serif', overflow:'hidden', padding:'12px 14px 0' }}>
-      <div style={{ fontSize:'6px', letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(0,0,0,0.22)', marginBottom:'10px' }}>Design System</div>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6px', marginBottom:'10px' }}>
-        {[['#1a1a1a','#fff','Button'],['transparent','#555','Ghost'],['#f0f0f0','#999','Input'],['#fff','#1a1a1a','Card']].map(([bg,c,n]) => (
-          <div key={n} style={{ background:bg as string, borderRadius:'5px', padding:'7px 9px', border: bg === 'transparent' ? '1px solid #ccc' : 'none', boxShadow: n === 'Card' ? '0 2px 6px rgba(0,0,0,0.07)' : 'none' }}>
-            <div style={{ fontSize:'7px', fontWeight:700, color:c as string }}>{n}</div>
-            <div style={{ height:'2px', background:'rgba(0,0,0,0.05)', borderRadius:'1px', width:'55%', marginTop:'3px' }}/>
-          </div>
-        ))}
-      </div>
-      <div style={{ display:'flex', gap:'4px', marginBottom:'8px' }}>
-        {['#1a1a1a','#ff4d00','#f0eeea','#888','#e0dbd4','#bbb'].map(c => (
-          <div key={c} style={{ flex:1, height:'20px', borderRadius:'3px', background:c, border:'1px solid rgba(0,0,0,0.07)' }}/>
-        ))}
-      </div>
-      <div style={{ borderTop:'1px solid rgba(0,0,0,0.05)', paddingTop:'8px' }}>
-        {[{s:'18px',w:900,t:'Display'},{s:'13px',w:700,t:'Heading'},{s:'10px',w:400,t:'Body'}].map(({s,w,t}) => (
-          <div key={t} style={{ display:'flex', alignItems:'baseline', gap:'6px', marginBottom:'3px' }}>
-            <span style={{ fontSize:s, fontWeight:w, color:'#111', lineHeight:1 }}>{t}</span>
-            <span style={{ fontSize:'6px', color:'rgba(0,0,0,0.25)' }}>{s}/{w}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ImgGSAP() {
-  return (
-    <div style={{ width:'100%', height:'100%', background:'#0a0a0a', fontFamily:'system-ui,sans-serif', overflow:'hidden', padding:'14px 16px' }}>
-      <div style={{ fontSize:'6px', color:'rgba(255,77,0,0.55)', letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:'10px' }}>GSAP Timeline</div>
-      {[{l:'scale',w:0.94,d:0},{l:'opacity',w:0.68,d:0.05},{l:'y',w:0.80,d:0.03},{l:'blur',w:0.52,d:0.08},{l:'stagger',w:0.88,d:0.02}].map((item,i) => (
-        <div key={item.l} style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'7px' }}>
-          <span style={{ fontSize:'6px', color:'rgba(255,255,255,0.18)', width:'32px', fontFamily:'var(--font-geist-mono), monospace' }}>{item.l}</span>
-          <div style={{ flex:1, height:'5px', background:'rgba(255,255,255,0.04)', borderRadius:'3px', overflow:'hidden', position:'relative' }}>
-            <div style={{ position:'absolute', left:`${item.d*100}%`, width:`${(item.w-item.d)*100}%`, height:'100%', background:`rgba(255,77,0,${0.38+i*0.11})`, borderRadius:'3px' }}/>
-          </div>
-        </div>
-      ))}
-      <div style={{ marginTop:'10px', background:'rgba(255,255,255,0.03)', borderRadius:'5px', padding:'7px 9px', fontFamily:'var(--font-geist-mono), monospace' }}>
-        <div style={{ fontSize:'7px', color:'rgba(255,77,0,0.70)', marginBottom:'2px' }}>gsap.timeline(&#123;&#125;)</div>
-        <div style={{ fontSize:'6px', color:'rgba(255,255,255,0.28)' }}>&nbsp;&nbsp;.from(el, &#123; y:40, opacity:0 &#125;)</div>
-        <div style={{ fontSize:'6px', color:'rgba(255,255,255,0.28)' }}>&nbsp;&nbsp;.to(el2, &#123; scale:1 &#125;, &apos;-=0.2&apos;)</div>
-      </div>
-    </div>
-  )
-}
-
-function ImgBrand() {
-  return (
-    <div style={{ width:'100%', height:'100%', background:'#f5f2ee', fontFamily:'system-ui,sans-serif', overflow:'hidden', padding:'14px 16px' }}>
-      <div style={{ fontSize:'6px', letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(0,0,0,0.25)', marginBottom:'12px' }}>Brand Identity</div>
-      <div style={{ fontSize:'clamp(16px,2.8vw,24px)', fontWeight:900, color:'#1a1a1a', letterSpacing:'-0.04em', lineHeight:0.9, marginBottom:'10px' }}>Wordmark.</div>
-      <div style={{ display:'flex', gap:'0', marginBottom:'10px', borderRadius:'6px', overflow:'hidden' }}>
-        {[['#1a1a1a','50%'],['#ff4d00','20%'],['#f0eeea','15%'],['#888','10%'],['#e0dbd4','5%']].map(([c,w]) => (
-          <div key={c} style={{ width:w as string, height:'28px', background:c as string }}/>
-        ))}
-      </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'4px' }}>
-        {[
-          'linear-gradient(135deg,#ffe8d0,#ffd0a0)',
-          'linear-gradient(135deg,#1a1a1a,#333)',
-          'linear-gradient(135deg,#f0eeea,#e0dbd4)',
-          'linear-gradient(135deg,#ff4d00,#ff8040)',
-          'linear-gradient(135deg,#c8c2b8,#b0a898)',
-          'linear-gradient(135deg,#0a0a0a,#1a1a1a)',
-        ].map((bg,i) => (
-          <div key={i} style={{ aspectRatio:'1', borderRadius:'5px', background:bg }}/>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ImgEcom() {
-  return (
-    <div style={{ width:'100%', height:'100%', background:'#f7f5f2', fontFamily:'system-ui,sans-serif', overflow:'hidden' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'7px 12px', borderBottom:'1px solid rgba(0,0,0,0.06)' }}>
-        <span style={{ fontSize:'8px', fontWeight:800, color:'#111' }}>Shop</span>
-        <div style={{ display:'flex', gap:'10px' }}>
-          {['New In','Sale','About'].map(n => <span key={n} style={{ fontSize:'6px', color:'rgba(0,0,0,0.32)' }}>{n}</span>)}
-        </div>
-        <span style={{ fontSize:'7px', color:'rgba(0,0,0,0.38)' }}>Cart (2)</span>
-      </div>
-      <div style={{ padding:'10px 12px 0' }}>
-        <div style={{ fontSize:'6px', letterSpacing:'0.10em', textTransform:'uppercase', color:'rgba(0,0,0,0.20)', marginBottom:'6px' }}>New Arrivals</div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'5px', marginBottom:'9px' }}>
-          {[{bg:'#e8e2d8',p:'AED 420'},{bg:'#d8d0c4',p:'AED 680'},{bg:'#ccc6ba',p:'AED 290'}].map(item => (
-            <div key={item.bg} style={{ borderRadius:'6px', overflow:'hidden', background:item.bg, aspectRatio:'2/3', position:'relative' }}>
-              <div style={{ position:'absolute', bottom:'5px', left:'3px', right:'3px', background:'rgba(255,255,255,0.90)', borderRadius:'2px', padding:'2px 4px' }}>
-                <div style={{ fontSize:'6px', color:'#333', fontWeight:700 }}>{item.p}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ background:'#1a1a1a', borderRadius:'100px', padding:'6px 12px', display:'inline-flex', alignItems:'center', gap:'5px' }}>
-          <span style={{ fontSize:'7px', color:'#fff', fontWeight:600 }}>Add to Cart →</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ImgCMS() {
-  return (
-    <div style={{ width:'100%', height:'100%', background:'#fff', fontFamily:'system-ui,sans-serif', overflow:'hidden', display:'flex', flexDirection:'column' }}>
-      <div style={{ background:'#101010', padding:'7px 12px', display:'flex', alignItems:'center', gap:'8px' }}>
-        <span style={{ fontSize:'8px', color:'rgba(255,255,255,0.42)', fontWeight:600 }}>Sanity Studio</span>
-        <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:'4px' }}>
-          <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#22c55e' }}/>
-          <span style={{ fontSize:'6px', color:'rgba(255,255,255,0.25)' }}>Connected</span>
-        </div>
-      </div>
-      <div style={{ flex:1, padding:'10px 14px' }}>
-        <div style={{ fontSize:'6px', color:'rgba(0,0,0,0.26)', marginBottom:'8px', letterSpacing:'0.05em' }}>Documents · 4 total</div>
-        {[{t:'Hero Section',s:'Published',time:'2h ago'},{t:'Blog Post',s:'Published',time:'1d ago'},{t:'About Page',s:'Draft',time:'5m ago'},{t:'Projects',s:'Published',time:'3d ago'}].map(item => (
-          <div key={item.t} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
-            <div>
-              <div style={{ fontSize:'8px', color:'#111', fontWeight:500 }}>{item.t}</div>
-              <div style={{ fontSize:'6px', color:'rgba(0,0,0,0.26)', marginTop:'1px' }}>{item.time}</div>
-            </div>
-            <span style={{ fontSize:'6px', borderRadius:'3px', padding:'2px 6px', fontWeight:600, background: item.s === 'Published' ? 'rgba(34,197,94,0.10)' : 'rgba(251,146,60,0.12)', color: item.s === 'Published' ? '#15803d' : '#c2650a' }}>{item.s}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-const PREVIEWS = [ImgWebDev, ImgUIUX, ImgGSAP, ImgBrand, ImgEcom, ImgCMS]
 
 /* ─── Component ──────────────────────────────────────────────────── */
 interface ServiceItem { num: string; label: string; tag: string; slug?: string; image?: string | null }
@@ -228,7 +65,11 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
     /* Position float — each service has its own left offset */
     gsap.killTweensOf(floatRef.current)
     gsap.set(floatRef.current, {
-      left: IMG_OFFSETS[idx].left,
+      /* Modulo, not a direct index — there's no cap on how many
+         services can be marked featured now, so this has to stay
+         safe past IMG_OFFSETS' own length instead of assuming a
+         fixed max of 6. */
+      left: IMG_OFFSETS[idx % IMG_OFFSETS.length].left,
       top:  centerY,
       y:    '-50%',
     })
@@ -422,13 +263,30 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
       onLeaveBack: hideFloat,
     })
 
-    /* Refresh after sticky WorkSection layout settles */
-    const refreshId = setTimeout(() => ScrollTrigger.refresh(), 400)
+    /* Refresh after sticky WorkSection layout settles — this measures
+       live DOM layout for every ScrollTrigger on the page (WorkSection's
+       huge pinned multi-project setup included), which is genuinely
+       expensive. A flat 400ms timer landed it squarely mid-flight
+       through Hero's ~2s entrance animation (portrait/bio/headline
+       still actively tweening at that point), causing a visible
+       stutter right as the page loads. requestIdleCallback only runs
+       it once the main thread is actually free instead of on a fixed
+       clock, so it no longer competes with an animation still playing.
+       Safari has no requestIdleCallback, hence the setTimeout fallback
+       (kept at 400ms there — better than nothing, just not the fix). */
+    let idleId: number | undefined
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(() => ScrollTrigger.refresh())
+    } else {
+      timeoutId = setTimeout(() => ScrollTrigger.refresh(), 400)
+    }
 
     return () => {
       ctx.revert()
       visibilityST.kill()
-      clearTimeout(refreshId)
+      if (idleId !== undefined) window.cancelIdleCallback(idleId)
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
     }
   }, [])
 
@@ -637,13 +495,29 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
           border:       '1px solid rgba(0,0,0,0.07)',
         }}
       >
-        {PREVIEWS.map((Preview, i) => (
+        {svcList.map((s, i) => (
           <div
-            key={i}
+            key={s.num}
             ref={el => { previewRefs.current[i] = el }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.04)' }}
           >
-            <Preview />
+            {s.image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- can
+              // be any admin-entered URL (MediaField allows external
+              // links, not just local uploads), which next/image would
+              // reject unless every possible host were pre-whitelisted.
+              <img
+                src={s.image}
+                alt=""
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.18)' }}>
+                  No preview
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>
