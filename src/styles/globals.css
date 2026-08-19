@@ -41,6 +41,12 @@ html {
   40%           { transform: scale(1);   opacity: 1;    }
 }
 
+/* ─── Maintenance page — orbit loader around the portrait ────────── */
+@keyframes mp-orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* ─── Preloader: server-side black — zero flash on reload ───────────
    layout.tsx sets data-loading="" on <html> before JS runs.
    Preloader removes it in onComplete so background snaps to cream.
@@ -811,7 +817,7 @@ section, footer, header, main, div {
   .ft-title { font-size: clamp(40px, 12vw, 56px) !important; }
   /* Scaled down to match .ft-title's reduced mobile font-size above —
      the desktop clamp is sized for a 168px-max heading. */
-  .ft-title-gif { width: clamp(48px, 12.5vw, 74px) !important; height: clamp(38px, 10vw, 60px) !important; }
+  .ft-title-gif { width: clamp(55px, 12.5vw, 85px) !important; height: clamp(44px, 10vw, 69px) !important; }
   /* ft-col-statement is a flex column wrapping ft-statement; flex items
      default to min-width:auto, which — same as the bare-1fr grid track
      above — lets the paragraph's content width become a hard floor
@@ -865,7 +871,7 @@ section, footer, header, main, div {
     gap: 40px !important;
   }
   .ft-title { font-size: clamp(64px, 13vw, 96px) !important; }
-  .ft-title-gif { width: clamp(56px, 11vw, 84px) !important; height: clamp(44px, 9vw, 68px) !important; }
+  .ft-title-gif { width: clamp(64px, 11vw, 97px) !important; height: clamp(51px, 9vw, 78px) !important; }
   .ft-col-statement { min-width: 0 !important; padding-top: 0 !important; }
   .ft-statement {
     font-size: clamp(32px, 5.5vw, 48px) !important;
@@ -902,7 +908,7 @@ section, footer, header, main, div {
     padding: 100px 48px 56px !important;
   }
   .ft-title     { font-size: clamp(48px, 7.5vw, 76px) !important; }
-  .ft-title-gif { width: clamp(40px, 8vw, 64px) !important; height: clamp(32px, 6.5vw, 52px) !important; }
+  .ft-title-gif { width: clamp(46px, 8vw, 74px) !important; height: clamp(37px, 6.5vw, 60px) !important; }
 }
 
 @media (min-width: 1280px) and (max-width: 1439px) {
@@ -918,7 +924,7 @@ section, footer, header, main, div {
     padding: 110px 56px 64px !important;
   }
   .ft-title     { font-size: clamp(56px, 8vw, 88px) !important; }
-  .ft-title-gif { width: clamp(48px, 8.5vw, 76px) !important; height: clamp(38px, 7vw, 62px) !important; }
+  .ft-title-gif { width: clamp(55px, 8.5vw, 87px) !important; height: clamp(44px, 7vw, 71px) !important; }
 }
 
 /* Same bug as the two tiers below, one more breakpoint over: nothing
@@ -930,7 +936,7 @@ section, footer, header, main, div {
 @media (min-width: 1440px) {
   footer { min-height: auto !important; }
   .ft-title     { font-size: clamp(64px, 7.5vw, 108px) !important; }
-  .ft-title-gif { width: clamp(52px, 8vw, 92px) !important; height: clamp(42px, 6.5vw, 74px) !important; }
+  .ft-title-gif { width: clamp(60px, 8vw, 106px) !important; height: clamp(48px, 6.5vw, 85px) !important; }
 }
 
 /* ── StackSection ─────────────────────────────────────────────────── */
@@ -1130,7 +1136,14 @@ section, footer, header, main, div {
      min-width:auto (their content's own natural width as a hard floor)
      rather than actually honoring the track's 1fr, the same bug pattern
      hit elsewhere on this site (.wpl-row-inner and others). */
-  .sr-content { min-width: 0 !important; }
+  .sr-content { min-width: 0 !important; order: 2 !important; }
+
+  /* Image first, then heading/description/points/CTA — desktop reads
+     left-to-right as text|image side by side, but stacked on mobile/
+     tablet the image should lead each row instead of sitting after a
+     wall of text. DOM order (and tab order) stays text-then-image for
+     desktop/keyboard nav; this is purely a visual reorder. */
+  .sr-img { order: 1 !important; }
 
   /* The alternating right-border/padding pattern between the two
      columns (odd/even index, inline styles) only makes sense with two
@@ -1147,4 +1160,46 @@ section, footer, header, main, div {
     padding-right: 0 !important;
     white-space: normal !important;
   }
+}
+
+/* ── /services/[slug] single service page (ServiceDetailClient.tsx) ──
+   No responsive CSS existed here at all. Two grids stayed at their
+   desktop column counts regardless of width — the title|image hero row
+   (1fr + up-to-460px) and the description|points row (3fr 1fr) — same
+   "not enough width left for the text column" problem already found
+   and fixed on the /services listing page and /work/[slug]. Title font
+   floors (52px hero, 36px next-service) are large enough that a long
+   single word ("Optimisation") risks the exact same real horizontal-
+   overflow bug measured on the listing page's .sr-name, so both get
+   the same min-width:0 + reduced mobile floor treatment. */
+@media (max-width: 1023px) {
+  .sd-hero-row   { grid-template-columns: 1fr !important; }
+  .sd-content    { min-width: 0 !important; order: 2 !important; }
+  .sd-row2       { grid-template-columns: 1fr !important; }
+  .sd-next-row   { flex-wrap: wrap !important; }
+  .sd-next-title { min-width: 0 !important; }
+
+  /* Image leads the stacked hero — same reorder already applied on the
+     /services listing page's rows, for the same reason: stacked on
+     mobile/tablet, the image should come first instead of sitting
+     after a wall of text. .sd-content still carries the back link/
+     label/title together as one block in their existing order, just
+     moved after the image now. */
+  .sd-img { order: 1 !important; }
+}
+@media (max-width: 767px) {
+  .sd-title      { font-size: clamp(32px, 10vw, 52px) !important; }
+  .sd-next-title { font-size: clamp(28px, 9vw, 44px) !important; }
+
+  /* Both gaps were tuned for the desktop side-by-side layout, where
+     marginBottom:56-96px reads as normal breathing room next to a
+     460px-tall image sitting alongside it. Stacked on mobile, the
+     title is now the last thing in the hero row (image moved above
+     it), so that same margin lands directly under the title text with
+     nothing to visually balance it against — reads as an oversized gap
+     rather than section spacing. Same story for the divider's own
+     48-80px margin before the description below it. Cut both roughly
+     in half for a tighter, more mobile-appropriate rhythm. */
+  .sd-hero-row { margin-bottom: 28px !important; }
+  .sd-divider  { margin-bottom: 24px !important; }
 }

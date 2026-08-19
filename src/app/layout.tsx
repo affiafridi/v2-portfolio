@@ -33,11 +33,19 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // getSiteSettings() is React cache()-deduped, so this costs nothing
+  // extra alongside generateMetadata()'s own call within the same request.
+  const settings = await getSiteSettings()
+  const general = (settings.general as { maintenanceMode?: boolean } | undefined) ?? {}
+  const footer  = (settings.footer as { email?: string } | undefined) ?? {}
+
   return (
     <html lang="en" suppressHydrationWarning data-loading="" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
-        <PortfolioShell>{children}</PortfolioShell>
+        <PortfolioShell maintenanceMode={general.maintenanceMode ?? false} contactEmail={footer.email}>
+          {children}
+        </PortfolioShell>
         <PageTransitionOverlay />
       </body>
     </html>

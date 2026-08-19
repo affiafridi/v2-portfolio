@@ -37,12 +37,14 @@ function NavItem({
   setActiveId,
   theme = 'dark',
   onClick,
+  isCurrent = false,
 }: {
   item:        { label: string; href: string }
   activeId:    string | null
   setActiveId: (v: string | null) => void
   theme?:      'light' | 'dark'
   onClick?:    () => void
+  isCurrent?:  boolean
 }) {
   const { setCursorType } = useCursorStore()
   const isActive = activeId === item.label
@@ -59,6 +61,25 @@ function NavItem({
       <span style={{ opacity: isActive ? 1 : 0, marginLeft: isActive ? '3px' : '0', transition: 'opacity 0.18s ease, margin 0.18s ease' }}>
         ]
       </span>
+      {/* Current-page marker — same orange accent dot used everywhere
+          else on this site (Hero, section labels, WorkPageHero's ball
+          accent), here as a small "you are here" indicator. Always
+          visible for the active route, not hover-gated like the
+          brackets above. */}
+      {isCurrent && (
+        <span
+          aria-hidden="true"
+          style={{
+            display:      'inline-block',
+            width:        '4px',
+            height:       '4px',
+            borderRadius: '50%',
+            background:   '#ff4d00',
+            marginLeft:   '6px',
+            flexShrink:   0,
+          }}
+        />
+      )}
     </span>
   )
 
@@ -93,6 +114,11 @@ function DefaultHeader() {
   // Work detail pages (/work/slug) have a dark hero — use white nav text
   const theme: 'light' | 'dark' = /^\/work\/.+/.test(pathname) ? 'dark' : 'light'
 
+  // Index only matches the exact root; every other item also covers its
+  // own detail pages (/work/[slug], /services/[slug], /blog/[slug]).
+  const isCurrentPage = (href: string) =>
+    href === '/' ? pathname === '/' : (pathname === href || pathname.startsWith(`${href}/`))
+
   return (
     <motion.div
       key="default"
@@ -115,6 +141,7 @@ function DefaultHeader() {
               setActiveId={setActiveId}
               theme={theme}
               onClick={item.label === 'Contact' ? openContact : undefined}
+              isCurrent={isCurrentPage(item.href)}
             />
           ))}
         </nav>

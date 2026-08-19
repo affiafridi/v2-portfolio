@@ -19,179 +19,6 @@ const CREAM = '#f0eeea'
 const INK   = '#1a1a1a'
 const ACC   = '#ff4d00'
 
-/* ─── Service mockup previews ────────────────────────────────────── */
-function PreviewWebDev() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#0c0c0c',display:'flex',flexDirection:'column',overflow:'hidden' }}>
-      <div style={{ display:'flex',alignItems:'center',gap:'5px',padding:'10px 14px',background:'#181818',borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-        {['rgba(255,90,90,0.8)','rgba(255,200,0,0.6)','rgba(50,205,100,0.6)'].map(c=><div key={c} style={{ width:'8px',height:'8px',borderRadius:'50%',background:c }}/>)}
-        <div style={{ flex:1,marginLeft:'8px',background:'rgba(255,255,255,0.05)',borderRadius:'4px',padding:'4px 10px' }}>
-          <span style={{ fontSize:'8px',color:'rgba(255,255,255,0.22)',fontFamily:'var(--font-geist-mono),monospace' }}>localhost:3000</span>
-        </div>
-      </div>
-      <div style={{ flex:1,padding:'22px 20px 0',display:'flex',gap:'16px' }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:'8px',color:'rgba(255,77,0,0.65)',letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:'10px' }}>Creative Developer</div>
-          <div style={{ fontSize:'clamp(18px,2.5vw,30px)',fontWeight:900,color:'#f0f0f0',letterSpacing:'-0.04em',lineHeight:0.9,marginBottom:'14px' }}>Building<br/><span style={{ color:'#ff4d00' }}>the web.</span></div>
-          <div style={{ display:'flex',gap:'5px',flexWrap:'wrap' }}>
-            {['Next.js','GSAP','TS','Tailwind'].map(t=><span key={t} style={{ fontSize:'7px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'100px',padding:'3px 8px',color:'rgba(255,255,255,0.32)' }}>{t}</span>)}
-          </div>
-        </div>
-        <div style={{ width:'38%',background:'linear-gradient(145deg,rgba(255,77,0,0.10),rgba(255,77,0,0.03))',borderRadius:'8px 8px 0 0',position:'relative',overflow:'hidden' }}>
-          {[...Array(3)].map((_,i)=><div key={i} style={{ position:'absolute',border:`1px solid rgba(255,77,0,${0.07+i*0.06})`,borderRadius:'50%',width:`${55+i*35}%`,height:`${55+i*35}%`,top:'50%',left:'50%',transform:'translate(-50%,-50%)' }}/>)}
-        </div>
-      </div>
-    </div>
-  )
-}
-function PreviewUIUX() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#fafaf8',overflow:'hidden',padding:'16px 18px 0' }}>
-      <div style={{ fontSize:'7px',letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(0,0,0,0.22)',marginBottom:'12px' }}>Design System</div>
-      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'12px' }}>
-        {[['#1a1a1a','#fff','Button'],['transparent','#555','Ghost'],['#f0f0f0','#999','Input'],['#fff','#1a1a1a','Card']].map(([bg,c,n])=>(
-          <div key={n} style={{ background:bg as string,borderRadius:'6px',padding:'9px 11px',border:bg==='transparent'?'1px solid #ccc':'none' }}>
-            <div style={{ fontSize:'8px',fontWeight:700,color:c as string }}>{n}</div>
-            <div style={{ height:'2px',background:'rgba(0,0,0,0.05)',borderRadius:'1px',width:'55%',marginTop:'4px' }}/>
-          </div>
-        ))}
-      </div>
-      <div style={{ display:'flex',gap:'5px',marginBottom:'10px' }}>
-        {['#1a1a1a','#ff4d00','#f0eeea','#888','#e0dbd4','#bbb'].map(c=><div key={c} style={{ flex:1,height:'22px',borderRadius:'4px',background:c }}/>)}
-      </div>
-      <div style={{ borderTop:'1px solid rgba(0,0,0,0.05)',paddingTop:'10px' }}>
-        {[{s:'20px',w:900,t:'Display'},{s:'14px',w:700,t:'Heading'},{s:'11px',w:400,t:'Body'}].map(({s,w,t})=>(
-          <div key={t} style={{ display:'flex',alignItems:'baseline',gap:'7px',marginBottom:'4px' }}>
-            <span style={{ fontSize:s,fontWeight:w,color:'#111',lineHeight:1 }}>{t}</span>
-            <span style={{ fontSize:'7px',color:'rgba(0,0,0,0.25)' }}>{s}/{w}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-function PreviewMotion() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#0a0a0a',overflow:'hidden',padding:'18px 20px' }}>
-      <div style={{ fontSize:'7px',color:'rgba(255,77,0,0.55)',letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:'12px' }}>GSAP Timeline</div>
-      {[{l:'scale',w:0.94,d:0},{l:'opacity',w:0.68,d:0.05},{l:'y',w:0.80,d:0.03},{l:'blur',w:0.52,d:0.08},{l:'stagger',w:0.88,d:0.02}].map((item,i)=>(
-        <div key={item.l} style={{ display:'flex',alignItems:'center',gap:'10px',marginBottom:'9px' }}>
-          <span style={{ fontSize:'7px',color:'rgba(255,255,255,0.18)',width:'36px',fontFamily:'var(--font-geist-mono),monospace' }}>{item.l}</span>
-          <div style={{ flex:1,height:'5px',background:'rgba(255,255,255,0.04)',borderRadius:'3px',overflow:'hidden',position:'relative' }}>
-            <div style={{ position:'absolute',left:`${item.d*100}%`,width:`${(item.w-item.d)*100}%`,height:'100%',background:`rgba(255,77,0,${0.38+i*0.11})`,borderRadius:'3px' }}/>
-          </div>
-        </div>
-      ))}
-      <div style={{ marginTop:'14px',background:'rgba(255,255,255,0.03)',borderRadius:'6px',padding:'9px 11px',fontFamily:'var(--font-geist-mono),monospace' }}>
-        <div style={{ fontSize:'8px',color:'rgba(255,77,0,0.70)',marginBottom:'3px' }}>gsap.timeline(&#123;&#125;)</div>
-        <div style={{ fontSize:'7px',color:'rgba(255,255,255,0.28)' }}>&nbsp;&nbsp;.from(el,&#123;y:40,opacity:0&#125;)</div>
-        <div style={{ fontSize:'7px',color:'rgba(255,255,255,0.28)' }}>&nbsp;&nbsp;.to(el2,&#123;scale:1&#125;,&apos;-=0.2&apos;)</div>
-      </div>
-    </div>
-  )
-}
-function PreviewBrand() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#f5f2ee',overflow:'hidden',padding:'18px 20px' }}>
-      <div style={{ fontSize:'7px',letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(0,0,0,0.25)',marginBottom:'14px' }}>Brand Identity</div>
-      <div style={{ fontSize:'clamp(18px,2.5vw,26px)',fontWeight:900,color:'#1a1a1a',letterSpacing:'-0.04em',lineHeight:0.9,marginBottom:'12px' }}>Wordmark.</div>
-      <div style={{ display:'flex',marginBottom:'12px',borderRadius:'7px',overflow:'hidden' }}>
-        {[['#1a1a1a','50%'],['#ff4d00','20%'],['#f0eeea','15%'],['#888','10%'],['#e0dbd4','5%']].map(([c,w])=><div key={c} style={{ width:w as string,height:'28px',background:c as string }}/>)}
-      </div>
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'5px' }}>
-        {['linear-gradient(135deg,#ffe8d0,#ffd0a0)','linear-gradient(135deg,#1a1a1a,#333)','linear-gradient(135deg,#f0eeea,#e0dbd4)','linear-gradient(135deg,#ff4d00,#ff8040)','linear-gradient(135deg,#c8c2b8,#b0a898)','linear-gradient(135deg,#0a0a0a,#1a1a1a)'].map((bg,i)=>(
-          <div key={i} style={{ aspectRatio:'1',borderRadius:'5px',background:bg }}/>
-        ))}
-      </div>
-    </div>
-  )
-}
-function PreviewEcom() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#f7f5f2',overflow:'hidden' }}>
-      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 14px',borderBottom:'1px solid rgba(0,0,0,0.06)' }}>
-        <span style={{ fontSize:'9px',fontWeight:800,color:'#111' }}>Shop</span>
-        <div style={{ display:'flex',gap:'12px' }}>{['New In','Sale','About'].map(n=><span key={n} style={{ fontSize:'7px',color:'rgba(0,0,0,0.32)' }}>{n}</span>)}</div>
-        <span style={{ fontSize:'8px',color:'rgba(0,0,0,0.38)' }}>Cart (2)</span>
-      </div>
-      <div style={{ padding:'12px 14px 0' }}>
-        <div style={{ fontSize:'7px',letterSpacing:'0.10em',textTransform:'uppercase',color:'rgba(0,0,0,0.20)',marginBottom:'8px' }}>New Arrivals</div>
-        <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px',marginBottom:'11px' }}>
-          {[{bg:'#e8e2d8',p:'AED 420'},{bg:'#d8d0c4',p:'AED 680'},{bg:'#ccc6ba',p:'AED 290'}].map(item=>(
-            <div key={item.bg} style={{ borderRadius:'7px',overflow:'hidden',background:item.bg,aspectRatio:'2/3',position:'relative' }}>
-              <div style={{ position:'absolute',bottom:'6px',left:'4px',right:'4px',background:'rgba(255,255,255,0.90)',borderRadius:'3px',padding:'3px 5px' }}>
-                <div style={{ fontSize:'7px',color:'#333',fontWeight:700 }}>{item.p}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ background:'#1a1a1a',borderRadius:'100px',padding:'7px 14px',display:'inline-flex',alignItems:'center',gap:'6px' }}>
-          <span style={{ fontSize:'8px',color:'#fff',fontWeight:600 }}>Add to Cart →</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-function PreviewCMS() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#fff',display:'flex',flexDirection:'column' }}>
-      <div style={{ background:'#101010',padding:'9px 14px',display:'flex',alignItems:'center',gap:'10px' }}>
-        <span style={{ fontSize:'9px',color:'rgba(255,255,255,0.42)',fontWeight:600 }}>Sanity Studio</span>
-        <div style={{ marginLeft:'auto',display:'flex',alignItems:'center',gap:'5px' }}>
-          <div style={{ width:'7px',height:'7px',borderRadius:'50%',background:'#22c55e' }}/>
-          <span style={{ fontSize:'7px',color:'rgba(255,255,255,0.25)' }}>Live</span>
-        </div>
-      </div>
-      <div style={{ flex:1,padding:'12px 16px' }}>
-        {[{t:'Hero Section',s:'Published',time:'2h ago'},{t:'Blog Post',s:'Published',time:'1d ago'},{t:'About Page',s:'Draft',time:'5m ago'},{t:'Projects',s:'Published',time:'3d ago'}].map(item=>(
-          <div key={item.t} style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
-            <div>
-              <div style={{ fontSize:'9px',color:'#111',fontWeight:500 }}>{item.t}</div>
-              <div style={{ fontSize:'7px',color:'rgba(0,0,0,0.26)',marginTop:'1px' }}>{item.time}</div>
-            </div>
-            <span style={{ fontSize:'7px',borderRadius:'4px',padding:'2px 7px',fontWeight:600,background:item.s==='Published'?'rgba(34,197,94,0.10)':'rgba(251,146,60,0.12)',color:item.s==='Published'?'#15803d':'#c2650a' }}>{item.s}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-function PreviewPerf() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#0d0d0d',overflow:'hidden',padding:'18px 20px' }}>
-      <div style={{ fontSize:'7px',color:'rgba(255,77,0,0.55)',letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:'14px' }}>Lighthouse Score</div>
-      {[{l:'Performance',v:96},{l:'Accessibility',v:100},{l:'Best Practices',v:95},{l:'SEO',v:100}].map(item=>(
-        <div key={item.l} style={{ marginBottom:'11px' }}>
-          <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'4px' }}>
-            <span style={{ fontSize:'7px',color:'rgba(255,255,255,0.35)' }}>{item.l}</span>
-            <span style={{ fontSize:'7px',color:item.v>=95?'#22c55e':'rgba(255,77,0,0.8)',fontWeight:700,fontFamily:'var(--font-geist-mono),monospace' }}>{item.v}</span>
-          </div>
-          <div style={{ height:'4px',background:'rgba(255,255,255,0.06)',borderRadius:'2px',overflow:'hidden' }}>
-            <div style={{ height:'100%',width:`${item.v}%`,background:item.v>=95?'rgba(34,197,94,0.60)':'rgba(255,77,0,0.50)',borderRadius:'2px' }}/>
-          </div>
-        </div>
-      ))}
-      <div style={{ marginTop:'14px',fontSize:'7px',color:'rgba(255,255,255,0.15)',fontFamily:'var(--font-geist-mono),monospace' }}>FCP: 0.4s · LCP: 0.9s · CLS: 0</div>
-    </div>
-  )
-}
-function PreviewAPI() {
-  return (
-    <div style={{ width:'100%',height:'100%',background:'#0a0f0a',overflow:'hidden',padding:'18px 20px' }}>
-      <div style={{ fontSize:'7px',color:'rgba(34,197,94,0.60)',letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:'12px' }}>API Endpoints</div>
-      {[{m:'GET',p:'/api/products',s:'200'},{m:'POST',p:'/api/orders',s:'201'},{m:'PUT',p:'/api/users/:id',s:'200'},{m:'DELETE',p:'/api/sessions',s:'204'}].map(item=>(
-        <div key={item.p} style={{ display:'flex',alignItems:'center',gap:'10px',padding:'7px 0',borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-          <span style={{ fontSize:'7px',fontWeight:700,fontFamily:'var(--font-geist-mono),monospace',color:item.m==='GET'?'rgba(34,197,94,0.80)':item.m==='POST'?'rgba(59,130,246,0.80)':item.m==='PUT'?'rgba(251,146,60,0.80)':'rgba(239,68,68,0.80)',width:'38px' }}>{item.m}</span>
-          <span style={{ fontSize:'7px',color:'rgba(255,255,255,0.25)',fontFamily:'var(--font-geist-mono),monospace',flex:1 }}>{item.p}</span>
-          <span style={{ fontSize:'7px',color:'rgba(34,197,94,0.70)',fontFamily:'var(--font-geist-mono),monospace' }}>{item.s}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const PREVIEWS = [PreviewWebDev, PreviewUIUX, PreviewMotion, PreviewBrand, PreviewEcom, PreviewCMS, PreviewPerf, PreviewAPI]
-
 /* ─── Single service row ─────────────────────────────────────────── */
 function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRef }: {
   service:           ServiceData
@@ -201,7 +28,6 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
   playFnRef:         { current: (() => void) | null }
 }) {
   const rowRef               = useRef<HTMLDivElement>(null)
-  const Preview              = PREVIEWS[index]
   const inViewRef            = useRef(false)
   const readyRef             = useRef(index === 0)
   const revealedRef          = useRef(false)          // plays once, never again
@@ -246,51 +72,94 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
       if (inViewRef.current) doPlay()
     }
 
+    /* Guard against React StrictMode double-fire ───────────────────
+       StrictMode mounts → cleans up → remounts in dev, synchronously,
+       within the same tick. Building the timeline/ScrollTrigger (and,
+       for row 0, immediately playing it — see the in-view check below)
+       directly in the effect body meant the FIRST (fake) mount could
+       set revealedRef.current = true and start playing, get killed by
+       its own cleanup a tick later — but revealedRef is a ref, so it
+       survives that fake mount/cleanup cycle. The SECOND (real) mount
+       then called doPlay() again, saw revealedRef already true, and
+       skipped playing the *new* tl that's actually the one still
+       attached to the live DOM. Every element was left stuck at its
+       initial gsap.set hidden state forever — exactly the "first
+       service permanently blank" bug found on real testing (this only
+       ever hit row 0, since it's the only row whose readyRef is true
+       — and therefore whose doPlay() can fire synchronously on mount
+       at all — during that vulnerable window; every other row only
+       gets played later via a genuine scroll/divider-chain event, long
+       after StrictMode's fake cycle has already finished). Wrapping
+       the real setup in a tiny setTimeout means the fake mount's
+       cleanup clears the timeout before it ever fires, so this only
+       ever runs once, on the real mount — same fix already used in
+       Preloader.tsx for the identical StrictMode race. ───────────── */
     let st: ScrollTrigger | null = null
+    let tl: gsap.core.Timeline | null = null
 
-    const tl = gsap.timeline({ paused: true })
+    const startId = setTimeout(() => {
+      tl = gsap.timeline({ paused: true })
 
-    tl.fromTo(el.querySelectorAll('.sr-num'),
-        { autoAlpha: 0, y: 12 },
-        { autoAlpha: 1, y: 0, duration: 0.40, ease: 'power2.out' })
-      .fromTo(el.querySelectorAll('.sr-name'),
-        { autoAlpha: 0, y: 36, clipPath: 'inset(0 0 100% 0)' },
-        { autoAlpha: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.70, ease: 'expo.out' }, '-=0.22')
-      .fromTo(el.querySelectorAll('.sr-img'),
-        { autoAlpha: 0, y: 28, scale: 0.96 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.75, ease: 'power3.out' }, '-=0.50')
-      .fromTo(el.querySelectorAll('.sr-desc'),
-        { autoAlpha: 0, filter: 'blur(8px)', y: 10 },
-        { autoAlpha: 1, filter: 'blur(0px)', y: 0, duration: 0.50, ease: 'power2.out' }, '-=0.42')
-      .fromTo(el.querySelectorAll('.sr-pt'),
-        { autoAlpha: 0, x: -12 },
-        { autoAlpha: 1, x: 0, duration: 0.35, ease: 'power2.out', stagger: 0.05 }, '-=0.22')
-      .fromTo(el.querySelectorAll('.sr-cta'),
-        { autoAlpha: 0, y: 10 },
-        { autoAlpha: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '-=0.18')
-      .fromTo(el.querySelectorAll('.sr-divider'),
-        { clipPath: 'inset(0 100% 0 0)' },
-        { clipPath: 'inset(0 0% 0 0)', duration: 0.65, ease: 'power3.out',
-          onComplete: () => onDividerCompleteRef.current() }, '+=0.10')
+      tl.fromTo(el.querySelectorAll('.sr-num'),
+          { autoAlpha: 0, y: 12 },
+          { autoAlpha: 1, y: 0, duration: 0.40, ease: 'power2.out' })
+        .fromTo(el.querySelectorAll('.sr-name'),
+          { autoAlpha: 0, y: 36, clipPath: 'inset(0 0 100% 0)' },
+          { autoAlpha: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.70, ease: 'expo.out' }, '-=0.22')
+        .fromTo(el.querySelectorAll('.sr-img'),
+          { autoAlpha: 0, y: 28, scale: 0.96 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.75, ease: 'power3.out' }, '-=0.50')
+        .fromTo(el.querySelectorAll('.sr-desc'),
+          { autoAlpha: 0, filter: 'blur(8px)', y: 10 },
+          { autoAlpha: 1, filter: 'blur(0px)', y: 0, duration: 0.50, ease: 'power2.out' }, '-=0.42')
+        .fromTo(el.querySelectorAll('.sr-pt'),
+          { autoAlpha: 0, x: -12 },
+          { autoAlpha: 1, x: 0, duration: 0.35, ease: 'power2.out', stagger: 0.05 }, '-=0.22')
+        .fromTo(el.querySelectorAll('.sr-cta'),
+          { autoAlpha: 0, y: 10 },
+          { autoAlpha: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '-=0.18')
+        .fromTo(el.querySelectorAll('.sr-divider'),
+          { clipPath: 'inset(0 100% 0 0)' },
+          { clipPath: 'inset(0 0% 0 0)', duration: 0.65, ease: 'power3.out',
+            onComplete: () => onDividerCompleteRef.current() }, '+=0.10')
 
-    tlRef.current = tl
+      tlRef.current = tl
 
-    st = ScrollTrigger.create({
-      trigger: el,
-      start:   'top 80%',
-      onEnter: () => {
+      st = ScrollTrigger.create({
+        trigger: el,
+        start:   'top 80%',
+        onEnter: () => {
+          inViewRef.current = true
+          if (readyRef.current) doPlay()
+        },
+        onLeaveBack: () => {
+          inViewRef.current = false
+          /* Snap to fully visible if skipped (scrolled too fast / never reached).
+             Ensures no empty section on scroll-up. Animation stays permanent. */
+          doSnap()
+        },
+      })
+
+      /* onEnter only fires on a scroll crossing — a row that's already
+         inside the 'top 80%' zone the instant this trigger is created
+         (row 0, on any viewport short enough that the hero doesn't push
+         it below that line) never gets one, so it just sits at its
+         initial hidden gsap.set state forever. Checking the real
+         position right after creation and firing the same logic
+         manually covers that case without waiting on a scroll event
+         that may never happen. doPlay's revealedRef guard makes this
+         safe even if onEnter does also fire. */
+      if (el.getBoundingClientRect().top <= window.innerHeight * 0.8) {
         inViewRef.current = true
         if (readyRef.current) doPlay()
-      },
-      onLeaveBack: () => {
-        inViewRef.current = false
-        /* Snap to fully visible if skipped (scrolled too fast / never reached).
-           Ensures no empty section on scroll-up. Animation stays permanent. */
-        doSnap()
-      },
-    })
+      }
+    }, 0)
 
-    return () => { tl.kill(); st?.kill() }
+    return () => {
+      clearTimeout(startId)
+      tl?.kill()
+      st?.kill()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index])
 
@@ -408,7 +277,7 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
           onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.gap = '14px'; setCursorType('hover') }}
           onMouseLeave={e => { e.currentTarget.style.color = `${INK}55`; e.currentTarget.style.gap = '8px'; setCursorType('default') }}
         >
-          Learn More
+          View Service
           <svg width="24" height="10" viewBox="0 0 28 10" fill="none" aria-hidden>
             <path d="M0 5h26M22 1l5 4-5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -426,7 +295,12 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
           boxShadow:    '0 24px 64px rgba(0,0,0,0.08)',
         }}
       >
-        <Preview />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={service.image ?? undefined}
+          alt={service.title}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
       </div>
 
       </div>
@@ -494,7 +368,33 @@ export default function ServicesPageClient({ services = [] }: { services?: Servi
       },
     })
 
-    return () => { tl.kill(); st.kill() }
+    /* Refresh after the page's real layout has settled — each row's
+       ScrollTrigger caches its 'top 80%' pixel position at mount, but
+       these large uppercase headings (fontWeight 800, tight 0.88 line-
+       height) shift height when the real font swaps in for its
+       fallback, same as any other late layout change. That shift
+       invalidates every trigger positioned below wherever it happened,
+       which reads as "some row further down never reveals" — exactly
+       the class of bug already hit (and fixed the same way) on the
+       homepage's own service list, see ServiceSection.tsx. Same
+       requestIdleCallback/setTimeout split for the same reason: Safari
+       has no requestIdleCallback, and this is squarely a
+       Safari/real-device-only symptom (desktop Chrome's font cache
+       rarely reproduces the swap-timing gap devtools' mobile emulation
+       inherits from it). */
+    let idleId: number | undefined
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(() => ScrollTrigger.refresh())
+    } else {
+      timeoutId = setTimeout(() => ScrollTrigger.refresh(), 400)
+    }
+
+    return () => {
+      tl.kill(); st.kill()
+      if (idleId !== undefined) window.cancelIdleCallback(idleId)
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
+    }
   }, [])
 
   return (

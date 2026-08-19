@@ -5,7 +5,7 @@ import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore } from '@/store/useCursorStore'
-import { useContactStore } from '@/store/useContactStore'
+import { useGifFlourishStore } from '@/store/useGifFlourishStore'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -20,7 +20,7 @@ interface ServiceData {
 
 export default function ServiceDetailClient({ service, next }: { service: ServiceData; next: ServiceData }) {
   const { setCursorType }     = useCursorStore()
-  const { open: openContact } = useContactStore()
+  const openFlourish           = useGifFlourishStore((s) => s.open)
 
   const pageRef = useRef<HTMLDivElement>(null)
 
@@ -73,16 +73,19 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
       <section style={{ padding: 'clamp(120px,14vw,172px) clamp(32px,6.5vw,96px) clamp(72px,9vw,112px)' }}>
 
         {/* ── Row 1: title + image ──────────────────────────────────── */}
-        <div style={{
-          display:             'grid',
-          gridTemplateColumns: '1fr minmax(0, 460px)',
-          gap:                 'clamp(48px,7vw,96px)',
-          alignItems:          'end',
-          marginBottom:        'clamp(56px,7vw,96px)',
-        }}>
+        <div
+          className="sd-hero-row"
+          style={{
+            display:             'grid',
+            gridTemplateColumns: '1fr minmax(0, 460px)',
+            gap:                 'clamp(48px,7vw,96px)',
+            alignItems:          'end',
+            marginBottom:        'clamp(56px,7vw,96px)',
+          }}
+        >
 
           {/* Left: nav + label + title */}
-          <div>
+          <div className="sd-content">
             <Link
               href="/services"
               className="sd-back"
@@ -131,15 +134,18 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
         </div>
 
         {/* ── Divider ───────────────────────────────────────────────── */}
-        <div style={{ height: 0, borderTop: `1px solid ${INK}0d`, marginBottom: 'clamp(48px,6vw,80px)' }} />
+        <div className="sd-divider" style={{ height: 0, borderTop: `1px solid ${INK}0d`, marginBottom: 'clamp(48px,6vw,80px)' }} />
 
         {/* ── Row 2: description + points & CTA ────────────────────── */}
-        <div style={{
-          display:             'grid',
-          gridTemplateColumns: '3fr 1fr',
-          gap:                 'clamp(48px,7vw,96px)',
-          alignItems:          'start',
-        }}>
+        <div
+          className="sd-row2"
+          style={{
+            display:             'grid',
+            gridTemplateColumns: '3fr 1fr',
+            gap:                 'clamp(48px,7vw,96px)',
+            alignItems:          'start',
+          }}
+        >
 
           {/* Description */}
           <p
@@ -175,7 +181,7 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
 
             {/* CTA */}
             <button
-              onClick={openContact}
+              onClick={openFlourish}
               onMouseEnter={e => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
               onMouseLeave={e => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = `${INK}28`; setCursorType('default') }}
               style={{
@@ -238,7 +244,7 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
           </div>
 
           {/* Title + arrow row */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
+          <div className="sd-next-row" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
             <h3 className="sd-next-title" style={{
               fontSize: 'clamp(36px,7vw,108px)', fontWeight: 900,
               letterSpacing: '-0.04em', lineHeight: 0.88, color: CREAM,

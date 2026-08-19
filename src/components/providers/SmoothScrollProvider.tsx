@@ -7,6 +7,20 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+/* iOS Safari resizes window.innerHeight as its address bar collapses/
+   expands mid-scroll — every percentage-based trigger point ('top 80%'
+   and similar, used throughout this site's reveal animations) is
+   calculated against that height, so a resize mid-scroll silently
+   invalidates trigger positions calculated before it. Desktop browsers
+   and devtools' mobile emulation don't reproduce this at all (neither
+   has a real collapsing toolbar), which is exactly why this class of
+   bug — a section that never reveals, only on a real phone — passed
+   every check in this dev environment and only showed up on an actual
+   iPhone. ignoreMobileResize makes ScrollTrigger disregard those
+   address-bar-driven height changes entirely instead of treating them
+   as a real layout change worth re-measuring triggers against. */
+ScrollTrigger.config({ ignoreMobileResize: true })
+
 /* ─────────────────────────────────────────────────────────────────
    SmoothScrollProvider
    ─────────────────────────────────────────────────────────────────
@@ -74,6 +88,7 @@ export default function SmoothScrollProvider({
        ─────────────────────────────────────────────────────────── */
     ;(window as unknown as Record<string, unknown>).__lenis = lenis
     ;(window as unknown as Record<string, unknown>).ScrollTrigger = ScrollTrigger
+    ;(window as unknown as Record<string, unknown>).gsap = gsap
 
     /* ── Wire Lenis into GSAP ticker ────────────────────────────
        Calling lenis.raf() inside the GSAP ticker (rather than a

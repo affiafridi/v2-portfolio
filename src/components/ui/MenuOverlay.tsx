@@ -57,37 +57,69 @@ export default function MenuOverlay() {
      gif's own framing intact instead of squeezing it into a square. */
   const THUMB_W = 116 // px
   const THUMB_H = 72  // px
-  const thumbRefs  = useRef<(HTMLSpanElement | null)[]>([])
+  const thumbRefs   = useRef<(HTMLSpanElement | null)[]>([])
+  const thumbTweens = useRef<(gsap.core.Timeline | null)[]>([])
   const pointerFine = useRef(true)
 
   useEffect(() => {
     pointerFine.current = window.matchMedia('(pointer: fine)').matches
   }, [])
 
+  /* One persistent, paused timeline per thumb, built once — same fix
+     as the Reach Out gif: rebuilding a fresh chained timeline on every
+     hover (the previous approach) meant a quick re-hover before the
+     old one finished could leave two overlapping timelines fighting
+     over the same element, which is what "breaks around 70% then
+     jumps to full" actually was — killTweensOf cancels tweens by
+     target, but a hover fired mid-flight could still catch it between
+     phases. .play()/.reverse() on one shared timeline can't collide
+     with itself, and .reverse() playing the exact same timeline
+     backward is what makes the close a literal mirror of the open
+     instead of a separately hand-tuned tween that could drift out of
+     sync with it.
+     Single continuous ease for width, not the earlier three-phase
+     "hesitate then snap" — that layered easing suits a rare one-shot
+     flourish (the contact GIF popup), not a hover that can retrigger
+     many times a second as the cursor moves down a list.
+     Height and width are NOT one simultaneous tween, on purpose —
+     animating both together from 0 reads as a dot expanding outward
+     in both directions at once, not the left-to-right slide the
+     contact/Reach-Out reveals have (where height is a fixed value the
+     whole time and only width moves). Height still has to start at 0
+     here — a permanently-full height on every row, hovered or not, is
+     the exact "gaps in the list" bug this component was already fixed
+     for once — so instead it snaps open near-instantly (0.1s) just
+     before width starts its slide, so by the time width has moved at
+     all, height is already fully there and everything after reads as
+     a pure horizontal slide. Reversed, the order flips: width slides
+     shut first (the visible majority of the motion), height only
+     collapses right at the very end — a slide-closed, not a shrinking
+     dot. */
+  useEffect(() => {
+    thumbTweens.current = NAV_ITEMS.map((item, idx) => {
+      const thumb = thumbRefs.current[idx]
+      if (!item.gif || !thumb) return null
+      const tl = gsap.timeline({ paused: true })
+      tl.to(thumb, { height: THUMB_H, duration: 0.1, ease: 'power2.out' })
+        .to(thumb, { width: THUMB_W, duration: 0.5, ease: 'power2.out' }, 0.05)
+      return tl
+    })
+  }, [])
+
   const handleRowEnter = (idx: number) => {
     setCursorType('hover')
-    const thumb = thumbRefs.current[idx]
-    if (!pointerFine.current || !thumb) return
-    gsap.killTweensOf(thumb)
-    /* Height snaps open fast so the row reaches its real final height
-       almost immediately — width keeps animating after that for the
-       slower left-to-right wipe. Without this, height stayed pinned
-       at THUMB_H even at width:0, permanently reserving that space on
-       every row regardless of hover — the "gaps" this was fixing. */
-    gsap.to(thumb, { height: THUMB_H, duration: 0.18, ease: 'power2.out' })
-    gsap.to(thumb, { width: THUMB_W, duration: 0.5, ease: 'power3.out' })
+    if (!pointerFine.current) return
+    thumbTweens.current[idx]?.play()
   }
 
   const handleRowLeave = (idx: number) => {
     setCursorType('default')
-    const thumb = thumbRefs.current[idx]
-    if (!pointerFine.current || !thumb) return
-    gsap.killTweensOf(thumb)
-    gsap.to(thumb, { width: 0, height: 0, duration: 0.4, ease: 'power2.inOut' })
+    if (!pointerFine.current) return
+    thumbTweens.current[idx]?.reverse()
   }
 
   const resetThumbs = () => {
-    thumbRefs.current.forEach(el => el && gsap.set(el, { width: 0, height: 0 }))
+    thumbTweens.current.forEach(tl => tl?.progress(0).pause())
   }
 
   /* ── Lock body scroll when open ──────────────────────────────── */

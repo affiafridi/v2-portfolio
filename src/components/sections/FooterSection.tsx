@@ -98,6 +98,69 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
         scrollTrigger: { trigger: sectionRef.current!, start: 'top 82%', once: true },
       })
 
+      /* ── "Reach Out" gif grows in from zero width ──────────────────
+         Animates max-width, not width — .ft-title-gif already has 5
+         breakpoint-specific `width ... !important` rules elsewhere in
+         this file (earlier mobile-responsiveness pass), and a
+         stylesheet !important always beats a plain inline style
+         regardless of who set it, GSAP included. Confirmed live: an
+         inline width:0 was completely ignored, box stayed locked at
+         whatever the active breakpoint's !important width resolved to.
+         max-width isn't touched by any of those rules, so it animates
+         freely while width keeps being governed by the existing
+         responsive rules exactly as before — reads naturally as
+         growing from 0 up to whatever size is already correct for the
+         current breakpoint. Growing the real box — not just a
+         clip-path reveal — means "Out" genuinely gets pushed right as
+         the gif arrives, same effect as the modal's cm-portrait.
+         Replays every time you scroll away and back — onLeaveBack
+         (scrolled back up past the section) resets it to collapsed
+         instantly (no animation, just readies it), onEnter (scrolled
+         back down into it) replays the growth from there. No
+         once:true, unlike the heading above it, which is meant to
+         stay put once revealed — this is the repeatable flourish, not
+         the permanent heading. */
+      const gifEl = sectionRef.current!.querySelector<HTMLElement>('.ft-title-gif')
+      const gifTargetWidth = gifEl ? gifEl.getBoundingClientRect().width : 168
+
+      /* One persistent, pausable tween instead of building/killing a
+         fresh one on every scroll-direction change — .play() runs it
+         forward (open), .reverse() runs the exact same tween backward
+         (close), which is a literal "closing animation is the opposite
+         of opening" rather than a hand-built mirror-image tween with
+         its own separate easing to keep in sync. Also sidesteps the
+         clearProps/re-measure dance the previous version needed: this
+         tween owns maxWidth for its whole lifetime, no other code
+         touches it, so there's never a missing "from" value to
+         re-establish before reversing. */
+      const gifTween = gsap.fromTo('.ft-title-gif',
+        { maxWidth: 0 },
+        { maxWidth: gifTargetWidth, duration: 0.65, ease: 'expo.out', paused: true }
+      )
+
+      /* Triggered off the heading itself (not the whole section), at
+         'top 40% — 60% still fired while the heading was only just
+         entering the lower half of the screen, well before the section
+         actually felt "arrived at". 40% holds off until the heading
+         has scrolled up much closer to the middle of the viewport.
+         All four scroll-direction callbacks are wired (not just
+         onEnter/onLeaveBack) — without an explicit `end`, a normal
+         continuous scroll can cross onLeave/onEnterBack too on its way
+         past; leaving those two unhandled meant a scroll that crossed
+         one of them left the tween untouched, sitting at whatever
+         state it was already in — reported as "it just disappears"
+         since nothing was there to animate it. Covering all four means
+         .play()/.reverse() responds to whichever boundary is actually
+         crossed. */
+      ScrollTrigger.create({
+        trigger:     '.ft-title',
+        start:       'top 40%',
+        onEnter:     () => gifTween.play(),
+        onEnterBack: () => gifTween.play(),
+        onLeave:     () => gifTween.reverse(),
+        onLeaveBack: () => gifTween.reverse(),
+      })
+
       /* ── Left body items — blur + slide in, step by step ── */
       gsap.fromTo('.ft-left-item',
         isMobile ? { x: -18, opacity: 0 } : { x: -18, opacity: 0, filter: 'blur(12px)' },
@@ -265,13 +328,20 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
             }}
           >
             <span style={{ display: 'block', marginBottom: '0.08em' }}>Reach</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.14em' }}>
+            {/* alignItems:'flex-end' instead of 'center' — same fix as
+                ContactModal's cm-line2: this heading's tight
+                lineHeight:0.88 compresses the line box below the
+                font's natural height, so centering against that
+                shrunk box sits the image noticeably low against the
+                text instead of level with it. flex-end grounds it to
+                where the text visually ends regardless. */}
+            <span style={{ display: 'flex', alignItems: 'flex-end', gap: '0.05em' }}>
               <span
                 className="ft-title-gif"
                 style={{
                   display:      'inline-block',
-                  width:        'clamp(72px, 10vw, 150px)',
-                  height:       'clamp(58px, 8.2vw, 128px)',
+                  width:        'clamp(84px, 11.5vw, 168px)',
+                  height:       'clamp(68px, 9.3vw, 140px)',
                   borderRadius: '10px',
                   overflow:     'hidden',
                   verticalAlign: 'middle',

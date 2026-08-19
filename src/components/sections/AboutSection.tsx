@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react'
 import { useCursorStore } from '@/store/useCursorStore'
-import { useContactStore } from '@/store/useContactStore'
+import { useGifFlourishStore } from '@/store/useGifFlourishStore'
 import ImageCycler       from '@/components/ui/ImageCycler'
 
 /* ─── Images for accent word hover ──────────────────────────────── */
@@ -70,7 +70,7 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
   const storyP1     = (settings.storyParagraph1 as string) || "I didn't learn development in a classroom. I learned it by building projects, solving problems, breaking things, and figuring out how to make them work again. What started as curiosity became a long-term commitment to creating products that are useful, reliable, and enjoyable to use."
   const storyP2     = (settings.storyParagraph2 as string) || 'Being self-taught taught me more than programming. It taught me how to learn, adapt, and solve problems independently. Every project is another opportunity to improve, experiment, and create something meaningful.'
   const { setCursorType } = useCursorStore()
-  const { open: openContact } = useContactStore()
+  const openFlourish = useGifFlourishStore((s) => s.open)
 
   /* ── Shared text sizes ── */
   const LABEL_STYLE: React.CSSProperties = {
@@ -249,10 +249,11 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
           ))}
         </div>
 
-        {/* CTA — opens the contact modal, same as the nav's "Let's talk" */}
+        {/* CTA — plays the GIF flourish, which opens the contact modal
+            itself once it finishes */}
         <button
           type="button"
-          onClick={openContact}
+          onClick={openFlourish}
           className="ab-cta"
           style={{
             display:        'inline-flex',

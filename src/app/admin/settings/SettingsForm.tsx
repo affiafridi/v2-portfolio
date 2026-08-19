@@ -40,6 +40,9 @@ interface ImagePosition {
 }
 
 interface SettingsData {
+  general: {
+    maintenanceMode: boolean
+  }
   hero: {
     heading: string
     bio: string
@@ -86,6 +89,7 @@ interface SettingsData {
 }
 
 const EMPTY: SettingsData = {
+  general: { maintenanceMode: false },
   hero: {
     heading: '', bio: '', marqueeText: '', location: '', availabilityStatus: true, availabilityText: '', portraitImage: '',
     /* Matches the previous hardcoded object-position:top default (50% 0%) —
@@ -116,6 +120,7 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
   const [data, setData] = useState<SettingsData>({
     ...EMPTY,
     ...initialData,
+    general: { ...EMPTY.general, ...initialData.general },
     hero: {
       ...EMPTY.hero,
       ...initialData.hero,
@@ -135,6 +140,9 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
     },
   })
   const [saving, setSaving] = useState(false)
+
+  const setGeneral = <K extends keyof SettingsData['general']>(key: K, val: SettingsData['general'][K]) =>
+    setData((d) => ({ ...d, general: { ...d.general, [key]: val } }))
 
   const setHero = <K extends keyof SettingsData['hero']>(key: K, val: SettingsData['hero'][K]) =>
     setData((d) => ({ ...d, hero: { ...d.hero, [key]: val } }))
@@ -196,6 +204,7 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
       <div className="max-w-3xl p-6">
         <Tabs defaultValue="hero">
           <TabsList className="mb-4">
+            <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
@@ -203,6 +212,23 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
             <TabsTrigger value="taxonomies">Taxonomies</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
+
+          {/* General Tab */}
+          <TabsContent value="general" className="mt-0">
+            <FormSection title="Maintenance Mode" description="Temporarily replace the entire public site with a single maintenance page">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={data.general.maintenanceMode} onCheckedChange={(v) => setGeneral('maintenanceMode', v === true)} />
+                <Label>Site is under maintenance</Label>
+              </div>
+              <p className="text-xs text-neutral-500">
+                When enabled, every public page shows a maintenance screen instead of its normal content
+                (the header, menu, and footer are hidden too — visitors can&apos;t navigate anywhere else).
+                This admin dashboard, including this settings page and the login page, stays fully
+                accessible the whole time, so you can turn it back off from here once you&apos;re done.
+                Uses the same contact email set in the Footer tab.
+              </p>
+            </FormSection>
+          </TabsContent>
 
           {/* Hero Tab */}
           <TabsContent value="hero" className="mt-0">

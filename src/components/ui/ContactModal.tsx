@@ -206,6 +206,23 @@ export default function ContactModal() {
         clearProps: 'opacity,y,x,scale,filter',
       })
 
+      /* GSAP's width:'auto' technique measures an element's own
+         shrink-to-fit content size — but .cm-portrait's only child is
+         a Next <Image fill>, which renders position:absolute and so
+         contributes nothing to that measurement (confirmed live: it
+         resolves to 0, not the real ~140px). Reading the real target
+         width directly (by momentarily applying the intended CSS
+         value and measuring it) sidesteps that entirely. */
+      const PORTRAIT_WIDTH_CSS = 'clamp(78px, 11vw, 146px)'
+      const portraitEl = panel.querySelector<HTMLElement>('.cm-portrait')
+      let portraitTargetWidth = 146
+      if (portraitEl) {
+        const prevWidth = portraitEl.style.width
+        portraitEl.style.width = PORTRAIT_WIDTH_CSS
+        portraitTargetWidth = portraitEl.getBoundingClientRect().width
+        portraitEl.style.width = prevWidth
+      }
+
       const tl = gsap.timeline()
       tlRef.current = tl
 
@@ -220,6 +237,29 @@ export default function ContactModal() {
         .from('.cm-line2',
           { y: -24, opacity: 0, duration: 0.50, ease: 'power3.out' },
           '-=0.40'
+        )
+        /* Portrait grows in from zero width (not just a clip-path
+           reveal over a fixed-size box) — animating the real width
+           means it's a genuine layout change, so "together" and the
+           dot actually get pushed rightward in real time as the image
+           arrives, instead of sitting in their final position with
+           only the pixels inside the box changing. object-left on the
+           <Image> (see JSX) keeps the crop anchored to the image's own
+           left edge throughout, so growing the box reads as revealing
+           progressively more of the same image rather than a zoom/
+           stretch. Animates to the pixel width measured just above
+           (see portraitTargetWidth) rather than GSAP's own 'auto'
+           resolution; onComplete hands the inline width back to the
+           real clamp() expression so it stays responsive to a resize
+           once the flourish has settled. Runs fresh every open (this
+           whole effect re-fires on isOpen), not once-ever. */
+        .fromTo('.cm-portrait',
+          { width: 0 },
+          {
+            width: portraitTargetWidth, duration: 0.65, ease: 'expo.out',
+            onComplete: () => gsap.set('.cm-portrait', { width: PORTRAIT_WIDTH_CSS }),
+          },
+          '-=0.30'
         )
         .fromTo('.cm-field',
           { opacity: 0, filter: 'blur(10px)', x: 8 },
@@ -406,12 +446,13 @@ export default function ContactModal() {
               userSelect:    'none',
               display:       'flex',
               alignItems:    'center',
-              gap:           '0.18em',
+              gap:           '0.06em',
               flexWrap:      'wrap',
             }}
           >
             {/* Inline portrait */}
             <span
+              className="cm-portrait"
               style={{
                 display:      'inline-block',
                 width:        'clamp(78px, 11vw, 146px)',
@@ -421,7 +462,6 @@ export default function ContactModal() {
                 verticalAlign: 'middle',
                 flexShrink:   0,
                 position:     'relative',
-                marginRight:  '0.04em',
               }}
             >
               <Image
@@ -430,7 +470,7 @@ export default function ContactModal() {
                 fill
                 unoptimized
                 sizes="146px"
-                className="object-cover object-center"
+                className="object-cover object-left"
               />
             </span>
             {/* "together" and the dot are wrapped in one flex item so

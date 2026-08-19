@@ -90,13 +90,24 @@ export default function PageTransitionOverlay() {
 
   // Distance from that point to the farthest viewport corner — the
   // circle has to grow at least this large to fully cover the screen
-  // regardless of where the click landed.
+  // regardless of where the click landed. iOS Safari's address bar
+  // collapses/expands mid-scroll (and can still be mid-transition when
+  // a click starts a page transition), so window.innerHeight at the
+  // instant this is computed can be smaller than the actual screen
+  // once the toolbar finishes hiding — undersizing the circle and
+  // leaving real, unblurred corners visible for the rest of the
+  // transition (reported on a real iPhone; devtools' mobile emulation
+  // doesn't reproduce the address-bar resize at all, same root cause
+  // class as the ScrollTrigger fix in SmoothScrollProvider.tsx). A
+  // 1.25x safety margin means the circle overshoots the corner it
+  // needs to reach even if the viewport grows by the toolbar's full
+  // height after this number is calculated.
   const maxRadius = useMemo(() => (
     typeof window !== 'undefined'
       ? Math.hypot(
           Math.max(point.x, window.innerWidth  - point.x),
           Math.max(point.y, window.innerHeight - point.y),
-        )
+        ) * 1.25
       : 0
   ), [point])
 
@@ -121,7 +132,25 @@ export default function PageTransitionOverlay() {
         // one place AnimatePresence has been seen to lose track of
         // when the exit animation actually finished, leaving the whole
         // subtree mounted (and covering the screen) indefinitely.
-        <motion.div key="page-transition" style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none' }}>
+        <motion.div
+          key="page-transition"
+          style={{
+            position:       'fixed',
+            top:            0,
+            left:           0,
+            /* Explicit dvh/dvw instead of inset:0 — on iOS Safari a
+               fixed element sized via inset:0 anchors to the small
+               (toolbar-visible) viewport by default and doesn't grow
+               to cover the extra space the large viewport reveals once
+               the toolbar collapses, leaving a real unblurred strip
+               along whichever edge the toolbar occupied. dvh/dvw track
+               the actual current viewport instead. */
+            width:          '100dvw',
+            height:         '100dvh',
+            zIndex:         99999,
+            pointerEvents:  'none',
+          }}
+        >
           <motion.div
             initial={{ clipPath: `circle(0px at ${point.x}px ${point.y}px)` }}
             animate={{ clipPath: `circle(${maxRadius}px at ${point.x}px ${point.y}px)` }}

@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import Link from '@/components/ui/TransitionLink'
+import Image from 'next/image'
 import { gsap } from 'gsap'
 import { useCursorStore } from '@/store/useCursorStore'
 
@@ -16,7 +17,6 @@ export default function NotFoundContent() {
   // Hide before first paint — prevents a flash of unstyled content, same
   // pattern as WorkPageHero.
   useLayoutEffect(() => {
-    gsap.set('.nf-eyebrow', { opacity: 0, y: -16 })
     gsap.set('.nf-number', { opacity: 0, y: -48, filter: 'blur(14px)' })
     gsap.set('.nf-message', { opacity: 0, y: -20, filter: 'blur(8px)' })
     gsap.set('.nf-actions', { opacity: 0, y: 16 })
@@ -25,8 +25,7 @@ export default function NotFoundContent() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      tl.to('.nf-eyebrow', { y: 0, opacity: 1, duration: 0.6 })
-        .to('.nf-number', { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.3 }, '-=0.35')
+      tl.to('.nf-number', { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.3 })
         .to('.nf-message', { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.0 }, '-=0.85')
         .to('.nf-actions', { y: 0, opacity: 1, duration: 0.7 }, '-=0.5')
     }, sectionRef)
@@ -47,20 +46,6 @@ export default function NotFoundContent() {
         textAlign: 'center',
       }}
     >
-      <span
-        className="nf-eyebrow"
-        style={{
-          fontSize: '11px',
-          fontWeight: 700,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          color: `${INK}55`,
-          marginBottom: 'clamp(16px,2vw,28px)',
-        }}
-      >
-        Error 404
-      </span>
-
       <div
         className="nf-number"
         style={{
@@ -80,14 +65,24 @@ export default function NotFoundContent() {
           aria-hidden="true"
           style={{
             display: 'inline-block',
-            width: 'clamp(56px, 11vw, 150px)',
-            height: 'clamp(56px, 11vw, 150px)',
+            position: 'relative',
+            width: 'clamp(70px, 13vw, 188px)',
+            height: 'clamp(70px, 13vw, 188px)',
             borderRadius: '50%',
-            background: ACC,
+            overflow: 'hidden',
             flexShrink: 0,
-            marginBottom: 'clamp(6px, 1.2vw, 20px)',
+            marginBottom: 'clamp(6px, 1.3vw, 20px)',
           }}
-        />
+        >
+          <Image
+            src="/uploads/1787142711888-404.gif"
+            alt=""
+            fill
+            unoptimized
+            sizes="226px"
+            className="object-cover object-center"
+          />
+        </span>
         <span>4</span>
       </div>
 
@@ -136,10 +131,10 @@ export default function NotFoundContent() {
           onMouseEnter={(e) => { e.currentTarget.style.color = ACC; e.currentTarget.style.borderColor = ACC; setCursorType('hover') }}
           onMouseLeave={(e) => { e.currentTarget.style.color = INK; e.currentTarget.style.borderColor = `${INK}28`; setCursorType('default') }}
         >
-          Back to Home
           <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
-            <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M13 5H1M5 1L1 5l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+          Back to Home
         </Link>
 
         <Link

@@ -7,7 +7,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useHeroColorStore } from '@/store/useHeroColorStore'
 import { useCursorStore } from '@/store/useCursorStore'
-import { useContactStore } from '@/store/useContactStore'
+import { useGifFlourishStore } from '@/store/useGifFlourishStore'
 
 /* ─────────────────────────────────────────────────────────────────
    HeroSection — Light-theme editorial hero
@@ -94,7 +94,7 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
   const hydrate = useHeroColorStore((st) => st.hydrate)
   useLayoutEffect(() => { hydrate() }, [hydrate])
   const { setCursorType } = useCursorStore()
-  const { open: openContact } = useContactStore()
+  const openFlourish = useGifFlourishStore((s) => s.open)
 
   /* ── Hero CTA: magnetic pull + diagonal wipe ──────────────────── */
   const [ctaHover, setCtaHover] = useState(false)
@@ -650,7 +650,7 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
           ref={ctaRef}
           type="button"
           className="hj-bio hj-cta"
-          onClick={openContact}
+          onClick={openFlourish}
           onMouseEnter={() => { setCtaHover(true); setCursorType('hover') }}
           onMouseLeave={handleCtaLeave}
           onMouseMove={handleCtaMove}
