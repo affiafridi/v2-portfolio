@@ -300,6 +300,7 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
 
       {/* Grid — padding lives here, NOT on the wrapper */}
       <div
+        className="sr-row"
         style={{
           display:             'grid',
           gridTemplateColumns: '1fr minmax(0, 420px)',
@@ -309,7 +310,7 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
         }}
       >
       {/* ── Left: content ──────────────────────────────────────── */}
-      <div>
+      <div className="sr-content">
 
         {/* Section label + number */}
         <div className="sr-num" style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: 'clamp(18px,2.8vw,30px)' }}>
@@ -354,6 +355,7 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
 
         {/* Points — 2-column grid, uppercase tracking text */}
         <div
+          className="sr-points"
           style={{
             display:             'grid',
             gridTemplateColumns: 'auto auto',
@@ -501,6 +503,7 @@ export default function ServicesPageClient({ services = [] }: { services?: Servi
       {/* ══ HERO — matches Selected Work on /work ════════════════════ */}
       <section
         ref={heroRef}
+        className="sph-section"
         style={{
           background:     CREAM,
           height:         '100vh',

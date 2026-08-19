@@ -1087,3 +1087,64 @@ section, footer, header, main, div {
      390px ÷ 5 was never going to read as a real gallery. */
   .pd-gallery-grid { grid-template-columns: 1fr 1fr !important; }
 }
+
+/* ── /services page (ServicesPageClient.tsx) ─────────────────────────
+   Hero is a literal copy of WorkPageHero (same base clamps), so it gets
+   the identical fix for the identical reason — see /work page's own
+   comment above. Below that, no responsive CSS existed for the service
+   rows either: the 1fr + up-to-420px text/image split leaves barely
+   200-300px for a clamp(48-110px) heading once the image column claims
+   its share below ~1024px wide, and the points list's `whiteSpace:
+   nowrap` + `width:fit-content` 2-column grid sizes itself to its
+   longest unwrapped line regardless of viewport — several real service
+   points (e.g. "Bundle analysis, code splitting & lazy loading") are
+   long enough to push that box past the viewport edge, causing real
+   page-level horizontal overflow, not just a tight fit (same class of
+   bug as .sv-name-label elsewhere on this site). */
+@media (max-width: 767px) {
+  .sph-line1, .sph-line2 { font-size: clamp(48px, 14vw, 240px) !important; }
+
+  /* clamp(48px,7.5vw,110px) floors at a flat 48px for any viewport under
+     640px wide — fine for short titles, but "Performance Optimisation"'s
+     longest single word ("Performance"/"Optimisation", both 11-12 chars,
+     can't break mid-word) measured ~355px wide at 48px/800-weight/
+     uppercase against an available column of only ~311px at 375px wide.
+     Grid tracks don't shrink below an item's min-content size by default,
+     so the column itself was forced wider than the viewport — real
+     horizontal page overflow (scrollWidth 388px against a 375px
+     viewport), not just a tight fit. 9vw keeps it comfortably under that
+     ceiling at every mobile width tested (30px floor only matters below
+     ~333px wide, narrower than any real device). */
+  .sr-name { font-size: clamp(30px, 9vw, 48px) !important; }
+}
+@media (max-width: 1023px) {
+  .sph-section { height: auto !important; min-height: 60dvh !important; }
+
+  /* Text | image side-by-side → stacked. Image keeps its own aspect
+     ratio and just becomes full-width below the text instead of being
+     squeezed into a leftover sliver next to it. */
+  .sr-row { grid-template-columns: 1fr !important; }
+
+  /* Belt-and-suspenders for the same min-content-width issue the
+     .sr-name fix above addresses directly — grid items default to
+     min-width:auto (their content's own natural width as a hard floor)
+     rather than actually honoring the track's 1fr, the same bug pattern
+     hit elsewhere on this site (.wpl-row-inner and others). */
+  .sr-content { min-width: 0 !important; }
+
+  /* The alternating right-border/padding pattern between the two
+     columns (odd/even index, inline styles) only makes sense with two
+     columns actually side by side — neutralized here so a single
+     column of items doesn't carry a stray right border and lopsided
+     padding from the column it no longer shares a row with. Wrapping
+     re-enabled since a single full-width column has enough room for
+     these to read as normal text again instead of needing to stay on
+     one line. */
+  .sr-points { grid-template-columns: 1fr !important; width: 100% !important; }
+  .sr-pt {
+    border-right: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    white-space: normal !important;
+  }
+}

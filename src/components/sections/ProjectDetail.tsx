@@ -67,7 +67,6 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
   useLayoutEffect(() => {
     gsap.set('.pd-hero-title', { opacity: 0, filter: 'blur(20px)', y: 30 })
     gsap.set('.pd-hero-type',  { opacity: 0, y: 10 })
-    gsap.set('.pd-hero-meta',  { opacity: 0, y: 10 })
     gsap.set('.pd-hero-scroll',{ opacity: 0, y: 12 })
   }, [])
 
@@ -78,8 +77,7 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
       tl.to('.pd-hero-title', { opacity: 1, filter: 'blur(0px)', y: 0, duration: 1.20 })
         .to('.pd-hero-type',  { opacity: 1, y: 0, duration: 0.55 }, '-=0.55')
-        .to('.pd-hero-meta',  { opacity: 1, y: 0, duration: 0.45 }, '-=0.30')
-        .to('.pd-hero-scroll',{ opacity: 1, y: 0, duration: 0.40 }, '-=0.20')
+        .to('.pd-hero-scroll',{ opacity: 1, y: 0, duration: 0.40 }, '-=0.05')
 
       /* ── Cover parallax ─────────────────────────────────────────── */
       if (coverRef.current) {
@@ -235,15 +233,6 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
             <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', background: ACC }} />
             {project.type}
           </div>
-        </div>
-
-        {/* Bottom meta — year left */}
-        <div className="pd-hero-meta" style={{
-          position: 'absolute', bottom: 'clamp(24px,3vw,40px)', left: 'clamp(24px,3vw,48px)',
-          fontSize: '11px', fontWeight: 600, letterSpacing: '0.18em',
-          color: 'rgba(255,255,255,0.28)', zIndex: 10,
-        }}>
-          {project.year}
         </div>
 
         {/* Scroll indicator */}
