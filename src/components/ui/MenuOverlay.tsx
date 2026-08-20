@@ -129,10 +129,49 @@ export default function MenuOverlay() {
     thumbTweens.current.forEach(tl => tl?.progress(0).pause())
   }
 
-  /* ── Lock body scroll when open ──────────────────────────────── */
+  /* ── Lock scroll — event-based, not layout-based ─────────────────
+     This used to be body.style.overflow:hidden, which doesn't actually
+     stop scrolling on this site: Lenis drives scroll itself via JS, so
+     the page kept moving underneath the menu on wheel/touch regardless
+     of the native overflow value. Same fix ContactModal already uses
+     for the identical problem — lenis.stop() plus intercepting the
+     events that cause scrolling, rather than a CSS/layout toggle (which
+     is also what that file's own comment warns against: changing body's
+     box model here previously desynced WorkSection's ScrollTrigger-
+     pinned panel stack on close).
+     No isInsideModal exemption like ContactModal's — this panel is
+     overflow:hidden by design (see its own "never show scrollbar" note
+     below) and never scrolls internally, so there's nothing legitimate
+     to carve out; every scroll event is blocked while open. */
   useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    const lenis = (window as unknown as Record<string, unknown>).__lenis as
+      | { stop: () => void; start: () => void }
+      | undefined
+
+    if (!isOpen) {
+      lenis?.start()
+      return
+    }
+
+    lenis?.stop()
+
+    const preventScroll = (e: Event) => { e.preventDefault() }
+
+    const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])
+    const preventKeyScroll = (e: KeyboardEvent) => {
+      if (SCROLL_KEYS.has(e.key)) e.preventDefault()
+    }
+
+    window.addEventListener('wheel', preventScroll, { passive: false })
+    window.addEventListener('touchmove', preventScroll, { passive: false })
+    window.addEventListener('keydown', preventKeyScroll, { passive: false })
+
+    return () => {
+      window.removeEventListener('wheel', preventScroll)
+      window.removeEventListener('touchmove', preventScroll)
+      window.removeEventListener('keydown', preventKeyScroll)
+      lenis?.start()
+    }
   }, [isOpen])
 
   /* ── GSAP panel animation ────────────────────────────────────── */
@@ -361,8 +400,13 @@ export default function MenuOverlay() {
               }
               const inner = (
                 <>
-                  {/* Number + thumb + label */}
-                  <div className="mo-item-left flex items-baseline gap-4">
+                  {/* Number + thumb + label
+                      items-center, not items-baseline — the label is no
+                      longer a single text line sitting on the row, it's
+                      the top line of a two-line stack (see below), and
+                      baseline alignment against a multi-line flex child
+                      doesn't resolve predictably across browsers. */}
+                  <div className="mo-item-left flex items-center gap-4">
                     <span className="text-[10px] tabular-nums" style={{ color: ACCENT }}>
                       {item.num}
                     </span>
@@ -396,23 +440,32 @@ export default function MenuOverlay() {
                         )}
                       </span>
                     )}
-                    <span
-                      className="text-[clamp(26px,5vw,40px)] font-bold leading-none tracking-tight
-                                 transition-transform duration-300 group-hover:translate-x-1.5"
-                      style={{ color: CREAM }}
-                    >
-                      {item.label}
-                    </span>
+                    {/* Label + note, stacked — moved off the row's
+                        opposite (right) side, where it sat alongside the
+                        arrow. On hover the arrow slides in and the label
+                        shifts right at the same time; with the note over
+                        there too, all three were competing for attention
+                        in the same glance. Underneath the label instead,
+                        it reads as this item's own caption, undisturbed
+                        by whatever the arrow is doing on the other side. */}
+                    <div className="flex flex-col">
+                      <span
+                        className="text-[clamp(26px,5vw,40px)] font-bold leading-none tracking-tight
+                                   transition-transform duration-300 group-hover:translate-x-1.5"
+                        style={{ color: CREAM }}
+                      >
+                        {item.label}
+                      </span>
+                      <span
+                        className="mo-item-note mt-1 text-[10px] uppercase tracking-[0.1em]"
+                        style={{ color: MUTED }}
+                      >
+                        {item.note}
+                      </span>
+                    </div>
                   </div>
-                  {/* Note + arrow */}
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="mo-item-note text-[10px] uppercase tracking-[0.1em]
-                                 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                      style={{ color: MUTED }}
-                    >
-                      {item.note}
-                    </span>
+                  {/* Arrow */}
+                  <div className="flex items-center">
                     <span
                       className="flex h-7 w-7 flex-shrink-0 items-center justify-center
                                  rounded-full text-[12px]
@@ -431,7 +484,7 @@ export default function MenuOverlay() {
                 <button
                   key={item.label}
                   onClick={handleClick}
-                  className="mo-item group flex items-center justify-between px-6 py-4
+                  className="mo-item group flex items-center justify-between px-6 py-3
                              transition-colors duration-200 w-full text-left"
                   style={{ background: 'none', border: `none`, borderBottom: `1px solid ${DIVIDER}`, cursor: 'none' }}
                   onMouseEnter={() => handleRowEnter(idx)}
@@ -444,7 +497,7 @@ export default function MenuOverlay() {
                   key={item.label}
                   href={item.href}
                   onClick={handleClick}
-                  className="mo-item group flex items-center justify-between px-6 py-4
+                  className="mo-item group flex items-center justify-between px-6 py-3
                              transition-colors duration-200"
                   style={{ borderBottom: `1px solid ${DIVIDER}` }}
                   onMouseEnter={() => handleRowEnter(idx)}

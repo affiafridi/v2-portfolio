@@ -613,25 +613,19 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
             }}>
               {next.title}
             </h3>
+            {/* Filled accent by default rather than only on hover, matching
+                the single-service page's next-link. */}
             <div style={{
               flexShrink: 0, width: 'clamp(44px,5vw,64px)', height: 'clamp(44px,5vw,64px)',
-              borderRadius: '50%', border: `1px solid ${INK}20`,
+              borderRadius: '50%', border: `1px solid ${ACC}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: `${INK}60`,
+              background: ACC, color: '#fff',
               transition: 'background 0.30s ease, border-color 0.30s ease, color 0.30s ease',
             }} className="pd-next-arrow">
-              <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
-                <path d="M1 6h14M9 1l6 5-6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="14" height="11" viewBox="0 0 16 12" fill="none" aria-hidden>
+                <path d="M1 6h14M9 1l6 5-6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-          </div>
-
-          <div style={{
-            fontSize: 'clamp(11px,1vw,14px)', fontWeight: 500,
-            color: `${INK}50`, marginTop: '16px',
-            letterSpacing: '0.04em',
-          }}>
-            {next.type} · {next.year}
           </div>
         </div>
       </Link>
@@ -743,9 +737,8 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
 
       <style>{`
         .pd-next:hover .pd-next-arrow {
-          background: ${ACC};
-          border-color: ${ACC};
-          color: #fff;
+          background: #e04400;
+          border-color: #e04400;
         }
         .pd-gal-img:hover .pd-gal-photo { transform: scale(1.06); }
         .prose-challenge p { font-size: clamp(14px,1.3vw,18px); font-weight: 400; line-height: 1.75; color: ${INK}80; margin: 0 0 1em; }

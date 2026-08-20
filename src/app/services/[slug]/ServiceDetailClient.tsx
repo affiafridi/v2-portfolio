@@ -253,11 +253,13 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
             }}>
               {next.title}
             </h3>
+            {/* Filled accent by default rather than only on hover — it
+                reads as the primary action instead of a faint outline. */}
             <div className="sd-next-arrow" style={{
               flexShrink: 0, width: 'clamp(44px,5vw,64px)', height: 'clamp(44px,5vw,64px)',
-              borderRadius: '50%', border: `1px solid ${CREAM}20`,
+              borderRadius: '50%', border: `1px solid ${ACC}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: `${CREAM}60`,
+              background: ACC, color: '#fff',
               transition: 'background 0.30s ease, border-color 0.30s ease, color 0.30s ease',
             }}>
               <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
@@ -266,23 +268,15 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
             </div>
           </div>
 
-          {/* Tag */}
-          <div style={{
-            fontSize: 'clamp(11px,1vw,14px)', fontWeight: 500,
-            color: `${CREAM}35`, marginTop: '16px', letterSpacing: '0.04em',
-          }}>
-            {next.tag}
-          </div>
-
         </div>
       </Link>
 
-      {/* Arrow hover styles */}
+      {/* Arrow hover styles — the arrow is already accent-filled, so hover
+          deepens it slightly rather than switching it on. */}
       <style>{`
         .sd-next:hover .sd-next-arrow {
-          background: ${ACC} !important;
-          border-color: ${ACC} !important;
-          color: #fff !important;
+          background: #e04400 !important;
+          border-color: #e04400 !important;
         }
         .sd-next:hover .sd-next-title {
           color: ${ACC};

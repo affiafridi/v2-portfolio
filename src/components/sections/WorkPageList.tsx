@@ -38,8 +38,13 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
       gsap.to(float, { opacity: 1, scale: 1, duration: 0.50, ease: 'back.out(1.4)' })
       floatVisible.current = true
     } else {
-      gsap.to(float, { scale: 0.90, duration: 0.10, ease: 'power2.in' })
-      gsap.to(float, { scale: 1,    duration: 0.38, ease: 'back.out(1.6)', delay: 0.10 })
+      /* opacity:1 belongs here too. killTweensOf above cuts the entrance
+         tween short whenever the pointer reaches a second row inside its
+         0.5s window — and since this branch previously animated only
+         scale, the preview stayed pinned at whatever partial opacity it
+         had reached, for the rest of the hover. */
+      gsap.to(float, { opacity: 1, scale: 0.90, duration: 0.10, ease: 'power2.in' })
+      gsap.to(float, { scale: 1,   duration: 0.38, ease: 'back.out(1.6)', delay: 0.10 })
     }
 
     /* Swap image */

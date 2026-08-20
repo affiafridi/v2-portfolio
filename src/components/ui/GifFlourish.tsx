@@ -45,7 +45,7 @@ export default function GifFlourish() {
          since the page underneath had no moment to actually register
          before getting covered. This holds on the current page first,
          then starts the flourish right after. */
-      delay: 0.14,
+      delay: 0.10,
       onComplete() {
         closeFlourish()
         openContact()
@@ -79,12 +79,12 @@ export default function GifFlourish() {
       .to(ring2, { scale: 2.6, autoAlpha: 0.28, duration: 0.65, ease: 'power2.out' }, '-=0.60')
       .to(ring2, { autoAlpha: 0, duration: 0.35, ease: 'power1.in' }, '-=0.15')
       /* Hold on screen. */
-      .to({}, { duration: 0.42 })
+      .to({}, { duration: 0.25 })
       /* Exit — settle back down with a soft blur dissolve rather than
          a hard cut, so it reads as one continuous motion straight into
          the contact modal opening underneath. */
-      .to(card, { scale: 0.94, autoAlpha: 0, filter: 'blur(10px)', duration: 0.30, ease: 'power2.in' })
-      .to(overlay, { autoAlpha: 0, duration: 0.24, ease: 'power1.in' }, '-=0.16')
+      .to(card, { scale: 0.94, autoAlpha: 0, filter: 'blur(10px)', duration: 0.26, ease: 'power2.in' })
+      .to(overlay, { autoAlpha: 0, duration: 0.20, ease: 'power1.in' }, '-=0.14')
 
     return () => { tl.kill() }
   }, [isOpen, closeFlourish, openContact])
@@ -132,7 +132,12 @@ export default function GifFlourish() {
           overflow:     'hidden',
           background:   DARK,
           border:       `1px solid ${ACC}40`,
-          boxShadow:    '0 32px 90px rgba(0,0,0,0.45)',
+          /* No drop shadow. A 90px-blur shadow offset 32px down was
+             landing on top of the overlay's own backdrop-blur, which
+             renders it as a large grey smudge under the card rather than
+             the soft lift it would be against a flat background. The
+             overlay tint and the accent rings already separate the card
+             from the page. */
         }}
       >
         <LoopingVideo

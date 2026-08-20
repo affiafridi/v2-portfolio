@@ -143,6 +143,31 @@ body {
 }
 
 /* ─── Menu Overlay ───────────────────────────────────────────────── */
+/* Same root cause as the mobile "dead gap" bug documented just below,
+   showing up the other way round: .mo-item-left is items-baseline, so
+   it grows the whole row to fit whatever its tallest child currently
+   is. The thumb's height animates 0 -> 72px on hover (by design — see
+   MenuOverlay.tsx's own comment on why height isn't just static), so
+   every hover made the row — and every row below it — visibly grow
+   and shrink.
+
+   Reserving the row's height permanently avoids that without touching
+   the thumb's own size or timing at all: 72px (THUMB_H) + 32px (the
+   row's existing py-4) = 104px, so the row is already exactly as tall
+   as the thumb will ever need before any hover happens. Scoped to
+   hover-capable, fine-pointer devices only — the same condition
+   MenuOverlay.tsx already checks in JS before this animation is even
+   allowed to run — so it can't add unwanted height on touch, which
+   has its own already-tuned compact sizing further down. */
+@media (hover: hover) and (pointer: fine) {
+  /* 72 (THUMB_H) + 24 (row's own py-3, reduced from py-4 to tighten the
+     list) + 1px border-box rounding, measured live the same way the
+     original 105px value was. Recompute this again if THUMB_H or the
+     row's padding class ever changes — it has to stay >= what the
+     thumb needs, or hover starts growing the row again. */
+  .mo-item { min-height: 97px; }
+}
+
 @media (max-width: 767px) {
   /* Desktop reveals the thumbnail on hover (width 0 → THUMB_W via
      GSAP, gated to pointer:fine devices — see MenuOverlay.tsx). There

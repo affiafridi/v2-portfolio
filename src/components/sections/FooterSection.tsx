@@ -54,10 +54,11 @@ const TICKER_TEXT =
 
 /* ─── Nav + social data ──────────────────────────────────────────── */
 const NAV_LINKS = [
-  { label: 'Index',   href: '/'        },
-  { label: 'Work',    href: '/work'    },
-  { label: 'Process', href: '/process' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Index',    href: '/'         },
+  { label: 'Work',     href: '/work'     },
+  { label: 'Services', href: '/services' },
+  { label: 'Contact',  href: '/contact'  },
+  { label: 'Blog',     href: '/blog'     },
 ]
 
 const SOCIAL_LINKS = [
@@ -73,7 +74,7 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
   const footerSocials     = (settings.socialLinks as { label: string; url: string }[]) || SOCIAL_LINKS.map(l => ({ label: l.label, url: l.href }))
   const footerWords       = (settings.wordReveal as W[])     || WORDS
   const footerImages      = (settings.images as string[])    || FOOTER_IMAGES
-  const footerCopyright   = (settings.copyrightName as string) || 'Aftab'
+  const footerCopyright   = (settings.copyrightName as string) || 'AFFI'
   const footerTechCredits = (settings.techCredits as string) || 'Next.js · GSAP · Three.js · Framer Motion'
   const sectionRef  = useRef<HTMLElement>(null)
   const nameRef     = useRef<HTMLDivElement>(null)
@@ -622,7 +623,7 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
         }}
       >
         <span className="ft-bottom-item" style={{ fontSize: '10px', color: INK, letterSpacing: '0.08em' }}>
-          © {year} {footerCopyright} · Designed &amp; developed by {footerCopyright}
+          © {year} · Designed &amp; developed by {footerCopyright}
         </span>
 
         <span className="ft-bottom-item" style={{ fontSize: '10px', color: INK, letterSpacing: '0.06em' }}>
