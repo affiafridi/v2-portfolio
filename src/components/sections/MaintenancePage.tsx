@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import Image from 'next/image'
+import LoopingVideo from '@/components/ui/LoopingVideo'
 import { gsap } from 'gsap'
 
 const CREAM = '#f0eeea'
@@ -68,12 +68,9 @@ export default function MaintenancePage({ email }: { email?: string }) {
             boxShadow:    '0 24px 64px rgba(0,0,0,0.10)',
           }}
         >
-          <Image
-            src="/uploads/1787142822531-waiting.gif"
-            alt=""
+          <LoopingVideo
+            src="/uploads/1787142822531-waiting.mp4"
             fill
-            unoptimized
-            sizes="320px"
             className="object-cover object-center"
           />
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import LoopingVideo from '@/components/ui/LoopingVideo'
 import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { useContactStore } from '@/store/useContactStore'
@@ -97,6 +98,15 @@ export default function ContactModal() {
 
   const panelRef  = useRef<HTMLDivElement>(null)
   const tlRef     = useRef<gsap.core.Timeline | null>(null)
+
+  /* This modal is mounted on every page and merely hidden, so rendering
+     the portrait clip unconditionally meant every visitor downloaded it
+     whether or not they ever opened contact — the single heaviest asset
+     on the site. Latches on first open and stays mounted afterwards, so
+     reopening is instant. The wrapper span still renders either way, so
+     the GSAP width tween built against .cm-portrait is unaffected. */
+  const [hasOpened, setHasOpened] = useState(false)
+  useEffect(() => { if (isOpen) setHasOpened(true) }, [isOpen])
 
   const [form, setForm] = useState({
     name:      '',
@@ -464,14 +474,13 @@ export default function ContactModal() {
                 position:     'relative',
               }}
             >
-              <Image
-                src="/uploads/1786796888930-lets-connect.gif"
-                alt=""
-                fill
-                unoptimized
-                sizes="146px"
-                className="object-cover object-left"
-              />
+              {hasOpened && (
+                <LoopingVideo
+                  src="/uploads/1786796888930-lets-connect.mp4"
+                  fill
+                  className="object-cover object-left"
+                />
+              )}
             </span>
             {/* "together" and the dot are wrapped in one flex item so
                 .cm-line2's own gap:0.18em (meant for the space after

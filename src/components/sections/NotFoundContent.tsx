@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import Link from '@/components/ui/TransitionLink'
-import Image from 'next/image'
+import LoopingVideo from '@/components/ui/LoopingVideo'
 import { gsap } from 'gsap'
 import { useCursorStore } from '@/store/useCursorStore'
 
@@ -74,12 +74,9 @@ export default function NotFoundContent() {
             marginBottom: 'clamp(6px, 1.3vw, 20px)',
           }}
         >
-          <Image
-            src="/uploads/1787142711888-404.gif"
-            alt=""
+          <LoopingVideo
+            src="/uploads/1787142711888-404.mp4"
             fill
-            unoptimized
-            sizes="226px"
             className="object-cover object-center"
           />
         </span>

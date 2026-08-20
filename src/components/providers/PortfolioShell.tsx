@@ -16,10 +16,12 @@ export default function PortfolioShell({
   children,
   maintenanceMode = false,
   contactEmail,
+  isAdminLoggedIn = false,
 }: {
-  children:        React.ReactNode
-  maintenanceMode?: boolean
-  contactEmail?:    string
+  children:          React.ReactNode
+  maintenanceMode?:  boolean
+  contactEmail?:     string
+  isAdminLoggedIn?:  boolean
 }) {
   const pathname = usePathname()
   const isAdmin = pathname.startsWith('/admin')
@@ -32,8 +34,11 @@ export default function PortfolioShell({
      menu, or footer, so there's nothing to navigate away to. Checked
      after isAdmin (not before) so /admin/* — the login page included —
      stays reachable the entire time maintenance mode is on; that's the
-     only way to turn it back off. */
-  if (maintenanceMode) {
+     only way to turn it back off. Skipped entirely for a logged-in
+     admin browsing the regular frontend (not /admin/*) — they should
+     see the live site as normal instead of the maintenance page,
+     which is meant for logged-out visitors only. */
+  if (maintenanceMode && !isAdminLoggedIn) {
     return <MaintenancePage email={contactEmail} />
   }
 

@@ -93,6 +93,7 @@ function AdminLoginForm() {
     setTimeout(() => router.push('/'), 520)
   }
 
+  const statusLoaded = status !== null
   const isBlocked = status?.blocked ?? false
   const remainingMs = status?.blockedUntil ? new Date(status.blockedUntil).getTime() - now : 0
 
@@ -100,7 +101,15 @@ function AdminLoginForm() {
     <div className="flex min-h-screen w-full items-center justify-center bg-[#000000] px-4">
       <div className="w-full max-w-[440px] rounded-[28px] bg-white px-8 py-10 sm:px-12 sm:py-12 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]">
 
-        {isBlocked ? (
+        {!statusLoaded ? (
+          /* Wait for the blocked/not-blocked check before showing either
+             screen — rendering the sign-in form by default while this
+             loads, then swapping to the blocked screen once it resolves,
+             was a visible flash on every refresh during an active cooldown. */
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-neutral-300" />
+          </div>
+        ) : isBlocked ? (
           <>
             {/* Icon badge — blocked state */}
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">

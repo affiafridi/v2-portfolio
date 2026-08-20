@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from '@/components/ui/TransitionLink'
 import Image from 'next/image'
+import LoopingVideo from '@/components/ui/LoopingVideo'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore }   from '@/store/useCursorStore'
@@ -349,12 +350,9 @@ export default function FooterSection({ settings = {} as Record<string, unknown>
                   position:     'relative',
                 }}
               >
-                <Image
-                  src="/uploads/1786797195871-reach-out.gif"
-                  alt=""
+                <LoopingVideo
+                  src="/uploads/1786797195871-reach-out.mp4"
                   fill
-                  unoptimized
-                  sizes="130px"
                   className="object-cover object-center"
                 />
               </span>

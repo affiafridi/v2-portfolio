@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from '@/components/ui/TransitionLink'
-import Image from 'next/image'
+import LoopingVideo from '@/components/ui/LoopingVideo'
 import { gsap } from 'gsap'
 import { useMenuStore }    from '@/store/useMenuStore'
 import { useCursorStore }  from '@/store/useCursorStore'
@@ -23,14 +23,14 @@ import { scheduleMenuClose, cancelMenuClose } from '@/store/menuHoverTimer'
    CLOSE animation: clipPath bottom 0%   → 100% (snaps back up)
    ───────────────────────────────────────────────────────────────── */
 
-interface NavItem { num: string; label: string; href: string; note: string; gif?: string }
+interface NavItem { num: string; label: string; href: string; note: string; video?: string }
 
 const NAV_ITEMS: NavItem[] = [
-  { num: '01', label: 'Index',    href: '/',         note: 'Home',              gif: '/uploads/1786797880514-index.gif'        },
-  { num: '02', label: 'Work',     href: '/work',     note: 'Selected projects', gif: '/uploads/1786798419823-work.gif'         },
-  { num: '03', label: 'Services', href: '/services', note: 'What I build',     gif: '/uploads/1786800780051-services.gif'     },
-  { num: '04', label: 'Blog',     href: '/blog',     note: 'My writing',       gif: '/uploads/1786798317843-blog.gif'         },
-  { num: '05', label: 'Contact',  href: '/contact',  note: 'Let\'s talk',      gif: '/uploads/1786796888930-lets-connect.gif' },
+  { num: '01', label: 'Index',    href: '/',         note: 'Home',              video: '/uploads/1786797880514-index.mp4'        },
+  { num: '02', label: 'Work',     href: '/work',     note: 'Selected projects', video: '/uploads/1786798419823-work.mp4'         },
+  { num: '03', label: 'Services', href: '/services', note: 'What I build',     video: '/uploads/1786800780051-services.mp4'     },
+  { num: '04', label: 'Blog',     href: '/blog',     note: 'My writing',       video: '/uploads/1786798317843-blog.mp4'         },
+  { num: '05', label: 'Contact',  href: '/contact',  note: 'Let\'s talk',      video: '/uploads/1786796888930-lets-connect.mp4' },
 ]
 
 const BG      = '#0d0d0d'
@@ -46,6 +46,13 @@ export default function MenuOverlay() {
 
   const panelRef = useRef<HTMLDivElement>(null)
   const tlRef    = useRef<gsap.core.Timeline | null>(null)
+
+  /* Latches true on first open and stays true — the thumbnails are then
+     kept mounted so reopening the menu is instant (browser cache) rather
+     than re-fetching. See the render site for why they aren't mounted
+     from the start. */
+  const [hasOpened, setHasOpened] = useState(false)
+  useEffect(() => { if (isOpen) setHasOpened(true) }, [isOpen])
 
   /* ── Hover thumbnail — reveals inline, before the item's label ──
      A fixed-size <Image> (not `fill`) sits inside an overflow:hidden
@@ -98,7 +105,7 @@ export default function MenuOverlay() {
   useEffect(() => {
     thumbTweens.current = NAV_ITEMS.map((item, idx) => {
       const thumb = thumbRefs.current[idx]
-      if (!item.gif || !thumb) return null
+      if (!item.video || !thumb) return null
       const tl = gsap.timeline({ paused: true })
       tl.to(thumb, { height: THUMB_H, duration: 0.1, ease: 'power2.out' })
         .to(thumb, { width: THUMB_W, duration: 0.5, ease: 'power2.out' }, 0.05)
@@ -359,7 +366,7 @@ export default function MenuOverlay() {
                     <span className="text-[10px] tabular-nums" style={{ color: ACCENT }}>
                       {item.num}
                     </span>
-                    {item.gif && (
+                    {item.video && (
                       <span
                         ref={el => { thumbRefs.current[idx] = el }}
                         className="mo-item-thumb"
@@ -373,10 +380,20 @@ export default function MenuOverlay() {
                           alignSelf:    'center',
                         }}
                       >
-                        <Image
-                          src={item.gif} alt="" width={THUMB_W} height={THUMB_H} unoptimized
-                          style={{ display: 'block', width: `${THUMB_W}px`, height: `${THUMB_H}px`, maxWidth: 'none', objectFit: 'cover' }}
-                        />
+                        {/* Held back until the menu has actually been opened
+                            once. This overlay never unmounts — it's mounted on
+                            every page and merely hidden with opacity — so
+                            rendering these unconditionally meant every page
+                            load fetched all five clips (11.2MB as GIFs) for a
+                            menu most visitors never open. The wrapper span
+                            still renders either way, so the GSAP hover
+                            timelines built against thumbRefs are unaffected. */}
+                        {hasOpened && (
+                          <LoopingVideo
+                            src={item.video}
+                            style={{ display: 'block', width: `${THUMB_W}px`, height: `${THUMB_H}px`, maxWidth: 'none', objectFit: 'cover' }}
+                          />
+                        )}
                       </span>
                     )}
                     <span

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import LoopingVideo from '@/components/ui/LoopingVideo'
 import { gsap } from 'gsap'
 import { useGifFlourishStore } from '@/store/useGifFlourishStore'
 import { useContactStore } from '@/store/useContactStore'
@@ -44,7 +45,7 @@ export default function GifFlourish() {
          since the page underneath had no moment to actually register
          before getting covered. This holds on the current page first,
          then starts the flourish right after. */
-      delay: 0.2,
+      delay: 0.14,
       onComplete() {
         closeFlourish()
         openContact()
@@ -78,7 +79,7 @@ export default function GifFlourish() {
       .to(ring2, { scale: 2.6, autoAlpha: 0.28, duration: 0.65, ease: 'power2.out' }, '-=0.60')
       .to(ring2, { autoAlpha: 0, duration: 0.35, ease: 'power1.in' }, '-=0.15')
       /* Hold on screen. */
-      .to({}, { duration: 0.85 })
+      .to({}, { duration: 0.42 })
       /* Exit — settle back down with a soft blur dissolve rather than
          a hard cut, so it reads as one continuous motion straight into
          the contact modal opening underneath. */
@@ -134,10 +135,8 @@ export default function GifFlourish() {
           boxShadow:    '0 32px 90px rgba(0,0,0,0.45)',
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/uploads/1786797195871-reach-out.gif"
-          alt=""
+        <LoopingVideo
+          src="/uploads/1786797195871-reach-out.mp4"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       </div>

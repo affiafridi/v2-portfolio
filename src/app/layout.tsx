@@ -3,10 +3,12 @@ import type { ReactNode } from 'react'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import '@/styles/globals.css'
+import { getServerSession } from 'next-auth'
 import PortfolioShell from '@/components/providers/PortfolioShell'
 import PageTransitionOverlay from '@/components/providers/PageTransitionOverlay'
 import { getSiteSettings } from '@/lib/data'
 import { getSeoSettings, absoluteUrl, SITE_URL } from '@/lib/seo'
+import { authOptions } from '@/lib/auth'
 
 export const viewport: Viewport = {
   themeColor: '#ff4d00',
@@ -39,11 +41,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const settings = await getSiteSettings()
   const general = (settings.general as { maintenanceMode?: boolean } | undefined) ?? {}
   const footer  = (settings.footer as { email?: string } | undefined) ?? {}
+  const session = await getServerSession(authOptions)
 
   return (
     <html lang="en" suppressHydrationWarning data-loading="" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
-        <PortfolioShell maintenanceMode={general.maintenanceMode ?? false} contactEmail={footer.email}>
+        <PortfolioShell
+          maintenanceMode={general.maintenanceMode ?? false}
+          contactEmail={footer.email}
+          isAdminLoggedIn={!!session}
+        >
           {children}
         </PortfolioShell>
         <PageTransitionOverlay />
