@@ -5,7 +5,7 @@ import ServiceSection from '@/components/sections/ServiceSection'
 import StackSection   from '@/components/sections/StackSection'
 import FooterSection  from '@/components/sections/FooterSection'
 import { getFeaturedProjects, getFeaturedServices, getStackCategories, getSiteSettings } from '@/lib/data'
-import { getSeoSettings, buildMetadata } from '@/lib/seo'
+import { getSeoSettings, buildMetadata, personJsonLd, webSiteJsonLd } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings()
@@ -36,8 +36,36 @@ export default async function Home() {
   const about  = (settings.about  || {}) as Record<string, unknown>
   const footer = (settings.footer || {}) as Record<string, unknown>
 
+  const seo = getSeoSettings(settings)
+
+  /* Social URLs double as the sameAs identity links, but the settings
+     ship with "#" placeholders — emitting those would assert a profile
+     exists at a bogus URL, so only real absolute links are included. */
+  const socialLinks = ((footer.socialLinks as { label?: string; url?: string }[]) || [])
+    .map(s => s?.url ?? '')
+    .filter(url => /^https?:\/\//.test(url))
+
+  const person = personJsonLd({
+    name:        seo.siteName,
+    jobTitle:    hero.marqueeText as string,
+    description: hero.bio as string,
+    image:       hero.portraitImage as string,
+    email:       footer.email as string,
+    location:    hero.location as string,
+    sameAs:      socialLinks,
+    /* Real technologies from the stack section rather than invented
+       keywords — this is the topical signal answer engines read. */
+    knowsAbout:  stackCategories.flatMap(c => c.items.map(i => i.name)),
+  })
+
+  const website = webSiteJsonLd({ siteName: seo.siteName, description: seo.defaultDescription })
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([person, website]) }}
+      />
       <HeroSection settings={hero} />
       <WorkSection
         aboutSettings={about}
