@@ -604,7 +604,7 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
             Next Project
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
+          <div className="pd-next-row" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
             <h3 className="pd-next-title" style={{
               fontSize: 'clamp(36px,7vw,108px)', fontWeight: 900,
               letterSpacing: '-0.04em', lineHeight: 0.88, color: INK,

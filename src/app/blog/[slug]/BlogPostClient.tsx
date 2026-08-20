@@ -122,7 +122,7 @@ export default function BlogPostClient({ post, next }: { post: PostData; next: P
           <span style={{ width: '1px', height: '12px', background: `${INK}18` }} />
           <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: ACC }}>{post.num}</span>
         </div>
-        <h1 className="bpg-title" style={{ fontSize: 'clamp(36px, 6.5vw, 100px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.90, color: INK, margin: '0 auto', maxWidth: '14ch' }}>{post.title}</h1>
+        <h1 className="bpg-title" style={{ fontSize: 'clamp(36px, 6.5vw, 100px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.90, color: INK, margin: '0 auto', maxWidth: '14ch', overflowWrap: 'break-word' }}>{post.title}</h1>
       </section>
 
       <div ref={imgWrapRef} style={{ paddingTop: '32px', display: 'flex', justifyContent: 'center' }}>
@@ -147,7 +147,7 @@ export default function BlogPostClient({ post, next }: { post: PostData; next: P
 
         <div className="bpg-brief-divider" style={{ height: 0, borderTop: `1px solid ${INK}`, marginBottom: 'clamp(40px, 5vw, 72px)' }} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: 'clamp(40px, 6vw, 100px)', alignItems: 'start' }}>
+        <div className="bpg-body-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: 'clamp(40px, 6vw, 100px)', alignItems: 'start' }}>
           <article className="bpg-sidebar">
             <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: ACC, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ display: 'inline-block', width: '20px', height: '1px', background: ACC }} />
@@ -168,7 +168,7 @@ export default function BlogPostClient({ post, next }: { post: PostData; next: P
             )}
           </article>
 
-          <aside className="bpg-block" style={{ position: 'sticky', top: '120px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          <aside className="bpg-block bpg-side-aside" style={{ position: 'sticky', top: '120px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div>
               <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: `${INK}44`, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ display: 'inline-block', width: '20px', height: '1px', background: `${INK}40` }} />
@@ -202,7 +202,7 @@ export default function BlogPostClient({ post, next }: { post: PostData; next: P
           <span style={{ display: 'inline-block', width: '28px', height: '1px', background: `${CREAM}25` }} />
           Next Article
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
+        <div className="bpg-next-row" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
           <h3 className="bpg-next-title" style={{ fontSize: 'clamp(36px, 7vw, 108px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 0.88, color: CREAM, textTransform: 'uppercase', margin: 0, transition: 'color 0.30s ease' }}>{next.title}</h3>
           <div className="bpg-next-arrow" style={{ flexShrink: 0, width: 'clamp(44px, 5vw, 64px)', height: 'clamp(44px, 5vw, 64px)', borderRadius: '50%', border: `1px solid ${CREAM}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: `${CREAM}60`, transition: 'background 0.30s ease, border-color 0.30s ease, color 0.30s ease' }}>
             <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden><path d="M1 6h14M9 1l6 5-6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
