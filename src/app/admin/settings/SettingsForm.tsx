@@ -75,6 +75,13 @@ interface SettingsData {
     interests: string[]
     phonePlaceholder: string
   }
+  whatsapp: {
+    enabled: boolean
+    number: string
+    profileImage: string
+    displayName: string
+    greetingMessage: string
+  }
   seo: {
     siteName: string
     titleTemplate: string
@@ -101,6 +108,10 @@ const EMPTY: SettingsData = {
   about: { storyParagraph1: '', storyParagraph2: '', scrollRevealWords: [], stats: [], images: [] },
   footer: { email: '', socialLinks: [], tickerText: '', wordReveal: [], images: [], copyrightName: '', techCredits: '' },
   contact: { interests: [], phonePlaceholder: '' },
+  whatsapp: {
+    enabled: false, number: '', profileImage: '', displayName: 'Aftab',
+    greetingMessage: 'Hi there 👋, How can I help you?',
+  },
   seo: {
     siteName: 'Aftab',
     titleTemplate: '%s | Aftab',
@@ -131,6 +142,7 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
     about: { ...EMPTY.about, ...initialData.about },
     footer: { ...EMPTY.footer, ...initialData.footer },
     contact: { ...EMPTY.contact, ...initialData.contact },
+    whatsapp: { ...EMPTY.whatsapp, ...initialData.whatsapp },
     seo: {
       ...EMPTY.seo,
       ...initialData.seo,
@@ -155,6 +167,9 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
 
   const setContact = <K extends keyof SettingsData['contact']>(key: K, val: SettingsData['contact'][K]) =>
     setData((d) => ({ ...d, contact: { ...d.contact, [key]: val } }))
+
+  const setWhatsapp = <K extends keyof SettingsData['whatsapp']>(key: K, val: SettingsData['whatsapp'][K]) =>
+    setData((d) => ({ ...d, whatsapp: { ...d.whatsapp, [key]: val } }))
 
   const setSeo = <K extends keyof SettingsData['seo']>(key: K, val: SettingsData['seo'][K]) =>
     setData((d) => ({ ...d, seo: { ...d.seo, [key]: val } }))
@@ -209,6 +224,7 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
+            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
             <TabsTrigger value="taxonomies">Taxonomies</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
@@ -381,6 +397,59 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
               <div className="space-y-2">
                 <Label>Phone Placeholder</Label>
                 <Input value={data.contact.phonePlaceholder} onChange={(e) => setContact('phonePlaceholder', e.target.value)} />
+              </div>
+            </FormSection>
+          </TabsContent>
+
+          {/* WhatsApp Tab */}
+          <TabsContent value="whatsapp" className="mt-0">
+            <FormSection title="WhatsApp Widget" description="A floating chat prompt shown across the site. Visitors can type a message, then 'Chat With Us' opens WhatsApp with it pre-filled — nothing is sent from your server.">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={data.whatsapp.enabled} onCheckedChange={(v) => setWhatsapp('enabled', v === true)} />
+                <Label>Show the WhatsApp button on the site</Label>
+              </div>
+
+              {/* The widget needs both the toggle AND a number — a wa.me
+                  link can't be built without one, so it stays hidden.
+                  Without this warning that's a silent no-op: the box is
+                  ticked, saved successfully, and nothing appears on the
+                  site with no explanation why. */}
+              {data.whatsapp.enabled && !data.whatsapp.number.trim() && (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Add your WhatsApp number below — until then the button stays hidden on the
+                  site, because the chat link can&apos;t be built without it.
+                </p>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>WhatsApp Number</Label>
+                  <Input
+                    value={data.whatsapp.number}
+                    onChange={(e) => setWhatsapp('number', e.target.value)}
+                    placeholder="+971 50 123 4567"
+                  />
+                  <p className="text-xs text-neutral-400">Include the country code. Spaces and dashes are fine — only the digits are used.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Display Name</Label>
+                  <Input value={data.whatsapp.displayName} onChange={(e) => setWhatsapp('displayName', e.target.value)} placeholder="Aftab" />
+                  <p className="text-xs text-neutral-400">Shown beside the profile image in the widget header.</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Greeting Message</Label>
+                <Textarea
+                  value={data.whatsapp.greetingMessage}
+                  onChange={(e) => setWhatsapp('greetingMessage', e.target.value)}
+                  rows={2}
+                  placeholder="Hi there 👋, How can I help you?"
+                />
+                <p className="text-xs text-neutral-400">Your greeting, shown in the widget. If a visitor sends without typing anything, this is what gets pre-filled in WhatsApp instead.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Profile Image</Label>
+                <MediaField value={data.whatsapp.profileImage} onChange={(url) => setWhatsapp('profileImage', url)} size="sm" />
               </div>
             </FormSection>
           </TabsContent>

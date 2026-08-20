@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
 import { useCursorStore } from '@/store/useCursorStore'
+import { useWhatsAppStore } from '@/store/useWhatsAppStore'
 
 const ACC  = '#ff4d00'
 const INK  = '#1a1a1a'
@@ -17,12 +18,28 @@ type LenisInstance = {
   off: (event: string, cb: (e: { scroll: number }) => void) => void
 }
 
-export default function BackToTop() {
+/* `shiftedForWidget` lifts this above the WhatsApp FAB, which occupies
+   the same bottom-right corner. Offsets are derived from that button's
+   own geometry (its clamp() inset + 58px height) so the two stay
+   aligned on a shared centre axis at every viewport width, rather than
+   being eyeballed at one breakpoint. */
+const FAB_INSET  = 'clamp(16px,3vw,28px)'
+const FAB_SIZE   = 58
+const STACK_GAP  = 14
+
+export default function BackToTop({ shiftedForWidget = false }: { shiftedForWidget?: boolean }) {
   const [visible,  setVisible]  = useState(false)
   const [progress, setProgress] = useState(0)
   const [mounted,  setMounted]  = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
   const { setCursorType } = useCursorStore()
+
+  /* The chat panel opens upward from its FAB and covers the exact slot
+     this button was moved into, so it would sit half-hidden behind the
+     card. Stepping out while the panel is open is cleaner than fighting
+     for z-order, and this button is unreachable during that time
+     anyway. */
+  const whatsappOpen = useWhatsAppStore((s) => s.isOpen)
 
   /* ── Mount guard for portal ─────────────────────────────────── */
   useEffect(() => { setMounted(true) }, [])
@@ -84,6 +101,7 @@ export default function BackToTop() {
   }
 
   const dashOffset = CIRC * (1 - progress)
+  const shown = visible && !whatsappOpen
 
   return (
     <>
@@ -94,8 +112,15 @@ export default function BackToTop() {
         aria-label="Back to top"
         style={{
           position:     'fixed',
-          bottom:       '2rem',
-          right:        '2rem',
+          /* Sits directly above the FAB, centres aligned: the FAB's
+             centre is inset + 29px from the right, so this 44px button
+             needs inset + 29 - 22 to match. */
+          bottom:       shiftedForWidget
+            ? `calc(${FAB_INSET} + ${FAB_SIZE + STACK_GAP}px)`
+            : '2rem',
+          right:        shiftedForWidget
+            ? `calc(${FAB_INSET} + ${(FAB_SIZE - SIZE) / 2}px)`
+            : '2rem',
           width:        `${SIZE}px`,
           height:       `${SIZE}px`,
           borderRadius: '50%',
@@ -108,10 +133,10 @@ export default function BackToTop() {
           justifyContent: 'center',
           cursor:       'none',
           zIndex:       9000,
-          opacity:      visible ? 1 : 0,
-          transform:    visible ? 'translateY(0) scale(1)' : 'translateY(14px) scale(0.82)',
+          opacity:      shown ? 1 : 0,
+          transform:    shown ? 'translateY(0) scale(1)' : 'translateY(14px) scale(0.82)',
           transition:   'opacity 0.35s ease, transform 0.40s cubic-bezier(0.34,1.56,0.64,1)',
-          pointerEvents: visible ? 'auto' : 'none',
+          pointerEvents: shown ? 'auto' : 'none',
           boxShadow:    '0 4px 20px rgba(0,0,0,0.10)',
         }}
       >

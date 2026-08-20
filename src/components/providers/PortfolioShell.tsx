@@ -11,20 +11,36 @@ import GifFlourish          from '@/components/ui/GifFlourish'
 import ScrollRestoration    from '@/components/ui/ScrollRestoration'
 import BackToTop            from '@/components/ui/BackToTop'
 import MaintenancePage      from '@/components/sections/MaintenancePage'
+import WhatsAppWidget       from '@/components/ui/WhatsAppWidget'
+
+interface WhatsAppSettings {
+  enabled?:         boolean
+  number?:          string
+  profileImage?:    string
+  displayName?:     string
+  greetingMessage?: string
+}
 
 export default function PortfolioShell({
   children,
   maintenanceMode = false,
   contactEmail,
   isAdminLoggedIn = false,
+  whatsapp,
 }: {
   children:          React.ReactNode
   maintenanceMode?:  boolean
   contactEmail?:     string
   isAdminLoggedIn?:  boolean
+  whatsapp?:         WhatsAppSettings
 }) {
   const pathname = usePathname()
   const isAdmin = pathname.startsWith('/admin')
+
+  /* Mirrors WhatsAppWidget's own render guard — it needs both a toggle
+     and a usable number, so BackToTop must only shift when the FAB is
+     genuinely on screen to avoid a floating gap when it isn't. */
+  const whatsappActive = !!(whatsapp?.enabled && (whatsapp?.number || '').replace(/\D/g, '').length > 0)
 
   if (isAdmin) {
     return <>{children}</>
@@ -53,8 +69,9 @@ export default function PortfolioShell({
           <ContactModal />
           <GifFlourish />
           <ScrollRestoration />
-          <BackToTop />
+          <BackToTop shiftedForWidget={whatsappActive} />
           {children}
+          <WhatsAppWidget settings={whatsapp} />
         </SmoothScrollProvider>
       </div>
     </>

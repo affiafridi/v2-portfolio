@@ -39,8 +39,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // getSiteSettings() is React cache()-deduped, so this costs nothing
   // extra alongside generateMetadata()'s own call within the same request.
   const settings = await getSiteSettings()
-  const general = (settings.general as { maintenanceMode?: boolean } | undefined) ?? {}
-  const footer  = (settings.footer as { email?: string } | undefined) ?? {}
+  const general  = (settings.general  as { maintenanceMode?: boolean } | undefined) ?? {}
+  const footer   = (settings.footer   as { email?: string } | undefined) ?? {}
+  const whatsapp = (settings.whatsapp as { enabled?: boolean; number?: string; profileImage?: string; displayName?: string; greetingMessage?: string } | undefined) ?? {}
 
   const maintenanceMode = general.maintenanceMode ?? false
 
@@ -93,6 +94,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           maintenanceMode={maintenanceMode}
           contactEmail={footer.email}
           isAdminLoggedIn={!!session}
+          whatsapp={whatsapp}
         >
           {children}
         </PortfolioShell>
