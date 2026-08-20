@@ -161,7 +161,7 @@ export default function Preloader() {
         }, '+=0.04')
         .to(canvas, { opacity: 0, duration: 0.22, ease: 'power1.in' })
 
-      safety = window.setTimeout(() => { teardown(); setMounted(false) }, 6000)
+      safety = setTimeout(() => { teardown(); setMounted(false) }, 6000)
 
     }, 0) /* delay 0 — yields to StrictMode cleanup before firing */
 
@@ -169,7 +169,7 @@ export default function Preloader() {
       clearTimeout(startId)
       running = false
       cancelAnimationFrame(raf)
-      if (safety) window.clearTimeout(safety)
+      if (safety) clearTimeout(safety)
       tl?.kill()
     }
   }, [])

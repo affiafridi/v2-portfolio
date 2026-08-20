@@ -342,7 +342,7 @@ export default function MenuOverlay() {
           </div>
 
           {/* ── LINE 1 — wipes in after logo ───────────────────── */}
-          <div className="mo-line" style={{ height: '1px', background: DIVIDER, transformOrigin: 'left center', scaleX: 0 }} />
+          <div className="mo-line" style={{ height: '1px', background: DIVIDER, transformOrigin: 'left center' }} />
 
           {/* ── NAV ITEMS ──────────────────────────────────────── */}
           <nav className="flex flex-col">
@@ -416,7 +416,7 @@ export default function MenuOverlay() {
                   onClick={handleClick}
                   className="mo-item group flex items-center justify-between px-6 py-4
                              transition-colors duration-200 w-full text-left"
-                  style={{ borderBottom: `1px solid ${DIVIDER}`, background: 'none', border: `none`, borderBottom: `1px solid ${DIVIDER}`, cursor: 'none' }}
+                  style={{ background: 'none', border: `none`, borderBottom: `1px solid ${DIVIDER}`, cursor: 'none' }}
                   onMouseEnter={() => handleRowEnter(idx)}
                   onMouseLeave={() => handleRowLeave(idx)}
                 >
@@ -440,7 +440,7 @@ export default function MenuOverlay() {
           </nav>
 
           {/* ── LINE 2 — wipes in after nav items ──────────────── */}
-          <div className="mo-line" style={{ height: '1px', background: DIVIDER, transformOrigin: 'left center', scaleX: 0 }} />
+          <div className="mo-line" style={{ height: '1px', background: DIVIDER, transformOrigin: 'left center' }} />
 
           {/* ── FOOTER ─────────────────────────────────────────── */}
           <div
