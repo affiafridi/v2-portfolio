@@ -320,7 +320,7 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
 }
 
 /* ─── Page ────────────────────────────────────────────────────────── */
-export default function ServicesPageClient({ services = [] }: { services?: ServiceData[] }) {
+export default function ServicesPageClient({ services = [], footerSettings }: { services?: ServiceData[]; footerSettings?: Record<string, unknown> }) {
   const heroRef = useRef<HTMLElement>(null)
   const { setCursorType } = useCursorStore()
 
@@ -488,7 +488,7 @@ export default function ServicesPageClient({ services = [] }: { services?: Servi
         />
       ))}
 
-      <FooterSection />
+      <FooterSection settings={footerSettings} />
 
     </div>
   )

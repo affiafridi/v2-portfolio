@@ -252,7 +252,7 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
       }}>
         <div className="pd-stats-grid" style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${statEntries.length + 1}, 1fr)`,
+          gridTemplateColumns: `repeat(${statEntries.length + (project.url ? 1 : 0)}, 1fr)`,
         }}>
           {/* Type */}
           {statEntries.map((stat, i) => (
@@ -275,36 +275,39 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
             </div>
           ))}
 
-          {/* Visit Website */}
-          <div className="pd-stat" style={{
-            padding: 'clamp(20px,2.8vw,36px) clamp(20px,3vw,44px)',
-            display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          }}>
-            <div style={{
-              fontSize: '9px', fontWeight: 700, letterSpacing: '0.22em',
-              textTransform: 'uppercase', color: `${INK}44`, marginBottom: '8px',
+          {/* Visit Website — omitted entirely when a project has no URL set,
+              rather than rendering a dead self-link. */}
+          {project.url && (
+            <div className="pd-stat" style={{
+              padding: 'clamp(20px,2.8vw,36px) clamp(20px,3vw,44px)',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
             }}>
-              Visit Website
+              <div style={{
+                fontSize: '9px', fontWeight: 700, letterSpacing: '0.22em',
+                textTransform: 'uppercase', color: `${INK}44`, marginBottom: '8px',
+              }}>
+                Visit Website
+              </div>
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  fontSize: 'clamp(14px,1.6vw,20px)', fontWeight: 700,
+                  letterSpacing: '-0.02em', color: INK,
+                  textDecoration: 'none',
+                  borderBottom: `1px solid ${INK}30`, paddingBottom: '2px',
+                  transition: 'color 0.2s ease, border-color 0.2s ease',
+                  cursor: 'none', width: 'fit-content',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = ACC; (e.currentTarget as HTMLElement).style.borderColor = ACC; setCursorType('hover') }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = INK; (e.currentTarget as HTMLElement).style.borderColor = `${INK}30`; setCursorType('default') }}
+              >
+                Open ↗
+              </a>
             </div>
-            <a
-              href={project.url ?? '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                fontSize: 'clamp(14px,1.6vw,20px)', fontWeight: 700,
-                letterSpacing: '-0.02em', color: INK,
-                textDecoration: 'none',
-                borderBottom: `1px solid ${INK}30`, paddingBottom: '2px',
-                transition: 'color 0.2s ease, border-color 0.2s ease',
-                cursor: 'none', width: 'fit-content',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = ACC; (e.currentTarget as HTMLElement).style.borderColor = ACC; setCursorType('hover') }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = INK; (e.currentTarget as HTMLElement).style.borderColor = `${INK}30`; setCursorType('default') }}
-            >
-              Open ↗
-            </a>
-          </div>
+          )}
         </div>
       </section>
 

@@ -18,12 +18,6 @@ import FormSection from '@/components/admin/FormSection'
 import { parseWordReveal } from '@/lib/wordReveal'
 import { X, Plus } from 'lucide-react'
 
-interface WordItem {
-  w: string
-  italic?: boolean
-  accent?: boolean
-}
-
 interface SocialLink {
   label: string
   url: string
@@ -73,7 +67,16 @@ interface SettingsData {
     email: string
     socialLinks: SocialLink[]
     tickerText: string
-    wordReveal: WordItem[]
+    /* Markup text ("*italic*" / "**accent**"), parsed via
+       src/lib/wordReveal.ts — same fix as about.scrollRevealText.
+       Was wordReveal: WordItem[], declared but with no admin UI ever
+       built for it. Worse than just unreachable: this form always
+       initialized the field to [], and FooterSection.tsx read it as
+       `settings.wordReveal || WORDS` — an empty ARRAY is truthy in JS,
+       so that fallback never actually engaged once any settings tab
+       was saved once for any reason, silently blanking this heading
+       sitewide with no error anywhere. */
+    wordRevealText: string
     images: string[]
     copyrightName: string
     techCredits: string
@@ -113,7 +116,7 @@ const EMPTY: SettingsData = {
     portraitPositionMobile:  { x: 50, y: 0, zoom: 100 },
   },
   about: { storyParagraph1: '', storyParagraph2: '', scrollRevealText: '', stats: [], images: [] },
-  footer: { email: '', socialLinks: [], tickerText: '', wordReveal: [], images: [], copyrightName: '', techCredits: '' },
+  footer: { email: '', socialLinks: [], tickerText: '', wordRevealText: '', images: [], copyrightName: '', techCredits: '' },
   contact: { interests: [], phonePlaceholder: '' },
   whatsapp: {
     enabled: false, number: '', profileImage: '', displayName: 'Aftab',
@@ -405,6 +408,38 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
               <div className="space-y-2">
                 <Label>Ticker Text</Label>
                 <Textarea value={data.footer.tickerText} onChange={(e) => setFooter('tickerText', e.target.value)} rows={2} />
+              </div>
+              <div className="space-y-2">
+                <Label>Scroll Reveal Heading</Label>
+                <Textarea
+                  value={data.footer.wordRevealText}
+                  onChange={(e) => setFooter('wordRevealText', e.target.value)}
+                  rows={2}
+                  placeholder="Whether you're **starting** from scratch or *improving an existing product,* let's build something real."
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-neutral-500">
+                  The word-by-word statement that reveals as the footer scrolls into view. Same markup as the About
+                  heading: <code className="rounded bg-neutral-100 px-1">*single asterisks*</code> for italic,{' '}
+                  <code className="rounded bg-neutral-100 px-1">**double asterisks**</code> for the orange accent
+                  word. Leave blank to keep the current default.
+                </p>
+                {data.footer.wordRevealText.trim() && (
+                  <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 text-lg font-bold leading-snug">
+                    {parseWordReveal(data.footer.wordRevealText).map((word, i) => (
+                      <span key={i}>
+                        <span
+                          style={{
+                            fontStyle: word.italic ? 'italic' : 'normal',
+                            color: word.accent ? '#ff4d00' : undefined,
+                          }}
+                        >
+                          {word.w}
+                        </span>{' '}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Social Links</Label>

@@ -16,7 +16,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ServicesPage() {
-  const services = await getServices()
+  // getSiteSettings() is React cache()-deduped, so calling it again here
+  // (generateMetadata above already does) costs nothing extra. This page
+  // was the only one of Work/Services/Blog never fetching it at all, so
+  // its footer rendered site-wide hardcoded defaults (wrong email,
+  // socials, copyright name, ...) regardless of what's actually
+  // configured in the dashboard — same fetch-and-forward pattern already
+  // used by work/page.tsx and BlogPageClient's caller.
+  const [services, settings] = await Promise.all([getServices(), getSiteSettings()])
+  const footer = (settings.footer || {}) as Record<string, unknown>
 
   const mapped = services.map(s => ({
     slug:         s.slug,
@@ -29,5 +37,5 @@ export default async function ServicesPage() {
     image:        s.image,
   }))
 
-  return <ServicesPageClient services={mapped} />
+  return <ServicesPageClient services={mapped} footerSettings={footer} />
 }

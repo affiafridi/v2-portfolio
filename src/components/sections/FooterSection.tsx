@@ -9,6 +9,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useCursorStore }   from '@/store/useCursorStore'
 import ImageCycler         from '@/components/ui/ImageCycler'
+import { parseWordReveal } from '@/lib/wordReveal'
 
 const FOOTER_IMAGES = [
   'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80', // team landscape
@@ -72,7 +73,15 @@ const SOCIAL_LINKS = [
 export default function FooterSection({ settings = {} as Record<string, unknown> }: { settings?: Record<string, unknown> }) {
   const footerEmail       = (settings.email as string)       || 'affiafridi.dev@gmail.com'
   const footerSocials     = (settings.socialLinks as { label: string; url: string }[]) || SOCIAL_LINKS.map(l => ({ label: l.label, url: l.href }))
-  const footerWords       = (settings.wordReveal as W[])     || WORDS
+  /* Admin-editable markup ("*italic*" / "**accent**"), parsed the same
+     way About's heading is — see src/lib/wordReveal.ts. Was
+     `(settings.wordReveal as W[]) || WORDS`: the form always saved this
+     as [] (no UI ever existed to set it to anything else), and an empty
+     ARRAY is truthy in JS, so that fallback could never actually engage
+     once any settings tab was saved — this heading rendered blank
+     sitewide. Checking `.trim()` on a string doesn't have that hole. */
+  const footerWordRevealText = settings.wordRevealText as string | undefined
+  const footerWords       = footerWordRevealText?.trim() ? parseWordReveal(footerWordRevealText) : WORDS
   const footerImages      = (settings.images as string[])    || FOOTER_IMAGES
   const footerCopyright   = (settings.copyrightName as string) || 'AFFI'
   const footerTechCredits = (settings.techCredits as string) || 'Next.js · GSAP · Three.js · Framer Motion'
