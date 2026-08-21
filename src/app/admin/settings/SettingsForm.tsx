@@ -15,6 +15,7 @@ import TaxonomyManager from '@/components/admin/TaxonomyManager'
 import MediaField from '@/components/admin/MediaField'
 import PortraitPositionPicker from '@/components/admin/PortraitPositionPicker'
 import FormSection from '@/components/admin/FormSection'
+import { parseWordReveal } from '@/lib/wordReveal'
 import { X, Plus } from 'lucide-react'
 
 interface WordItem {
@@ -58,7 +59,13 @@ interface SettingsData {
   about: {
     storyParagraph1: string
     storyParagraph2: string
-    scrollRevealWords: WordItem[]
+    /* Markup text ("*italic*" / "**accent**"), parsed into the per-word
+       array AboutSection actually renders — see src/lib/wordReveal.ts.
+       Was scrollRevealWords: WordItem[] (a per-word array), but nothing
+       ever built a UI for editing that shape, and this heading is a
+       sentence someone's writing, not a list of independent word rows —
+       replaced instead of adding a second, differently-shaped field. */
+    scrollRevealText: string
     stats: Stat[]
     images: string[]
   }
@@ -105,7 +112,7 @@ const EMPTY: SettingsData = {
     portraitPositionTablet:  { x: 50, y: 0, zoom: 100 },
     portraitPositionMobile:  { x: 50, y: 0, zoom: 100 },
   },
-  about: { storyParagraph1: '', storyParagraph2: '', scrollRevealWords: [], stats: [], images: [] },
+  about: { storyParagraph1: '', storyParagraph2: '', scrollRevealText: '', stats: [], images: [] },
   footer: { email: '', socialLinks: [], tickerText: '', wordReveal: [], images: [], copyrightName: '', techCredits: '' },
   contact: { interests: [], phonePlaceholder: '' },
   whatsapp: {
@@ -323,6 +330,39 @@ export default function SettingsForm({ initialData }: { initialData: Partial<Set
               <div className="space-y-2">
                 <Label>Story Paragraph 2</Label>
                 <Textarea value={data.about.storyParagraph2} onChange={(e) => setAbout('storyParagraph2', e.target.value)} rows={4} />
+              </div>
+              <div className="space-y-2">
+                <Label>Scroll Reveal Heading</Label>
+                <Textarea
+                  value={data.about.scrollRevealText}
+                  onChange={(e) => setAbout('scrollRevealText', e.target.value)}
+                  rows={3}
+                  placeholder="I *taught myself by building things.* It started with a **C++** project in 2016."
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-neutral-500">
+                  The big word-by-word heading that reveals as the About section scrolls into view.
+                  Wrap words in <code className="rounded bg-neutral-100 px-1">*single asterisks*</code> for
+                  italic, or <code className="rounded bg-neutral-100 px-1">**double asterisks**</code> for
+                  the orange accent word — the accent word also shows a cycling photo on hover, so use it
+                  on the one word you most want to draw attention to. Leave blank to keep the current default.
+                </p>
+                {data.about.scrollRevealText.trim() && (
+                  <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 text-lg font-bold leading-snug">
+                    {parseWordReveal(data.about.scrollRevealText).map((word, i) => (
+                      <span key={i}>
+                        <span
+                          style={{
+                            fontStyle: word.italic ? 'italic' : 'normal',
+                            color: word.accent ? '#ff4d00' : undefined,
+                          }}
+                        >
+                          {word.w}
+                        </span>{' '}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Stats</Label>

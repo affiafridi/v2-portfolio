@@ -108,13 +108,39 @@ export default function ContactModal() {
   const [hasOpened, setHasOpened] = useState(false)
   useEffect(() => { if (isOpen) setHasOpened(true) }, [isOpen])
 
+  /* ── Spam/bot defenses ──────────────────────────────────────────
+     Two lightweight, invisible-to-humans checks, both enforced again
+     server-side (a client-side-only check is trivial to bypass by
+     hitting the API directly, so these values are just carried along
+     for the server to actually judge):
+       1. Honeypot — positioned off-screen rather than display:none/
+          visibility:hidden, since some scrapers specifically skip those
+          two to evade honeypot detection. Deliberately NOT named
+          anything a browser's autofill recognizes (no "company",
+          "website", "address" etc.) — those are exactly the field names
+          autofill heuristics key off, and autocomplete="off" is only a
+          hint some browsers ignore for known field types. A real
+          person's browser silently autofilling this would make their
+          genuine message get treated as spam and never saved, which is
+          worse than not having the check at all. "hp_field" matches no
+          recognized category, so nothing should ever fill it but a bot
+          that blindly fills every input it finds.
+       2. Timing — records when the modal opened. Submitting within a
+          couple seconds of that isn't something a human filling four
+          fields can do, but is exactly what a scripted bot does.
+     Reset on every open (not just once) so re-opening the modal later
+     doesn't inherit a stale, now-very-old timestamp that would make a
+     genuinely fast second submission look instant. */
+  const [openedAt, setOpenedAt] = useState(0)
+  useEffect(() => { if (isOpen) setOpenedAt(Date.now()) }, [isOpen])
+
   const [form, setForm] = useState({
     name:      '',
     email:     '',
     phone:     '',
     message:   '',
     interests: [] as string[],
-    agreed:    false,
+    hp_field:  '', // honeypot — must stay empty
   })
   const [submitting,  setSubmitting]  = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -529,14 +555,17 @@ export default function ContactModal() {
               const res = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: form.name, email: form.email, phone: form.phone, message: form.message, interests: form.interests }),
+                body: JSON.stringify({
+                  name: form.name, email: form.email, phone: form.phone, message: form.message, interests: form.interests,
+                  hp_field: form.hp_field, formOpenedAt: openedAt,
+                }),
               })
               if (!res.ok) {
                 const data = await res.json().catch(() => ({}))
                 setSubmitError(data.error || 'Something went wrong — please try again.')
                 return
               }
-              setForm({ name: '', email: '', phone: '', message: '', interests: [], agreed: false })
+              setForm({ name: '', email: '', phone: '', message: '', interests: [], hp_field: '' })
               close()
             } catch {
               setSubmitError('Network error — please check your connection and try again.')
@@ -545,6 +574,26 @@ export default function ContactModal() {
             }
           }}
         >
+
+          {/* Honeypot — invisible to real visitors, bait for bots that
+              fill in every field they find. Off-screen rather than
+              display:none, which some scrapers specifically know to
+              skip; tabIndex/aria-hidden/autoComplete keep it out of
+              keyboard nav and screen readers for anyone who does
+              somehow reach this far. A filled value is checked and
+              rejected server-side in /api/contact — this alone proves
+              nothing on its own, since a bot could just ignore client
+              JS entirely, but real people never see or fill it. */}
+          <input
+            type="text"
+            name="hp_field"
+            value={form.hp_field}
+            onChange={e => setForm(p => ({ ...p, hp_field: e.target.value }))}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }}
+          />
 
           {/* Name */}
           <div className="cm-field" style={{ display: 'flex', alignItems: 'center', gap: '24px', borderBottom: `1px solid ${INK}12`, padding: 'clamp(12px,1.6vw,20px) 0' }}>
@@ -652,83 +701,19 @@ export default function ContactModal() {
             </p>
           )}
 
-          {/* Policy checkbox + send */}
+          {/* Send */}
           <div
             className="cm-bottom"
             style={{
               display:        'flex',
               alignItems:     'center',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               paddingTop:     'clamp(20px, 3vw, 36px)',
-              gap:            '16px',
-              flexWrap:       'wrap',
             }}
           >
-            {/* Checkbox + policy label */}
-            <label
-              style={{
-                display:     'flex',
-                alignItems:  'center',
-                gap:         '10px',
-                cursor:      'none',
-                userSelect:  'none',
-              }}
-              onMouseEnter={() => setCursorType('hover')}
-              onMouseLeave={() => setCursorType('default')}
-            >
-              {/* Hidden native checkbox */}
-              <input
-                type="checkbox"
-                checked={form.agreed}
-                onChange={e => setForm(p => ({ ...p, agreed: e.target.checked }))}
-                style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-              />
-              {/* Custom checkbox box */}
-              <span
-                style={{
-                  display:        'inline-flex',
-                  alignItems:     'center',
-                  justifyContent: 'center',
-                  width:          '18px',
-                  height:         '18px',
-                  borderRadius:   '4px',
-                  border:         `1.5px solid ${form.agreed ? ACC : `${INK}28`}`,
-                  background:     form.agreed ? ACC : 'transparent',
-                  flexShrink:     0,
-                  transition:     'all 0.18s ease',
-                }}
-              >
-                {form.agreed && (
-                  <svg width="10" height="7" viewBox="0 0 10 7" fill="none" aria-hidden>
-                    <path d="M1 3.5L3.8 6.5L9 1" stroke="#fff" strokeWidth="1.6"
-                      strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-              <span style={{
-                fontSize:      '11px',
-                fontWeight:    500,
-                letterSpacing: '0.04em',
-                color:         form.agreed ? INK : `${INK}60`,
-                transition:    'color 0.18s ease',
-              }}>
-                I agree to the{' '}
-                <span
-                  style={{
-                    borderBottom:   `1px solid ${ACC}`,
-                    color:          ACC,
-                    fontWeight:     600,
-                    paddingBottom:  '1px',
-                  }}
-                >
-                  privacy policy
-                </span>
-              </span>
-            </label>
-
             <button
               type="submit"
-              disabled={!form.agreed || submitting}
+              disabled={submitting}
               style={{
                 display:       'inline-flex',
                 alignItems:    'center',
@@ -738,17 +723,17 @@ export default function ContactModal() {
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
                 color:         '#fff',
-                background:    form.agreed ? INK : `${INK}30`,
+                background:    INK,
                 padding:       '14px 36px',
                 borderRadius:  '100px',
                 border:        'none',
                 cursor:        'none',
                 transition:    'background 0.22s ease',
                 opacity:       submitting ? 0.7 : 1,
-                pointerEvents: form.agreed && !submitting ? 'auto' : 'none',
+                pointerEvents: submitting ? 'none' : 'auto',
               }}
-              onMouseEnter={e => { if (form.agreed) { e.currentTarget.style.background = ACC; setCursorType('hover') } }}
-              onMouseLeave={e => { if (form.agreed) { e.currentTarget.style.background = INK; setCursorType('default') } }}
+              onMouseEnter={e => { e.currentTarget.style.background = ACC; setCursorType('hover') }}
+              onMouseLeave={e => { e.currentTarget.style.background = INK; setCursorType('default') }}
             >
               {submitting ? 'Sending…' : 'Send'}
               <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>

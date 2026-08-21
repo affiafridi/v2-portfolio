@@ -630,9 +630,9 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
         <p
           className="hj-bio hj-bio-text"
           style={{
-            fontSize:      '13px',
+            fontSize:      '16px',
             fontWeight:    500,
-            lineHeight:    1.85,
+            lineHeight:    1.7,
             letterSpacing: '0.01em',
             color:         `${INK}52`,
             borderLeft:    `2px solid ${INK}12`,

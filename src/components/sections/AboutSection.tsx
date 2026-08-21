@@ -4,6 +4,7 @@ import { Fragment } from 'react'
 import { useCursorStore } from '@/store/useCursorStore'
 import { useGifFlourishStore } from '@/store/useGifFlourishStore'
 import ImageCycler       from '@/components/ui/ImageCycler'
+import { parseWordReveal } from '@/lib/wordReveal'
 
 /* ─── Images for accent word hover ──────────────────────────────── */
 const ABOUT_IMAGES = [
@@ -65,7 +66,12 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
      content (an old version of this line) even after being updated
      there directly; hardcoding it removes that path entirely so what's
      in WORDS above is always exactly what renders. */
-  const aboutWords  = WORDS
+  /* Admin-editable markup ("*italic*" / "**accent**"), parsed into the
+     same per-word shape WORDS already is — see src/lib/wordReveal.ts.
+     Falls back to the hardcoded default the same way every other field
+     on this page does when the setting hasn't been filled in yet. */
+  const scrollRevealText = settings.scrollRevealText as string | undefined
+  const aboutWords  = scrollRevealText?.trim() ? parseWordReveal(scrollRevealText) : WORDS
   const aboutStats  = (settings.stats as { num: string; label: string }[]) || STATS
   const storyP1     = (settings.storyParagraph1 as string) || "I didn't learn development in a classroom. I learned it by building projects, solving problems, breaking things, and figuring out how to make them work again. What started as curiosity became a long-term commitment to creating products that are useful, reliable, and enjoyable to use."
   const storyP2     = (settings.storyParagraph2 as string) || 'Being self-taught taught me more than programming. It taught me how to learn, adapt, and solve problems independently. Every project is another opportunity to improve, experiment, and create something meaningful.'
@@ -137,7 +143,7 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
 
           <div className="ab-left-item">
             <span style={LABEL_STYLE}>My Story</span>
-            <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0, textAlign: 'justify' }}>
+            <p style={{ fontSize: '16px', lineHeight: 1.7, color: `${INK}85`, margin: 0, textAlign: 'justify' }}>
               {storyP1}
             </p>
           </div>
@@ -146,7 +152,7 @@ export default function AboutSection({ settings = {} as Record<string, unknown> 
             className="ab-left-item"
             style={{ borderLeft: `2px solid ${ACC}`, paddingLeft: '16px' }}
           >
-            <p style={{ fontSize: '14px', lineHeight: 1.9, color: `${INK}65`, margin: 0, textAlign: 'justify' }}>
+            <p style={{ fontSize: '16px', lineHeight: 1.7, color: `${INK}85`, margin: 0, textAlign: 'justify' }}>
               {storyP2}
             </p>
           </div>

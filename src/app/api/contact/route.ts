@@ -25,6 +25,12 @@ function isRateLimited(ip: string): boolean {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// A real visitor filling name/email/message by hand can't do it faster
+// than this; a script hitting the endpoint immediately after loading
+// the page does. Deliberately short (not, say, 5s) so a fast but real
+// human autofilling from a password manager isn't caught by it too.
+const MIN_FILL_TIME_MS = 1500
+
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(Object.fromEntries(request.headers.entries()))
@@ -43,6 +49,19 @@ export async function POST(request: Request) {
     const interests = Array.isArray(body.interests)
       ? body.interests.filter((i: unknown): i is string => typeof i === 'string').slice(0, 20).map((i: string) => i.slice(0, 100))
       : []
+
+    /* Honeypot + timing check. Deliberately checked BEFORE real
+       validation and answered with the same fake-success shape a
+       genuine submission gets (see below) — a bot that receives a 400
+       learns something is wrong and can iterate against it; one that
+       receives a normal-looking 201 has no signal to adapt to, and
+       nothing is written to the database either way. */
+    const honeypotFilled = typeof body.hp_field === 'string' && body.hp_field.trim().length > 0
+    const openedAt = typeof body.formOpenedAt === 'number' ? body.formOpenedAt : 0
+    const filledTooFast = openedAt > 0 && Date.now() - openedAt < MIN_FILL_TIME_MS
+    if (honeypotFilled || filledTooFast) {
+      return NextResponse.json({ id: 'ok', name, email }, { status: 201 })
+    }
 
     if (!name || !email || !message) {
       return NextResponse.json(
