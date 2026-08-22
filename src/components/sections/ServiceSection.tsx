@@ -311,12 +311,21 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
         </h2>
       </div>
 
-      {/* ══ SERVICE LIST ════════════════════════════════════════════ */}
+      {/* ══ SERVICE LIST ════════════════════════════════════════════
+          The 34vw indent used to live on .sv-list itself, which meant
+          every .sv-row's own hoverable box started at 34vw too — the
+          gutter to its left (where the floating preview image actually
+          appears) belonged to no row at all, so drifting the cursor
+          into it while the image was showing dropped the hover and
+          hid it. Moved the indent onto each row's own paddingLeft
+          instead (rowStyle below) so the row's hit area spans the full
+          width edge-to-edge while its visible content lands in exactly
+          the same place. The divider lines get the same offset via
+          marginLeft so they stay visually identical too. ════════════ */}
       <div
         className="sv-list"
         ref={listRef}
         style={{
-          paddingLeft:  '34vw',
           paddingRight: 'clamp(32px, 6.5vw, 96px)',
         }}
       >
@@ -324,7 +333,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
         <div
           className="sv-line"
           ref={el => { lineRefs.current[0] = el }}
-          style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
+          style={{ height: '1px', marginLeft: '34vw', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
         />
 
         {svcList.map((s, i) => {
@@ -390,6 +399,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
             alignItems:     'center',
             justifyContent: 'space-between',
             padding:        'clamp(12px, 1.6vw, 22px) 0',
+            paddingLeft:    '34vw',
             cursor:         'none',
           }
 
@@ -423,7 +433,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
               <div
                 className="sv-line"
                 ref={el => { lineRefs.current[i + 1] = el }}
-                style={{ height: '1px', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
+                style={{ height: '1px', marginLeft: '34vw', backgroundColor: 'rgba(26,26,26,0.10)', transformOrigin: 'left center' }}
               />
             )}
           </div>
