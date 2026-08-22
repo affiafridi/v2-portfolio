@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -41,7 +41,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
   const { setCursorType } = useCursorStore()
 
   /* ── Hover handlers ──────────────────────────────────────────── */
-  const handleEnter = (idx: number) => {
+  const handleEnter = useCallback((idx: number) => {
     const row = rowRefs.current[idx]
     if (!row || !floatRef.current) return
 
@@ -109,9 +109,9 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
       gsap.to(numRefs.current[idx]!,   { opacity: 0.55, duration: 0.22 })
 
     setCursorType('hover')
-  }
+  }, [setCursorType])
 
-  const handleLeave = () => {
+  const handleLeave = useCallback(() => {
     if (!floatRef.current) return
     gsap.killTweensOf(floatRef.current)
     gsap.to(floatRef.current, { opacity: 0, scale: 0.78, duration: 0.22, ease: 'power2.in' })
@@ -126,7 +126,7 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
       el && gsap.to(el, { opacity: 0.18, duration: 0.22 }))
 
     setCursorType('default')
-  }
+  }, [setCursorType])
 
   /* ── Setup & entrance animations ────────────────────────────── */
   useEffect(() => {
@@ -279,6 +279,71 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
     }
   }, [])
 
+  /* ── Pointer-driven hover, decoupled from each row's own DOM box ──
+     Per-row onMouseEnter only fires when the mouse itself moves into
+     that row's element — hovering past the title into empty space on
+     the same line (the left gutter the float image sits in, or the
+     margin to the right of the number) fell outside every row's box
+     and dropped the hover. Scrolling had the same gap from the other
+     direction: content moves under a stationary cursor, but nothing
+     re-fires without actual mouse movement, so the float stayed stuck
+     on whatever was last actively hovered until the mouse itself
+     moved again. Tracking the raw pointer Y and re-matching it against
+     each row's current bounding rect — on both mousemove and Lenis's
+     own scroll event — fixes both. X is deliberately never checked,
+     only Y, so hovering anywhere across a row's full height counts
+     regardless of how far from the title text the cursor actually is. */
+  useEffect(() => {
+    let lastY = -1
+
+    const updateHover = () => {
+      if (lastY < 0) return
+      let matchedIdx = -1
+      for (let i = 0; i < rowRefs.current.length; i++) {
+        const row = rowRefs.current[i]
+        if (!row) continue
+        const rect = row.getBoundingClientRect()
+        if (lastY >= rect.top && lastY <= rect.bottom) { matchedIdx = i; break }
+      }
+      if (matchedIdx === -1) {
+        if (floatVisible.current) handleLeave()
+      } else if (matchedIdx !== prevIdx.current) {
+        handleEnter(matchedIdx)
+      }
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      lastY = e.clientY
+      updateHover()
+    }
+    window.addEventListener('mousemove', onMouseMove)
+
+    /* SmoothScrollProvider sets window.__lenis in its own effect, but
+       React runs effects child-before-parent — this component is a
+       descendant, so on first mount this effect body runs BEFORE
+       SmoothScrollProvider's has had a chance to set it. Reading it
+       synchronously here would silently find nothing (optional
+       chaining swallows it) and never retry, permanently missing
+       every scroll-driven update for the rest of the session. A
+       setTimeout(0) always fires on the next macrotask, strictly
+       after the entire synchronous effects flush (parent included)
+       has finished — same "defer past the vulnerable window" idiom
+       already used in ServiceRow/Preloader for their own StrictMode
+       race, just against a different ordering hazard here. */
+    type LenisLike = { on: (evt: string, cb: () => void) => void; off: (evt: string, cb: () => void) => void }
+    let lenis: LenisLike | undefined
+    const lenisId = setTimeout(() => {
+      lenis = (window as unknown as Record<string, unknown>).__lenis as LenisLike | undefined
+      lenis?.on('scroll', updateHover)
+    }, 0)
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      clearTimeout(lenisId)
+      lenis?.off('scroll', updateHover)
+    }
+  }, [handleEnter, handleLeave])
+
   /* No real services yet — nothing to preview. Checked after every hook
      above (rules of hooks), not before, so this stays a plain early
      return rather than a conditional hook call. */
@@ -410,8 +475,6 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
                 href={`/services/${s.slug}`}
                 className="sv-row"
                 ref={el => { rowRefs.current[i] = el }}
-                onMouseEnter={() => handleEnter(i)}
-                onMouseLeave={handleLeave}
                 style={rowStyle}
               >
                 {rowContent}
@@ -420,8 +483,6 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
               <div
                 className="sv-row"
                 ref={el => { rowRefs.current[i] = el }}
-                onMouseEnter={() => handleEnter(i)}
-                onMouseLeave={handleLeave}
                 style={rowStyle}
               >
                 {rowContent}
