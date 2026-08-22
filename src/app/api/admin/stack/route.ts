@@ -18,8 +18,12 @@ export async function POST(request: Request) {
   if (unauthorized) return unauthorized
   try {
     const body = await request.json()
-    if (body.sortOrder === undefined) body.sortOrder = await prisma.stackCategory.count()
-    const category = await prisma.stackCategory.create({ data: body })
+    // num is derived from position, never client-supplied — see reorder/
+    // and [id]/route.ts (DELETE), which keep it in sync the same way.
+    const sortOrder = body.sortOrder ?? await prisma.stackCategory.count()
+    const category = await prisma.stackCategory.create({
+      data: { ...body, sortOrder, num: String(sortOrder + 1).padStart(2, '0') },
+    })
     revalidatePath('/')
     return NextResponse.json(category, { status: 201 })
   } catch (e: unknown) {

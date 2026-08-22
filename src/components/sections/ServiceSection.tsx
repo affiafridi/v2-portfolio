@@ -12,16 +12,6 @@ const CREAM = '#f0eeea'
 const INK   = '#1a1a1a'
 const ACC   = '#ff4d00'
 
-/* ─── Services ───────────────────────────────────────────────────── */
-const SERVICES: ServiceItem[] = [
-  { num: '01', label: 'Web Development',    tag: 'Full Stack'  },
-  { num: '02', label: 'UI/UX Design',       tag: 'Interaction' },
-  { num: '03', label: 'GSAP Animations',    tag: 'Motion'      },
-  { num: '04', label: 'Creative Direction', tag: 'Concept'     },
-  { num: '05', label: 'E-commerce',         tag: 'Commerce'    },
-  { num: '06', label: 'CMS Integration',    tag: 'Content'     },
-]
-
 /* Per-service image: unique left offset for "own position" feel */
 const IMG_OFFSETS = [
   { left: '4.5vw'  },
@@ -36,7 +26,7 @@ const IMG_OFFSETS = [
 interface ServiceItem { num: string; label: string; tag: string; slug?: string; image?: string | null }
 
 export default function ServiceSection({ services }: { services?: ServiceItem[] }) {
-  const svcList = services && services.length > 0 ? services : SERVICES
+  const svcList = services || []
   const sectionRef    = useRef<HTMLElement>(null)
   const listRef       = useRef<HTMLDivElement>(null)   // the actual list container
   const rowRefs       = useRef<(HTMLElement | null)[]>([])
@@ -49,7 +39,6 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
   const prevIdx       = useRef(-1)
   const floatVisible  = useRef(false)
   const { setCursorType } = useCursorStore()
-  const N = SERVICES.length
 
   /* ── Hover handlers ──────────────────────────────────────────── */
   const handleEnter = (idx: number) => {
@@ -289,6 +278,11 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
       if (timeoutId !== undefined) clearTimeout(timeoutId)
     }
   }, [])
+
+  /* No real services yet — nothing to preview. Checked after every hook
+     above (rules of hooks), not before, so this stays a plain early
+     return rather than a conditional hook call. */
+  if (svcList.length === 0) return null
 
   return (
     <section

@@ -33,36 +33,6 @@ interface Project {
 }
 
 
-/* Shown only when no projects are marked "Featured" in the admin yet —
-   same fallback-to-demo-content pattern already used by ServiceSection
-   and StackSection when their own DB-backed props are empty. */
-const FALLBACK_PROJECTS: Project[] = [
-  {
-    id: '01', slug: '', title: 'Modevelle', type: 'Ecommerce Website',
-    stack: ['Next.js', 'Shopify API', 'GSAP'],
-    desc: "A demo e-commerce website for women's fashion — product listings, cart functionality, and user authentication. Built with Next.js and the Shopify Storefront API.",
-    url: '#', image: '', gallery: [],
-  },
-  {
-    id: '02', slug: '', title: 'The Shear Room', type: 'Booking Website',
-    stack: ['Next.js', 'Supabase', 'GSAP'],
-    desc: 'A demo booking website for a unisex salon brand — service listings, end-to-end booking workflow, and user authentication. Built with Next.js and Supabase.',
-    url: '#', image: '', gallery: [],
-  },
-  {
-    id: '03', slug: '', title: 'Matilda Cake', type: 'Brand Website',
-    stack: ['Next.js', 'Sanity CMS', 'Framer Motion'],
-    desc: 'A premium brand website for a boutique cake studio — dynamic product gallery, custom order builder, and a seamless client inquiry flow.',
-    url: '#', image: '', gallery: [],
-  },
-  {
-    id: '04', slug: '', title: 'Portfolio v1', type: 'Personal Portfolio',
-    stack: ['React', 'GSAP', 'Three.js'],
-    desc: 'First iteration of my personal portfolio — advanced scroll animations, 3D canvas elements, and creative web interactions at the edge of the web.',
-    url: '#', image: '', gallery: [],
-  },
-]
-
 /* ─── Per-project preview frames — real gallery screenshots ─────────
    Cycles through the project's admin-uploaded gallery images (falling
    back to its cover image, then to a plain "no preview" placeholder if
@@ -337,9 +307,11 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
 const ABOUT_HOLD_UNITS  = 0.35  // slots reserved for About before transitions start
 
 export default function WorkSection({ aboutSettings, projects }: { aboutSettings?: Record<string, unknown>; projects?: Project[] }) {
-  /* Admin's "Featured" star-toggle drives this — falls back to demo
-     content only if nothing's been marked featured yet. */
-  const PROJECTS        = projects && projects.length > 0 ? projects : FALLBACK_PROJECTS
+  /* Admin's "Featured" star-toggle drives this. No fallback to demo
+     content — an empty array here just means the pinned sequence below
+     holds on the About panel (idx 0) and releases immediately, since
+     PROJECTS.map(...) below produces zero project panels. */
+  const PROJECTS        = projects || []
   const sectionRef     = useRef<HTMLElement>(null)
   const progressRef    = useRef<(HTMLDivElement | null)[]>([])
   const progressWrapRef = useRef<HTMLDivElement>(null)

@@ -16,99 +16,6 @@ const ACC   = '#ff4d00'
 interface Tech { name: string; slug: string; color: string }
 interface Cat  { num: string; label: string; desc: string; items: Tech[] }
 
-const STACK: Cat[] = [
-  {
-    num: '01', label: 'Languages', desc: 'The languages I think in',
-    items: [
-      { name: 'JavaScript', slug: 'javascript', color: 'F7DF1E' },
-      { name: 'TypeScript', slug: 'typescript',  color: '3178C6' },
-      { name: 'Python',     slug: 'python',       color: '3776AB' },
-      { name: 'PHP',        slug: 'php',          color: '777BB4' },
-      { name: 'SQL',        slug: 'mysql',        color: '4479A1' },
-      { name: 'Bash',       slug: 'gnubash',      color: '4EAA25' },
-    ],
-  },
-  {
-    num: '02', label: 'Frameworks', desc: 'The frameworks I build with',
-    items: [
-      { name: 'Next.js',  slug: 'nextdotjs',  color: 'eeeeee' },
-      { name: 'React',    slug: 'react',      color: '61DAFB' },
-      { name: 'Vue.js',   slug: 'vuedotjs',   color: '4FC08D' },
-      { name: 'Node.js',  slug: 'nodedotjs',  color: '339933' },
-      { name: 'Express',  slug: 'express',    color: 'aaaaaa' },
-      { name: 'Laravel',  slug: 'laravel',    color: 'FF2D20' },
-      { name: 'Nuxt.js',  slug: 'nuxtdotjs',  color: '00DC82' },
-    ],
-  },
-  {
-    num: '03', label: 'Motion & 3D', desc: 'Tools that bring things to life',
-    items: [
-      { name: 'GSAP',          slug: 'greensock', color: '88CE02' },
-      { name: 'Framer Motion', slug: 'framer',    color: '6699FF' },
-      { name: 'Three.js',      slug: 'threedotjs',color: 'cccccc' },
-      { name: 'Lenis',         slug: '',           color: 'f0eeea' },
-      { name: 'ScrollTrigger', slug: 'greensock', color: '88CE02' },
-      { name: 'Anime.js',      slug: '',           color: 'f0eeea' },
-    ],
-  },
-  {
-    num: '04', label: 'Styling', desc: 'How I make things look right',
-    items: [
-      { name: 'Tailwind CSS',  slug: 'tailwindcss',     color: '06B6D4' },
-      { name: 'Sass',          slug: 'sass',             color: 'CC6699' },
-      { name: 'CSS Modules',   slug: 'css3',             color: '1572B6' },
-      { name: 'Styled Comps',  slug: 'styledcomponents', color: 'DB7093' },
-      { name: 'PostCSS',       slug: 'postcss',          color: 'DD3A0A' },
-      { name: 'Radix UI',      slug: 'radixui',          color: 'cccccc' },
-    ],
-  },
-  {
-    num: '05', label: 'CMS & Headless', desc: 'Content infrastructure',
-    items: [
-      { name: 'Sanity',      slug: 'sanity',     color: 'F03E2F' },
-      { name: 'Contentful',  slug: 'contentful', color: '2478CC' },
-      { name: 'WordPress',   slug: 'wordpress',  color: '21759B' },
-      { name: 'Webflow',     slug: 'webflow',    color: '4353FF' },
-      { name: 'Shopify',     slug: 'shopify',    color: '7AB55C' },
-      { name: 'Strapi',      slug: 'strapi',     color: '4945FF' },
-    ],
-  },
-  {
-    num: '06', label: 'DevOps & Tools', desc: 'How I ship and collaborate',
-    items: [
-      { name: 'Git',     slug: 'git',              color: 'F05032' },
-      { name: 'Docker',  slug: 'docker',           color: '2496ED' },
-      { name: 'Vercel',  slug: 'vercel',           color: 'cccccc' },
-      { name: 'AWS',     slug: 'amazonaws',        color: 'FF9900' },
-      { name: 'Figma',   slug: 'figma',            color: 'F24E1E' },
-      { name: 'Postman', slug: 'postman',          color: 'FF6C37' },
-      { name: 'VS Code', slug: 'visualstudiocode', color: '007ACC' },
-    ],
-  },
-  {
-    num: '07', label: 'CRM & SaaS', desc: 'Platforms and integrations',
-    items: [
-      { name: 'Stripe',     slug: 'stripe',     color: '635BFF' },
-      { name: 'Supabase',   slug: 'supabase',   color: '3ECF8E' },
-      { name: 'Firebase',   slug: 'firebase',   color: 'FFCA28' },
-      { name: 'HubSpot',    slug: 'hubspot',    color: 'FF7A59' },
-      { name: 'Salesforce', slug: 'salesforce', color: '00A1E0' },
-      { name: 'Klaviyo',    slug: 'klaviyo',    color: 'cccccc' },
-    ],
-  },
-  {
-    num: '08', label: 'Web Solutions', desc: 'What I build end-to-end',
-    items: [
-      { name: 'E-commerce', slug: 'shopify',    color: '7AB55C' },
-      { name: 'SaaS Apps',  slug: 'supabase',   color: '3ECF8E' },
-      { name: 'Dashboards', slug: 'chartdotjs', color: 'FF6384' },
-      { name: 'REST APIs',  slug: 'postman',    color: 'FF6C37' },
-      { name: 'GraphQL',    slug: 'graphql',    color: 'E10098' },
-      { name: 'PWAs',       slug: 'pwa',        color: '5A0FC8' },
-    ],
-  },
-]
-
 /* ─── Initials fallback ──────────────────────────────────────────── */
 function Initials({ name, color }: { name: string; color: string }) {
   const abbr = name.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase()
@@ -209,7 +116,7 @@ function TechCard({ tech }: { tech: Tech }) {
 
 /* ─── Section ────────────────────────────────────────────────────── */
 export default function StackSection({ categories }: { categories?: Cat[] }) {
-  const stackData = categories && categories.length > 0 ? categories : STACK
+  const stackData = categories || []
   const [activeIdx, setActiveIdx] = useState(0)
   const [hasPointer, setHasPointer] = useState(true)
   const sectionRef = useRef<HTMLElement>(null)
@@ -286,6 +193,11 @@ export default function StackSection({ categories }: { categories?: Cat[] }) {
     }, sectionRef)
     return () => ctx.revert()
   }, [])
+
+  /* No real categories yet — nothing to show, and stackData[activeIdx]
+     below would otherwise be undefined. Checked after every hook above
+     (rules of hooks), not before. */
+  if (stackData.length === 0) return null
 
   const cat = stackData[activeIdx]
 

@@ -48,12 +48,14 @@ interface StackCategory {
 
 function SortableCategory({
   cat,
+  index,
   active,
   onSelect,
   onEdit,
   onDelete,
 }: {
   cat: StackCategory
+  index: number
   active: boolean
   onSelect: () => void
   onEdit: () => void
@@ -80,7 +82,9 @@ function SortableCategory({
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-      <span className="flex-1 truncate">{cat.num}. {cat.label}</span>
+      {/* Derived from list position, not the stored num — stays correct
+          the instant you drag, without waiting on the reorder round-trip. */}
+      <span className="flex-1 truncate">{String(index + 1).padStart(2, '0')}. {cat.label}</span>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onEdit() }}><Pencil className="h-3 w-3" /></Button>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onDelete() }}><Trash2 className="h-3 w-3 text-red-500" /></Button>
@@ -139,7 +143,7 @@ export default function StackManager({ initialCategories }: { initialCategories:
   const [selectedId, setSelectedId] = useState<string | null>(initialCategories[0]?.id || null)
   const [showCatForm, setShowCatForm] = useState(false)
   const [editCat, setEditCat] = useState<StackCategory | null>(null)
-  const [catForm, setCatForm] = useState({ num: '', label: '', desc: '' })
+  const [catForm, setCatForm] = useState({ label: '', desc: '' })
   const [showItemForm, setShowItemForm] = useState(false)
   const [editItem, setEditItem] = useState<StackItem | null>(null)
   const [itemForm, setItemForm] = useState({ name: '', slug: '', color: '' })
@@ -160,13 +164,13 @@ export default function StackManager({ initialCategories }: { initialCategories:
 
   const openNewCat = () => {
     setEditCat(null)
-    setCatForm({ num: '', label: '', desc: '' })
+    setCatForm({ label: '', desc: '' })
     setShowCatForm(true)
   }
 
   const openEditCat = (cat: StackCategory) => {
     setEditCat(cat)
-    setCatForm({ num: cat.num, label: cat.label, desc: cat.desc })
+    setCatForm({ label: cat.label, desc: cat.desc })
     setShowCatForm(true)
   }
 
@@ -299,10 +303,11 @@ export default function StackManager({ initialCategories }: { initialCategories:
         <CardContent className="space-y-1 p-2">
           <DndContext id="stack-categories-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
             <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-              {categories.map((cat) => (
+              {categories.map((cat, index) => (
                 <SortableCategory
                   key={cat.id}
                   cat={cat}
+                  index={index}
                   active={selectedId === cat.id}
                   onSelect={() => setSelectedId(cat.id)}
                   onEdit={() => openEditCat(cat)}
@@ -362,10 +367,6 @@ export default function StackManager({ initialCategories }: { initialCategories:
             <DialogTitle>{editCat ? 'Edit Category' : 'New Category'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>Number</Label>
-              <Input value={catForm.num} onChange={(e) => setCatForm({ ...catForm, num: e.target.value })} placeholder="01" />
-            </div>
             <div className="space-y-1.5">
               <Label>Label</Label>
               <Input value={catForm.label} onChange={(e) => setCatForm({ ...catForm, label: e.target.value })} placeholder="Frontend" />
