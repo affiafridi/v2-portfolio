@@ -3,12 +3,10 @@ import type { ReactNode } from 'react'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import '@/styles/globals.css'
-import { getServerSession } from 'next-auth'
 import PortfolioShell from '@/components/providers/PortfolioShell'
 import PageTransitionOverlay from '@/components/providers/PageTransitionOverlay'
 import { getSiteSettings } from '@/lib/data'
 import { getSeoSettings, absoluteUrl, SITE_URL } from '@/lib/seo'
-import { authOptions } from '@/lib/auth'
 
 export const viewport: Viewport = {
   themeColor: '#ff4d00',
@@ -38,25 +36,19 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // getSiteSettings() is React cache()-deduped, so this costs nothing
   // extra alongside generateMetadata()'s own call within the same request.
+  //
+  // Maintenance mode used to be checked here via getServerSession(), but
+  // that reads cookies — and any cookie access in the root layout opts
+  // the ENTIRE route tree out of static generation. That silently turned
+  // every page dynamic whenever maintenance mode was on, and for routes
+  // built via generateStaticParams() (services/work/blog detail pages)
+  // the resulting dynamic render didn't degrade gracefully: it threw
+  // DYNAMIC_SERVER_USAGE instead, surfacing as a 500. Maintenance gating
+  // (including the logged-in-admin bypass) now happens in middleware
+  // (src/middleware.ts), before Next decides how to render anything, so
+  // this layout — and every page under it — stays fully static always.
   const settings = await getSiteSettings()
-  const general  = (settings.general  as { maintenanceMode?: boolean } | undefined) ?? {}
-  const footer   = (settings.footer   as { email?: string } | undefined) ?? {}
   const whatsapp = (settings.whatsapp as { enabled?: boolean; number?: string; profileImage?: string; displayName?: string; greetingMessage?: string } | undefined) ?? {}
-
-  const maintenanceMode = general.maintenanceMode ?? false
-
-  /* Only read the session when maintenance mode is actually on.
-     getServerSession() reads cookies, and any cookie access in the root
-     layout opts the ENTIRE route tree out of static generation — an
-     unconditional call here silently turned every page dynamic, so each
-     visit re-rendered and re-queried the database instead of serving
-     prerendered HTML.
-
-     Gating it means the normal state (maintenance off) keeps every page
-     static, and only the rare maintenance-on state pays for per-request
-     rendering — which is correct there anyway, since the whole point is
-     to serve different HTML to admins than to everyone else. */
-  const session = maintenanceMode ? await getServerSession(authOptions) : null
 
   return (
     <html lang="en" suppressHydrationWarning data-loading="" className={`${GeistSans.variable} ${GeistMono.variable}`}>
@@ -90,12 +82,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         )}
       </head>
       <body>
-        <PortfolioShell
-          maintenanceMode={maintenanceMode}
-          contactEmail={footer.email}
-          isAdminLoggedIn={!!session}
-          whatsapp={whatsapp}
-        >
+        <PortfolioShell whatsapp={whatsapp}>
           {children}
         </PortfolioShell>
         <PageTransitionOverlay />
