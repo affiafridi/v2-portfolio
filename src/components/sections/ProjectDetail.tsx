@@ -23,7 +23,11 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
   const next = nextProject || { slug: project.slug, title: project.title, type: project.type }
 
   /* ── Gallery glitch ────────────────────────────────────────────── */
-  const gallery        = project.gallery ?? []
+  // Cover image leads, same as the homepage card stack's getFrames() —
+  // this grid previously mapped project.gallery directly, so the cover
+  // image (a separate field from gallery) never appeared here at all,
+  // only in the hero above. Deduped in case it's ever also in gallery.
+  const gallery = Array.from(new Set([project.image, ...(project.gallery ?? [])].filter(Boolean)))
   const galGlitchTls   = useRef<(gsap.core.Timeline | null)[]>([])
   const galGreenRefs   = useRef<(HTMLDivElement | null)[]>([])
   const galMagentaRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -510,16 +514,16 @@ export default function ProjectDetail({ project, nextProject }: { project: Proje
       )}
 
       {/* ══ 6. GALLERY ═══════════════════════════════════════════ */}
-      {project.gallery && project.gallery.length > 0 && (
+      {gallery.length > 0 && (
         <section className="pd-gallery" style={{
           background: CREAM, padding: 'clamp(40px,5vw,72px) clamp(10px,1.2vw,16px)',
         }}>
           <div className="pd-gallery-grid" style={{
             display: 'grid',
-            gridTemplateColumns: `repeat(${Math.min(project.gallery.length, 5)}, 1fr)`,
+            gridTemplateColumns: `repeat(${Math.min(gallery.length, 5)}, 1fr)`,
             gap: 'clamp(6px,0.8vw,10px)',
           }}>
-            {project.gallery.map((src, i) => (
+            {gallery.map((src, i) => (
               <div
                 key={i}
                 className="pd-gal-img"
