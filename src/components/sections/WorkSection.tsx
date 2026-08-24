@@ -152,6 +152,22 @@ function CardStack({ p }: { p: Project }) {
           ref={el => { cardRefs.current[i] = el }}
           style={{
             position:     'absolute',
+            /* top:0 alongside bottom:0 (not bottom-only) — this box used
+               to get its height for free from wk-cardstack-frame's own
+               explicit clamp() height inside it, back when that was a
+               fixed value instead of height:'100%'. Once it became a
+               percentage, this box needed a definite height of its own
+               for that percentage to resolve against; without top set,
+               an absolutely positioned box with only `bottom` and no
+               `height` sizes to its in-flow content, and its only
+               content (the frame's <img>) is itself absolutely
+               positioned — excluded from that calculation — so it
+               collapsed to ~0 and silently took the whole percentage
+               chain down to the image with it. Pinning all four sides
+               gives it wk-cardstack's own aspect-ratio-derived height
+               directly, which is what wk-cardstack-frame's 100% (and
+               everything under it) actually needs to resolve against. */
+            top:          0,
             bottom:       0,
             left:         0,
             right:        0,
