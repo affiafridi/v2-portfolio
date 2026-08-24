@@ -21,6 +21,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (typeof body.slug === 'string' && body.slug.trim() === '') {
       return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 })
     }
+    // Mirrors the cap in GalleryMediaInput.tsx — that's a UI convenience,
+    // not enforcement; a direct API call could still send more without
+    // this.
+    if (Array.isArray(body.gallery) && body.gallery.length > 12) {
+      body.gallery = body.gallery.slice(0, 12)
+    }
     const project = await prisma.project.update({ where: { id: params.id }, data: body })
     revalidatePath('/')
     revalidatePath('/work')

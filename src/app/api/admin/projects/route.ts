@@ -26,6 +26,12 @@ export async function POST(request: Request) {
     if (!body.slug) {
       return NextResponse.json({ error: 'Title or slug is required' }, { status: 400 })
     }
+    // Mirrors the cap in GalleryMediaInput.tsx — that's a UI convenience,
+    // not enforcement; a direct API call could still send more without
+    // this.
+    if (Array.isArray(body.gallery) && body.gallery.length > 12) {
+      body.gallery = body.gallery.slice(0, 12)
+    }
     if (body.sortOrder === undefined) body.sortOrder = await prisma.project.count()
     const project = await prisma.project.create({ data: body })
     revalidatePath('/')

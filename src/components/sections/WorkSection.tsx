@@ -34,12 +34,17 @@ interface Project {
 
 
 /* ─── Per-project preview frames — real gallery screenshots ─────────
-   Cycles through the project's admin-uploaded gallery images (falling
-   back to its cover image, then to a plain "no preview" placeholder if
-   it has neither yet) to fill the 3-card rotating stack. Always
-   returns exactly 3 frames regardless of how many images exist. */
+   Cycles through the project's cover image followed by its gallery
+   (falling back to a plain "no preview" placeholder if it has neither)
+   to fill the 3-card rotating stack. Always returns exactly 3 frames
+   regardless of how many images exist. Cover always comes first — it
+   was previously gallery-OR-cover (cover only showed at all when the
+   gallery was completely empty), so the image chosen as the project's
+   "main" one in admin wasn't guaranteed to be what a visitor saw
+   first here. Deduplicated in case the same image was ever set as
+   both the cover and part of the gallery. */
 function getFrames(p: Project): React.ReactNode[] {
-  const imgs = p.gallery.length > 0 ? p.gallery : p.image ? [p.image] : []
+  const imgs = Array.from(new Set([p.image, ...p.gallery].filter(Boolean)))
   return Array.from({ length: 3 }).map((_, i) => (
     <div key={i} style={{ position: 'relative', width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)' }}>
       {imgs.length > 0 ? (
@@ -132,7 +137,15 @@ function CardStack({ p }: { p: Project }) {
   }, [])
 
   return (
-    <div className="wk-cardstack" style={{ position:'relative', width:'100%', height:'clamp(220px,30vw,420px)' }}>
+    /* aspectRatio, not a fixed height clamp — the old clamp(220px,30vw,
+       420px) sized height independently of width, so on a wide viewport
+       (col-right can be 700px+) the card ended up around 1.67:1 while
+       every real project screenshot is ~2:1 (checked directly: all 5
+       current images are 2536-2551 × 1277-1281px). That mismatch is
+       what object-fit:cover was cropping into the sides to compensate
+       for. Deriving height from width instead keeps the card's own
+       shape matched to what's actually being shown. */
+    <div className="wk-cardstack" style={{ position:'relative', width:'100%', aspectRatio:'2/1' }}>
       {frames.map((frame, i) => (
         <div
           key={i}
@@ -148,7 +161,7 @@ function CardStack({ p }: { p: Project }) {
             boxShadow:    '0 4px 16px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.06) inset',
           }}
         >
-          <div className="wk-cardstack-frame" style={{ height:'clamp(220px,30vw,420px)', overflow:'hidden' }}>
+          <div className="wk-cardstack-frame" style={{ height:'100%', overflow:'hidden' }}>
             {frame}
           </div>
         </div>
@@ -225,7 +238,15 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
 
           {/* Title + desc + CTA — positioned at green mark (upper-middle of left col) */}
           <div className="wk-title-block" style={{ position:'absolute', top:'46%', left:0, right:0 }}>
-            <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem', textAlign:'justify', textWrap:'balance', wordBreak:'normal', overflowWrap:'normal' } as React.CSSProperties}>{p.title}</h3>
+            {/* textAlign was 'justify' — fine for body copy with many
+                words per line, but this heading can be just 2-3 words
+                at a huge font size (e.g. "Foundly. UAE Lost & Found
+                Platform"), and justify stretches text to fill the full
+                line width by inserting extra space *between* words —
+                with only a couple of words on a line, that gap becomes
+                enormous, reading as scattered/disconnected words rather
+                than one title. 'left' wraps naturally instead. */}
+            <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem', textAlign:'left', textWrap:'balance', wordBreak:'normal', overflowWrap:'normal' } as React.CSSProperties}>{p.title}</h3>
             <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px', textAlign:'justify' }}>{p.desc}</p>
             <Link href={p.url} className="wk-left"
               style={{
