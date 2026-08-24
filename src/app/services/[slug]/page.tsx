@@ -5,7 +5,11 @@ import ServiceDetailClient from './ServiceDetailClient'
 
 export async function generateStaticParams() {
   const services = await getServices()
-  return services.map(s => ({ slug: s.slug }))
+  // An empty slug collides with this page's own listing route during
+  // static export and fails the whole production build (real incident —
+  // API routes now reject saving one, but this is the last line of
+  // defense against the build breaking sitewide over one bad record).
+  return services.filter(s => s.slug).map(s => ({ slug: s.slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

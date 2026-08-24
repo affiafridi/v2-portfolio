@@ -16,6 +16,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (unauthorized) return unauthorized
   try {
     const body = await request.json()
+    // Same guard as create — an empty slug breaks static export for the
+    // whole site, not just this post (see posts/route.ts POST).
+    if (typeof body.slug === 'string' && body.slug.trim() === '') {
+      return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 })
+    }
     const post = await prisma.post.update({ where: { id: params.id }, data: body })
     revalidatePath('/blog')
     revalidatePath(`/blog/${post.slug}`)

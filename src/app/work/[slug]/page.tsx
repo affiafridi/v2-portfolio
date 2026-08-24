@@ -5,7 +5,11 @@ import ProjectDetail from '@/components/sections/ProjectDetail'
 
 export async function generateStaticParams() {
   const projects = await getProjects()
-  return projects.map(p => ({ slug: p.slug }))
+  // An empty slug collides with this page's own listing route during
+  // static export and fails the whole production build (real incident —
+  // API routes now reject saving one, but this is the last line of
+  // defense against the build breaking sitewide over one bad record).
+  return projects.filter(p => p.slug).map(p => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

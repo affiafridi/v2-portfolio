@@ -36,7 +36,22 @@ export default function SlugField({ title, value, onChange, pathPrefix, isEdit }
   }
 
   function commit() {
-    onChange(sanitizeFinal(value))
+    const sanitized = sanitizeFinal(value)
+    if (sanitized) {
+      onChange(sanitized)
+    } else {
+      // Clearing the field entirely and blurring used to commit an empty
+      // slug outright — which the server had no guard against either
+      // (see the API routes), and an empty slug isn't just cosmetically
+      // wrong: it collides with the listing page's own path during
+      // static export and fails the whole production build. Treating
+      // "cleared it" as "go back to auto-generating from the title"
+      // instead means there's no way to end up with an empty slug just
+      // by blurring, matching what happens before the pencil is ever
+      // clicked.
+      touchedRef.current = false
+      onChange(slugify(title))
+    }
     setEditing(false)
   }
 

@@ -16,6 +16,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (unauthorized) return unauthorized
   try {
     const body = await request.json()
+    // Same guard as create — an empty slug breaks static export for the
+    // whole site, not just this service (see services/route.ts POST).
+    // This exact gap is how "Web Apps Development" ended up with
+    // slug: '' in production and broke the build.
+    if (typeof body.slug === 'string' && body.slug.trim() === '') {
+      return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 })
+    }
     // num is derived from position (see reorder/route.ts and DELETE
     // below), never editable directly — strip it even if an older
     // client sends one.
