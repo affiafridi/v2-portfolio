@@ -17,7 +17,6 @@ import SeoFields from '@/components/admin/SeoFields'
 interface ServiceData {
   id?: string
   slug: string
-  num: string
   title: string
   tag: string
   description: string
@@ -32,7 +31,7 @@ interface ServiceData {
 }
 
 const DEFAULT: ServiceData = {
-  slug: '', num: '', title: '', tag: '', description: '',
+  slug: '', title: '', tag: '', description: '',
   points: [], deliverables: [], image: '', published: false,
   seoTitle: '', seoDescription: '', seoImage: '', noindex: false,
 }
@@ -111,15 +110,9 @@ export default function ServiceForm({ initial }: { initial?: ServiceData }) {
             </FormSection>
 
             <FormSection title="Details" description="Metadata for this service">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Number *</Label>
-                  <Input value={data.num} onChange={(e) => set('num', e.target.value)} placeholder="01" required className="h-8 text-sm" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Tag *</Label>
-                  <Input value={data.tag} onChange={(e) => set('tag', e.target.value)} placeholder="Full Stack" required className="h-8 text-sm" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tag *</Label>
+                <Input value={data.tag} onChange={(e) => set('tag', e.target.value)} placeholder="Full Stack" required className="h-8 text-sm" />
               </div>
             </FormSection>
 

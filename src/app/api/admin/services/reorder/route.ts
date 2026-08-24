@@ -15,7 +15,10 @@ export async function PATCH(request: Request) {
 
     await prisma.$transaction(
       ids.map((id: string, index: number) =>
-        prisma.service.update({ where: { id }, data: { sortOrder: index } })
+        prisma.service.update({
+          where: { id },
+          data: { sortOrder: index, num: String(index + 1).padStart(2, '0') },
+        })
       )
     )
 

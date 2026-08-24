@@ -17,8 +17,12 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     if (!body.slug) body.slug = slugify(body.title || '')
-    if (body.sortOrder === undefined) body.sortOrder = await prisma.service.count()
-    const service = await prisma.service.create({ data: body })
+    // num is derived from position, never client-supplied — see reorder/
+    // and [id]/route.ts (DELETE), which keep it in sync the same way.
+    const sortOrder = body.sortOrder ?? await prisma.service.count()
+    const service = await prisma.service.create({
+      data: { ...body, sortOrder, num: String(sortOrder + 1).padStart(2, '0') },
+    })
     revalidatePath('/')
     revalidatePath('/services')
     return NextResponse.json(service, { status: 201 })

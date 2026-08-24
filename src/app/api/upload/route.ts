@@ -8,8 +8,8 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'imag
 const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg']
 const ALLOWED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES]
 
-const MAX_IMAGE_SIZE = 8 * 1024 * 1024 // 8MB
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_VIDEO_SIZE = 10 * 1024 * 1024 // 10MB
 
 export async function POST(request: Request) {
   const unauthorized = await requireAdmin()
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: `File too large. Max size is ${isVideo ? '50MB' : '8MB'}.` },
+        { error: `File too large. Max size is ${maxSize / (1024 * 1024)}MB.` },
         { status: 400 }
       )
     }
