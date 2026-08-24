@@ -4,7 +4,12 @@ import { prisma } from '@/lib/prisma'
 import fs from 'fs'
 import path from 'path'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
+// Uploads live outside public/ now — see the comment in
+// src/app/api/upload/route.ts for why — served instead by
+// src/app/uploads/[...path]/route.ts. Stored URLs still read
+// "/uploads/…" either way, so nothing downstream (DB records, admin
+// forms) needed to change; only where this file itself looks on disk.
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads')
 const PUBLIC_DIR = path.join(process.cwd(), 'public')
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov', '.ogg', '.ogv']
 
@@ -19,11 +24,15 @@ function urlToFilename(url: string): string {
   return base.includes('.') ? base : `${base}.jpg`
 }
 
-// Local (public/) files can be stat'd for a real size; remote URLs (e.g.
-// Unsplash placeholders from seed data) have no size we can cheaply get.
+// Local files can be stat'd for a real size; remote URLs (e.g. Unsplash
+// placeholders from seed data) have no size we can cheaply get.
+// "/uploads/…" URLs resolve against UPLOAD_DIR (outside public/); any
+// other local URL is a bundled public/ asset, resolved against that.
 function localSize(url: string): number {
   if (!url.startsWith('/')) return 0
-  const filePath = path.join(PUBLIC_DIR, url)
+  const filePath = url.startsWith('/uploads/')
+    ? path.join(UPLOAD_DIR, url.slice('/uploads/'.length))
+    : path.join(PUBLIC_DIR, url)
   return fs.existsSync(filePath) ? fs.statSync(filePath).size : 0
 }
 

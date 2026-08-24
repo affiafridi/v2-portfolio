@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import fs from 'fs'
 import path from 'path'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads')
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   const unauthorized = await requireAdmin()

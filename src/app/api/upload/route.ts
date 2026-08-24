@@ -50,7 +50,14 @@ export async function POST(request: Request) {
 
     const uniqueName = `${Date.now()}-${sanitized}`
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+    // Deliberately NOT public/uploads — Next's own static serving for
+    // public/ only reliably picks up files that existed when the server
+    // process started; anything written here after boot 404s until the
+    // next restart (confirmed: a live upload was broken until a manual
+    // PM2 restart, then worked). This directory is served instead by
+    // src/app/uploads/[...path]/route.ts, which reads fresh from disk
+    // on every request and has no such staleness.
+    const uploadsDir = path.join(process.cwd(), 'uploads')
     await mkdir(uploadsDir, { recursive: true })
 
     const filePath = path.join(uploadsDir, uniqueName)

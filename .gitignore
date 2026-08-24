@@ -3,6 +3,6 @@ next/
 /src/generated/prisma
 .env
 .env.local
-/public/uploads/
+/uploads/
 .next/
 *.tsbuildinfo

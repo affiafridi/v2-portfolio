@@ -13,20 +13,11 @@ const nextConfig = {
 
   async headers() {
     return [
-      {
-        /* Uploaded media is written with a millisecond timestamp prefix
-           (1786797195871-reach-out.mp4) and never rewritten in place —
-           editing an image in admin uploads a new file under a new name.
-           That makes these effectively content-addressed, so they can be
-           cached permanently; repeat visitors re-download none of it.
-           Next.js already sends this for /_next/static, which is hashed
-           the same way, but /uploads is served straight from disk and
-           gets no caching headers by default. */
-        source: '/uploads/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
+      /* /uploads/:path* used to get its Cache-Control here — moved to
+         being set directly in src/app/uploads/[...path]/route.ts once
+         uploads moved off Next's static public/ serving (see that
+         route's own comment for why), since this config-level rule
+         only ever applied to files Next resolved as static assets. */
       {
         source: '/(.*)',
         headers: [
