@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -23,6 +23,15 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
   const openFlourish           = useGifFlourishStore((s) => s.open)
 
   const pageRef = useRef<HTMLDivElement>(null)
+
+  /* Real cover images range from 4:3 to 16:9 (checked directly: 5 of 7
+     are 3:2, one's 4:3, one's 16:9) — no single fixed ratio fits all of
+     them without cropping into some (Performance & DevOps at 16:9 was
+     losing its left/right edges to a fixed 3:2 box). 3:2 as a static
+     default until the image actually loads, then switched to whatever
+     its real ratio is, so every image ends up shown at its own true
+     proportions with zero cropping, whatever that happens to be. */
+  const [imgRatio, setImgRatio] = useState(1.5)
 
   /* ── initial hide ─────────────────────────────────────────────── */
   useLayoutEffect(() => {
@@ -119,9 +128,10 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
             style={{
               borderRadius: 'clamp(10px,1.2vw,16px)',
               overflow:     'hidden',
-              // 3/2, not 4/3 — matches the real uploaded cover images (5 of
-              // 7 real services are exactly 3:2), see ServiceSection.tsx.
-              aspectRatio:  '3/2',
+              // Matches the actual loaded image's own ratio (see
+              // imgRatio) — object-fit:cover below is just a rounding-
+              // safety net at that point, not doing any real cropping.
+              aspectRatio:  imgRatio,
               border:       `1px solid ${INK}0d`,
               boxShadow:    '0 24px 64px rgba(0,0,0,0.07)',
             }}
@@ -130,6 +140,10 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
             <img
               src={service.image ?? undefined}
               alt={service.title}
+              onLoad={e => {
+                const { naturalWidth: w, naturalHeight: h } = e.currentTarget
+                if (w && h) setImgRatio(w / h)
+              }}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -33,6 +33,14 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
   const revealedRef          = useRef(false)          // plays once, never again
   const tlRef                = useRef<gsap.core.Timeline | null>(null)
   const onDividerCompleteRef = useRef(onDividerComplete)
+
+  /* Real cover images range from 4:3 to 16:9 (checked directly: 5 of 7
+     are 3:2, one's 4:3, one's 16:9) — no single fixed ratio fits all of
+     them without cropping into some. 3:2 as a static default until the
+     image actually loads, then switched to whatever its real ratio is,
+     so every image ends up shown at its own true proportions with zero
+     cropping, whatever that happens to be. */
+  const [imgRatio, setImgRatio] = useState(1.5)
 
   /* keep callback ref current without re-running the effect */
   useEffect(() => { onDividerCompleteRef.current = onDividerComplete })
@@ -175,14 +183,19 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
           gridTemplateColumns: '1fr minmax(0, 420px)',
           gap:                 'clamp(40px, 6vw, 88px)',
           padding:             'clamp(56px,7vw,96px) clamp(32px,6.5vw,96px)',
-          // Was 'start' — the image had its own fixed aspect-ratio, so on
-          // any row where the text content (more points, longer
-          // description) was taller than that fixed box, the image just
-          // sat at the top with dead space below it instead of matching
-          // the row's actual height. 'stretch' + height:100% on the image
-          // (below) makes it always fill exactly as much vertical space
-          // as the text next to it takes up.
-          alignItems:          'stretch',
+          // 'center', not 'start' or 'stretch' — 'start' left dead space
+          // under the image on any row whose text was taller than the
+          // image's own fixed-ratio box; 'stretch' (tried first) fixed
+          // that but forced the image to match the FULL row height at a
+          // fixed 420px width, which on a tall row (lots of points, long
+          // description) squashed a wide landscape image into an
+          // awkward narrow/tall crop instead — different bug, same
+          // complaint shape. The image now keeps its own true aspect
+          // ratio always (see imgRatio above) and just sits centered in
+          // whatever height the row turns out to be, so any leftover
+          // space splits evenly above and below instead of pooling
+          // under it, and the image itself is never distorted.
+          alignItems:          'center',
         }}
       >
       {/* ── Left: content ──────────────────────────────────────── */}
@@ -314,11 +327,10 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
         style={{
           borderRadius: 'clamp(10px, 1.2vw, 16px)',
           overflow:     'hidden',
-          // Fills the row's actual height (set by alignItems:'stretch' on
-          // the grid above) instead of a fixed aspect-ratio box — object-
-          // fit:cover on the <img> below still crops sensibly at whatever
-          // shape that ends up being, but never leaves empty space.
-          height:       '100%',
+          // Matches the actual loaded image's own ratio (see imgRatio) —
+          // object-fit:cover below is just a rounding-safety net at that
+          // point, not doing any real cropping.
+          aspectRatio:  imgRatio,
           border:       `1px solid ${INK}0d`,
           boxShadow:    '0 24px 64px rgba(0,0,0,0.08)',
         }}
@@ -327,6 +339,10 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
         <img
           src={service.image ?? undefined}
           alt={service.title}
+          onLoad={e => {
+            const { naturalWidth: w, naturalHeight: h } = e.currentTarget
+            if (w && h) setImgRatio(w / h)
+          }}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       </div>
