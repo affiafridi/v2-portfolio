@@ -550,7 +550,11 @@ export default function ServiceSection({ services }: { services?: ServiceItem[] 
         style={{
           position:     'fixed',
           width:        'min(25vw, 340px)',
-          aspectRatio:  '4/3',
+          /* 3/2, not 4/3 — checked the actual uploaded cover images: 5 of
+             the 7 real services are exactly 3:2, one is close (1.56), only
+             one is a true 4:3. The old 4:3 box was cropping into the
+             sides of the majority to force-fit the minority shape. */
+          aspectRatio:  '3/2',
           pointerEvents:'none',
           zIndex:       200,
           opacity:      0,

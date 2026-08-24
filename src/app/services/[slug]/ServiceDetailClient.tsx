@@ -119,7 +119,9 @@ export default function ServiceDetailClient({ service, next }: { service: Servic
             style={{
               borderRadius: 'clamp(10px,1.2vw,16px)',
               overflow:     'hidden',
-              aspectRatio:  '4/3',
+              // 3/2, not 4/3 — matches the real uploaded cover images (5 of
+              // 7 real services are exactly 3:2), see ServiceSection.tsx.
+              aspectRatio:  '3/2',
               border:       `1px solid ${INK}0d`,
               boxShadow:    '0 24px 64px rgba(0,0,0,0.07)',
             }}

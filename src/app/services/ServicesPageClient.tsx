@@ -175,7 +175,14 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
           gridTemplateColumns: '1fr minmax(0, 420px)',
           gap:                 'clamp(40px, 6vw, 88px)',
           padding:             'clamp(56px,7vw,96px) clamp(32px,6.5vw,96px)',
-          alignItems:          'start',
+          // Was 'start' — the image had its own fixed aspect-ratio, so on
+          // any row where the text content (more points, longer
+          // description) was taller than that fixed box, the image just
+          // sat at the top with dead space below it instead of matching
+          // the row's actual height. 'stretch' + height:100% on the image
+          // (below) makes it always fill exactly as much vertical space
+          // as the text next to it takes up.
+          alignItems:          'stretch',
         }}
       >
       {/* ── Left: content ──────────────────────────────────────── */}
@@ -203,6 +210,23 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
             color:         INK,
             margin:        '0 0 clamp(20px, 3vw, 36px)',
             textTransform: 'uppercase',
+            // Left column is 1fr — on a wide screen a short 2-word title
+            // ("WhatsApp Automation", "CMS Development") had enough room
+            // to fit on one line at this size and stretched edge-to-edge,
+            // while every 3+-word title wrapped to two lines naturally.
+            // Capping the width forces the short ones to wrap too, so
+            // every row reads consistently instead of some being one
+            // giant line and others two normal ones. 13ch, not something
+            // rounder like 16ch — checked empirically against every real
+            // title at the widths this actually renders at: 14ch+ was
+            // just wide enough for "CMS Development" and "SEO & Google
+            // Ads" to keep fitting on one line (ch is the width of the
+            // font's "0" glyph, not a real character average, so it's
+            // not as predictable as it looks for a bold uppercase
+            // heading). 13ch is the highest value where every current
+            // title wraps to two lines with no accidental three-line
+            // titles either.
+            maxWidth:      '13ch',
           }}
         >
           {service.title}
@@ -290,7 +314,11 @@ function ServiceRow({ service, index, setCursorType, onDividerComplete, playFnRe
         style={{
           borderRadius: 'clamp(10px, 1.2vw, 16px)',
           overflow:     'hidden',
-          aspectRatio:  '4/3',
+          // Fills the row's actual height (set by alignItems:'stretch' on
+          // the grid above) instead of a fixed aspect-ratio box — object-
+          // fit:cover on the <img> below still crops sensibly at whatever
+          // shape that ends up being, but never leaves empty space.
+          height:       '100%',
           border:       `1px solid ${INK}0d`,
           boxShadow:    '0 24px 64px rgba(0,0,0,0.08)',
         }}
