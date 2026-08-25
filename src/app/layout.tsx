@@ -3,8 +3,6 @@ import type { ReactNode } from 'react'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import '@/styles/globals.css'
-import PortfolioShell from '@/components/providers/PortfolioShell'
-import PageTransitionOverlay from '@/components/providers/PageTransitionOverlay'
 import { getSiteSettings } from '@/lib/data'
 import { getSeoSettings, absoluteUrl, SITE_URL } from '@/lib/seo'
 
@@ -33,23 +31,22 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  // getSiteSettings() is React cache()-deduped, so this costs nothing
-  // extra alongside generateMetadata()'s own call within the same request.
-  //
-  // Maintenance mode used to be checked here via getServerSession(), but
-  // that reads cookies — and any cookie access in the root layout opts
-  // the ENTIRE route tree out of static generation. That silently turned
-  // every page dynamic whenever maintenance mode was on, and for routes
-  // built via generateStaticParams() (services/work/blog detail pages)
-  // the resulting dynamic render didn't degrade gracefully: it threw
-  // DYNAMIC_SERVER_USAGE instead, surfacing as a 500. Maintenance gating
-  // (including the logged-in-admin bypass) now happens in middleware
-  // (src/middleware.ts), before Next decides how to render anything, so
-  // this layout — and every page under it — stays fully static always.
-  const settings = await getSiteSettings()
-  const whatsapp = (settings.whatsapp as { enabled?: boolean; number?: string; profileImage?: string; displayName?: string; greetingMessage?: string } | undefined) ?? {}
-
+/* Deliberately minimal — just the <html> shell, fonts, and site-wide
+   metadata. Portfolio chrome (Preloader, Header, MenuOverlay, etc.)
+   used to live here behind a usePathname()-based bypass for /admin and
+   /maintenance, but that bypass silently never matched for /maintenance:
+   middleware reaches it via a *rewrite*, which is invisible to the
+   browser's URL — usePathname() keeps reporting whatever path the
+   visitor actually requested, never '/maintenance', so the chrome
+   rendered anyway (full nav on top of the maintenance page — the exact
+   bug just reported). No client-side hook can detect a rewrite; it's
+   fundamentally a server-side routing concept. The fix is structural
+   instead of another runtime check: chrome now lives in
+   (site)/layout.tsx, applied by Next's own file-based routing to only
+   the routes actually placed in that group. /admin (its own layout)
+   and /maintenance both sit outside it and get real full HTML documents
+   with nothing to bypass, regardless of how they were reached. */
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning data-loading="" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
@@ -81,12 +78,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           />
         )}
       </head>
-      <body>
-        <PortfolioShell whatsapp={whatsapp}>
-          {children}
-        </PortfolioShell>
-        <PageTransitionOverlay />
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

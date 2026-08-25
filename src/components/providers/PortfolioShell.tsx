@@ -1,6 +1,5 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import Header               from '@/components/layout/Header'
 import Cursor               from '@/components/ui/Cursor'
 import MenuOverlay          from '@/components/ui/MenuOverlay'
@@ -27,17 +26,12 @@ export default function PortfolioShell({
   children:  React.ReactNode
   whatsapp?: WhatsAppSettings
 }) {
-  const pathname = usePathname()
-
-  /* /admin renders its own shell. /maintenance is a full takeover with
-     no header/menu/footer — middleware (src/middleware.ts) rewrites
-     every non-admin request to this path while maintenance mode is on,
-     so by the time a render reaches here there's nothing else on the
-     site to navigate to anyway. Admin-logged-in bypass also lives in
-     that same middleware check now, not here. */
-  if (pathname.startsWith('/admin') || pathname === '/maintenance') {
-    return <>{children}</>
-  }
+  /* No /admin or /maintenance bypass here anymore — this component is
+     only ever rendered inside (site)/layout.tsx now, which /admin and
+     /maintenance both sit outside of. See the root layout's comment for
+     why a runtime pathname check here couldn't reliably detect
+     /maintenance in the first place (it's reached via a middleware
+     rewrite, invisible to the client). */
 
   /* Mirrors WhatsAppWidget's own render guard — it needs both a toggle
      and a usable number, so BackToTop must only shift when the FAB is
