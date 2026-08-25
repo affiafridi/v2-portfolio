@@ -338,7 +338,7 @@ section, footer, header, main, div {
      from insetting left/right/top instead of running edge-to-edge. */
   .hj-portrait-outer {
     left: 16px !important; right: auto !important; width: calc(100% - 32px) !important;
-    top: 16px !important; height: 62dvh !important; transform: none !important;
+    top: 16px !important; height: 55dvh !important; transform: none !important;
     border-radius: 20px !important; overflow: hidden !important;
   }
   .hj-frame-1, .hj-frame-2 { display: none !important; }
@@ -368,23 +368,18 @@ section, footer, header, main, div {
   .hj-headline       { bottom: auto !important; top: 56dvh !important; }
   .hj-marquee-span   { font-size: clamp(48px, 13vw, 76px) !important; }
   /* .hj-left can't start any higher than the portrait's own bottom
-     edge (16px + 62dvh ≈ 64dvh) without overlapping the photo, so the
-     ~36dvh below that is a hard ceiling on available room — not
-     enough for the heading/para/CTA at their desktop sizes plus the
-     desktop gaps between them. That mismatch is what pushed the CTA
-     (and the tail of the bio paragraph) past the fold: real content,
-     just rendering below the visible viewport. Shrinking each piece
-     for mobile specifically brings the total back under that ceiling
-     instead of just reserving more room, which doesn't really exist
-     here. */
-  /* Bio matched to About's story-paragraph size (16px/1.7) on request,
-     up from 12.5px/1.6 — that ate back into the ceiling the comment
-     above describes, so heading font-size/margin and .hj-left's offset
-     were all cut a bit further to compensate, rather than pushing any
-     one of them to an unreasonable size alone. Landed here empirically
-     (live-measured at 375x812) with ~5px of spare room below the CTA —
-     re-check that margin at 375x812 if any of these four move again. */
-  .hj-left           { top: calc(64dvh - 4px) !important; left: 5% !important; width: 90% !important; }
+     edge without overlapping the photo, so shrinking the portrait
+     itself (62dvh → 55dvh above) — not just repositioning .hj-left —
+     is what actually creates room, on both ends at once: a visible
+     gap between the photo and the heading (there was none before,
+     they sat flush), and real clearance below the CTA. Previously
+     .hj-left started right at the portrait's own edge with ~5px spare
+     below the CTA — hairline enough that it read as the button
+     getting cropped on real devices, not just tight. Landed here
+     empirically (live-measured at 375x812): an 18px→30px gap above
+     the heading and ~6px→51px spare below the CTA. Re-check both
+     numbers at 375x812 if any of these four move again. */
+  .hj-left           { top: 58dvh !important; left: 5% !important; width: 90% !important; }
   .hj-heading         { font-size: clamp(24px, 6.5vw, 32px) !important; margin-bottom: 0.3rem !important; }
   .hj-bio-text        { font-size: 16px !important; line-height: 1.7 !important; }
   .hj-cta             { margin-top: 0.6rem !important; padding: 12px 22px !important; }
@@ -401,14 +396,12 @@ section, footer, header, main, div {
    portrait and shifting .hj-left up recovers that room; the heading/
    bio/CTA trims on top of that add margin so this isn't a hairline fit. */
 @media (max-width: 767px) and (max-height: 620px) {
-  .hj-portrait-outer { height: 54dvh !important; }
-  /* Same bio-size change as the 767px rule above, but this bucket
-     starts from a tighter ceiling already (see the file comment above
-     this block), so matching About's 16px needed a correspondingly
-     bigger compensating cut across heading/position/CTA — not just a
-     scaled-down version of the other block's smaller cuts. Landed here
-     empirically (live-measured at 375x568) with ~13px of spare room. */
-  .hj-left            { top: calc(56dvh - 8px) !important; }
+  .hj-portrait-outer { height: 48dvh !important; }
+  /* Same portrait-shrink approach as the 767px rule above, scaled to
+     this bucket's tighter budget — landed here empirically (live-
+     measured at 375x568): a 9px→23px gap above the heading and a
+     14px→34px spare below the CTA. */
+  .hj-left            { top: 51dvh !important; }
   .hj-heading         { font-size: clamp(18px, 5vw, 22px) !important; margin-bottom: 0.15rem !important; }
   .hj-bio-text        { font-size: 16px !important; line-height: 1.7 !important; }
   .hj-cta             { margin-top: 0.2rem !important; padding: 9px 18px !important; }
@@ -785,7 +778,14 @@ section, footer, header, main, div {
      visible child and lands flush against the grid's own padding —
      no breathing room above it. */
   .wk-title-block { position: relative !important; top: auto !important; padding-top: 28px !important; }
-  .wk-title-block h3.wk-left { font-size: clamp(24px, 6.5vw, 32px) !important; }
+  /* Desktop's margin-bottom (1.1rem, set inline in WorkSection.tsx) was
+     left as-is here — fine for a one-line title, but several project
+     titles wrap to two lines at this width/font-size, and a two-line
+     block that tall sitting right on top of the description read as
+     cramped. The grid has ~106px of unused slack below its content at
+     this breakpoint (measured), so there's no overflow risk in adding
+     this even for the two-line case. */
+  .wk-title-block h3.wk-left { font-size: clamp(24px, 6.5vw, 32px) !important; margin-bottom: 1.75rem !important; }
   .wk-col-right { padding-top: 0 !important; }
   /* Back cards in the stack peek 58-115px above their own box by design
      (see WorkSection's STACK y-offsets) — needs clearance above it on
