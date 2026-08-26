@@ -278,7 +278,17 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
                 type, a justified line often has very few words, and
                 justify stretches those into large, uneven gaps rather
                 than reading as normal body copy. 'left' wraps naturally. */}
-            <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px', textAlign:'left' }}>{p.desc}</p>
+            {/* Line-clamped to 3 rather than trimmed by character count —
+                a fixed character count doesn't reliably land on the same
+                number of lines across descriptions of different word
+                lengths, while this caps the rendered height at exactly 3
+                lines regardless of how long p.desc actually is, ellipsis
+                and all, with zero effect on the underlying data. */}
+            <p className="wk-left" style={{
+              fontSize: '13px', lineHeight: 1.9, color: 'rgba(255,255,255,0.52)',
+              margin: '0 0 1.7rem', maxWidth: '420px', textAlign: 'left',
+              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            } as React.CSSProperties}>{p.desc}</p>
             <Link href={p.url} className="wk-left"
               style={{
                 display:'inline-flex', alignItems:'center', gap:'10px',
