@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 import { slugify } from '@/lib/slugify'
+import { friendlyPrismaError } from '@/lib/prisma-errors'
 
 export async function GET() {
   const unauthorized = await requireAdmin()
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     revalidatePath('/blog')
     return NextResponse.json(post, { status: 201 })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to create post'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const { message, status } = friendlyPrismaError(e, 'Failed to create post')
+    return NextResponse.json({ error: message }, { status })
   }
 }
