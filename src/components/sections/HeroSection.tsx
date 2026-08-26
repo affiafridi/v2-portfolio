@@ -626,18 +626,29 @@ export default function HeroSection({ settings = {} as Record<string, unknown> }
           {headingItalic && <><br /><em style={{ fontStyle: 'italic', fontWeight: 800 }}>{headingItalic}</em></>}
         </p>
 
-        {/* Para — clean, correct, on-brand */}
+        {/* Para — deliberately identical to AboutSection's story
+            paragraphs (16px / 1.7 / INK85 / justify, weight 400): same
+            role, same voice, so they shouldn't read as two different
+            typographic treatments. This previously ran lighter (INK52),
+            heavier (500), letter-spaced and ragged-right, which made it
+            look like a different kind of text entirely next to About's.
+
+            No borderLeft/paddingLeft either — that faint 2px INK12 bar
+            was indenting this text ~18px while the heading above and
+            the CTA below both start at the column's true left edge,
+            leaving the left column with three different left edges.
+            About's first story paragraph has no bar for the same
+            reason; its second one uses a deliberate ACC-orange bar as
+            an accent, which is a different thing from this near-
+            invisible grey one. */}
         <p
           className="hj-bio hj-bio-text"
           style={{
-            fontSize:      '16px',
-            fontWeight:    500,
-            lineHeight:    1.7,
-            letterSpacing: '0.01em',
-            color:         `${INK}52`,
-            borderLeft:    `2px solid ${INK}12`,
-            paddingLeft:   '16px',
-            maxWidth:      '480px',
+            fontSize:    '16px',
+            lineHeight:  1.7,
+            color:       `${INK}85`,
+            textAlign:   'justify',
+            maxWidth:    '480px',
           }}
         >
           {s.bio}
