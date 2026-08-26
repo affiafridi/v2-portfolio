@@ -262,8 +262,23 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
                 with only a couple of words on a line, that gap becomes
                 enormous, reading as scattered/disconnected words rather
                 than one title. 'left' wraps naturally instead. */}
-            <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem', textAlign:'left', textWrap:'balance', wordBreak:'normal', overflowWrap:'normal' } as React.CSSProperties}>{p.title}</h3>
-            <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px', textAlign:'justify' }}>{p.desc}</p>
+            {/* maxWidth:13ch forces this onto (at least) two lines even for
+                a short title like "WAutomation Platform", which otherwise
+                fit on one line at wider desktop widths and read as a
+                different, smaller-feeling block than the two-line titles
+                next to it. Same 13ch value already used for this exact
+                reason on the Services listing heading. Verified live at
+                1920/1440/1024/820/375px — both current titles land on
+                exactly 2 lines at every one of them; textWrap:'balance'
+                (already set) keeps the two lines close in length rather
+                than one long line and one short orphan word. */}
+            <h3 className="wk-left" style={{ fontSize:'clamp(36px,4.8vw,78px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:0.92, color:'#fff', textTransform:'uppercase', margin:'0 0 1.1rem', maxWidth:'13ch', textAlign:'left', textWrap:'balance', wordBreak:'normal', overflowWrap:'normal' } as React.CSSProperties}>{p.title}</h3>
+            {/* textAlign was 'justify' — same problem as the heading above
+                and the hero's own paragraph: at 420px max-width and 13px
+                type, a justified line often has very few words, and
+                justify stretches those into large, uneven gaps rather
+                than reading as normal body copy. 'left' wraps naturally. */}
+            <p className="wk-left" style={{ fontSize:'13px', lineHeight:1.9, color:'rgba(255,255,255,0.52)', margin:'0 0 1.7rem', maxWidth:'420px', textAlign:'left' }}>{p.desc}</p>
             <Link href={p.url} className="wk-left"
               style={{
                 display:'inline-flex', alignItems:'center', gap:'10px',
@@ -297,15 +312,34 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
               {p.type}
             </p>
             <div className="wk-line" style={{ width:'100%', height:'1px', background:'rgba(255,255,255,0.18)', transformOrigin:'left center' }} />
-            <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center' }}>
-              {p.stack.map((tech, i) => (
-                <span key={tech} style={{ display:'inline-flex', alignItems:'center' }}>
-                  <span className="wk-tag" style={{ fontSize:'clamp(11px,0.95vw,14px)', fontWeight:500, letterSpacing:'0.16em', textTransform:'uppercase', color:'rgba(255,255,255,0.75)' }}>
-                    {tech}
-                  </span>
-                  {i < p.stack.length - 1 && (
-                    <span className="wk-tag" style={{ fontSize:'clamp(11px,0.95vw,14px)', color:'rgba(255,255,255,0.26)', margin:'0 12px' }}>·</span>
-                  )}
+            {/* Frosted-glass pills instead of plain text + "·" dividers —
+                same treatment already used for tags on WorkPageGrid's
+                project cards (rgba(255,255,255,0.10) fill, blur(12px),
+                a faint 1px border), scaled up to this section's larger
+                type. gap on the wrapping flex replaces the manual
+                margin the old "·" spacers provided. className="wk-tag"
+                is unchanged on the element GSAP actually animates, so
+                the existing blur-in stagger keeps working exactly as
+                before — only the dot spacer (which was also picking up
+                that same animation, redundantly) is gone. */}
+            <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', gap:'8px' }}>
+              {p.stack.map((tech) => (
+                <span key={tech} className="wk-tag" style={{
+                  display:        'inline-flex',
+                  fontSize:       'clamp(10px,0.85vw,13px)',
+                  fontWeight:     500,
+                  letterSpacing:  '0.12em',
+                  textTransform:  'uppercase',
+                  color:          'rgba(255,255,255,0.75)',
+                  background:     'rgba(255,255,255,0.10)',
+                  backdropFilter:       'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border:         '1px solid rgba(255,255,255,0.14)',
+                  borderRadius:   '999px',
+                  padding:        '6px 14px',
+                  lineHeight:     1,
+                } as React.CSSProperties}>
+                  {tech}
                 </span>
               ))}
             </div>
