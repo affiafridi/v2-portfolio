@@ -1,6 +1,6 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, useEditorState, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import ImageExtension from '@tiptap/extension-image'
 import LinkExtension from '@tiptap/extension-link'
@@ -73,6 +73,40 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     },
   })
 
+  /* TipTap v3 stopped re-rendering the host component on every editor
+     transaction (selection changes included) — a deliberate performance
+     change from v2, where that used to happen automatically. The
+     TOOLBAR_BUTTONS array below used to call editor.isActive(...)
+     directly in the render body, which read the state as of whichever
+     render last happened to run — typing (which fires onUpdate -> the
+     parent's onChange -> a re-render here) kept it looking plausible,
+     but simply clicking into a different block without editing text
+     never re-rendered this component at all, so every highlight was
+     reading stale state. Confirmed directly: after toggling a bullet
+     list, editor.getHTML() showed <ul><li>...</li></ul> — the actual
+     document was correct — while the Bullet list button still read
+     inactive.
+
+     useEditorState is TipTap's own fix for this: it subscribes to
+     transactions and recomputes only this selector, so the toolbar
+     re-renders reactively without forcing the whole editor tree to
+     re-render on every keystroke the way a blunt "re-render on every
+     transaction" setting would. */
+  const activeStates = useEditorState({
+    editor,
+    selector: ({ editor: e }) => ({
+      bold:        e?.isActive('bold') ?? false,
+      italic:      e?.isActive('italic') ?? false,
+      heading2:    e?.isActive('heading', { level: 2 }) ?? false,
+      heading3:    e?.isActive('heading', { level: 3 }) ?? false,
+      bulletList:  e?.isActive('bulletList') ?? false,
+      orderedList: e?.isActive('orderedList') ?? false,
+      blockquote:  e?.isActive('blockquote') ?? false,
+      codeBlock:   e?.isActive('codeBlock') ?? false,
+      link:        e?.isActive('link') ?? false,
+    }),
+  })
+
   if (!editor) return null
 
   function handleLink() {
@@ -100,55 +134,55 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       icon: Bold,
       label: 'Bold',
       action: () => editor.chain().focus().toggleBold().run(),
-      active: editor.isActive('bold'),
+      active: activeStates?.bold ?? false,
     },
     {
       icon: Italic,
       label: 'Italic',
       action: () => editor.chain().focus().toggleItalic().run(),
-      active: editor.isActive('italic'),
+      active: activeStates?.italic ?? false,
     },
     {
       icon: Heading2,
       label: 'Heading 2',
       action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-      active: editor.isActive('heading', { level: 2 }),
+      active: activeStates?.heading2 ?? false,
     },
     {
       icon: Heading3,
       label: 'Heading 3',
       action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
-      active: editor.isActive('heading', { level: 3 }),
+      active: activeStates?.heading3 ?? false,
     },
     {
       icon: List,
       label: 'Bullet list',
       action: () => editor.chain().focus().toggleBulletList().run(),
-      active: editor.isActive('bulletList'),
+      active: activeStates?.bulletList ?? false,
     },
     {
       icon: ListOrdered,
       label: 'Ordered list',
       action: () => editor.chain().focus().toggleOrderedList().run(),
-      active: editor.isActive('orderedList'),
+      active: activeStates?.orderedList ?? false,
     },
     {
       icon: Quote,
       label: 'Blockquote',
       action: () => editor.chain().focus().toggleBlockquote().run(),
-      active: editor.isActive('blockquote'),
+      active: activeStates?.blockquote ?? false,
     },
     {
       icon: Code2,
       label: 'Code block',
       action: () => editor.chain().focus().toggleCodeBlock().run(),
-      active: editor.isActive('codeBlock'),
+      active: activeStates?.codeBlock ?? false,
     },
     {
       icon: Link,
       label: 'Link',
       action: handleLink,
-      active: editor.isActive('link'),
+      active: activeStates?.link ?? false,
     },
     {
       icon: ImageIcon,
