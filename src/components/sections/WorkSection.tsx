@@ -17,12 +17,29 @@ const RING_SIZE = 120
 const RING_R    = 48
 const RING_CIRC = 2 * Math.PI * RING_R
 
-/* ─── Card stack positions (front → back, bottom-anchored) ──────── */
+/* ─── Card stack positions (front → back, bottom-anchored) ──────────
+   Each card in the stack holds one fixed image, so the number of slots
+   here IS the number of gallery images a visitor ever sees — the
+   rotation below only moves cards between these slots, it never swaps
+   what a card is showing. At three slots only the first three images
+   were ever reachable no matter how many the project had.
+
+   Deliberately still bottom out at y:-115, the same as the previous
+   three-slot version, with the steps compressed rather than extended:
+   the deepest card's peek above the stack box is what the mobile
+   layout is spaced around (globals.css sets .wk-cardstack-wrap's
+   margin-top to 128px specifically to clear it), so keeping that
+   envelope means five cards need no layout changes anywhere. Steps
+   shrink toward the back, which also reads as perspective rather than
+   a flat ladder. */
 const STACK = [
-  { y:   0,  scale: 1.00,  opacity: 1,    zIndex: 12, filter: 'blur(0px)'  }, // front — sharp, full size
-  { y: -58,  scale: 0.93,  opacity: 0.90, zIndex: 11, filter: 'blur(2.5px)' }, // middle — 58px above front
-  { y: -115, scale: 0.86,  opacity: 0.78, zIndex: 10, filter: 'blur(5px)'  }, // back — 57px above middle (equal step)
+  { y:    0, scale: 1.000, opacity: 1.00, zIndex: 12, filter: 'blur(0px)'   }, // front — sharp, full size
+  { y:  -38, scale: 0.945, opacity: 0.92, zIndex: 11, filter: 'blur(1.8px)' },
+  { y:  -70, scale: 0.898, opacity: 0.82, zIndex: 10, filter: 'blur(3.4px)' },
+  { y:  -96, scale: 0.858, opacity: 0.70, zIndex:  9, filter: 'blur(4.9px)' },
+  { y: -115, scale: 0.824, opacity: 0.57, zIndex:  8, filter: 'blur(6.4px)' }, // back — same peek as the old 3-slot back
 ]
+const STACK_COUNT = STACK.length
 
 /* ─── Projects ───────────────────────────────────────────────────── */
 interface Project {
@@ -36,8 +53,10 @@ interface Project {
 /* ─── Per-project preview frames — real gallery screenshots ─────────
    Cycles through the project's cover image followed by its gallery
    (falling back to a plain "no preview" placeholder if it has neither)
-   to fill the 3-card rotating stack. Always returns exactly 3 frames
-   regardless of how many images exist. Cover always comes first — it
+   to fill the rotating stack. Always returns exactly STACK_COUNT frames
+   regardless of how many images exist — a project with fewer images
+   than slots cycles them (i % imgs.length) rather than leaving gaps in
+   the stack. Cover always comes first — it
    was previously gallery-OR-cover (cover only showed at all when the
    gallery was completely empty), so the image chosen as the project's
    "main" one in admin wasn't guaranteed to be what a visitor saw
@@ -45,7 +64,7 @@ interface Project {
    both the cover and part of the gallery. */
 function getFrames(p: Project): React.ReactNode[] {
   const imgs = Array.from(new Set([p.image, ...p.gallery].filter(Boolean)))
-  return Array.from({ length: 3 }).map((_, i) => (
+  return Array.from({ length: STACK_COUNT }).map((_, i) => (
     <div key={i} style={{ position: 'relative', width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)' }}>
       {imgs.length > 0 ? (
         // eslint-disable-next-line @next/next/no-img-element -- gallery
@@ -70,20 +89,22 @@ function getFrames(p: Project): React.ReactNode[] {
 }
 
 /* ─── Card stack — "next, next, next" queue animation ───────────────
-   3 browser-window cards stacked bottom-anchored.
-   Every 2.2 s: front card slides up and out, the two cards behind
-   step forward, and the exited card re-enters at the back of the stack.
-   All transitions run at fixed speed, independent of scroll.
+   STACK_COUNT browser-window cards stacked bottom-anchored.
+   On each tick: the front card fades out, every card behind it steps
+   forward one slot, and the exited card re-enters at the back of the
+   stack. All transitions run at fixed speed, independent of scroll.
    ─────────────────────────────────────────────────────────────────── */
 function CardStack({ p }: { p: Project }) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  /* orderRef: indices into cardRefs ordered front→back */
-  const orderRef = useRef([0, 1, 2])
+  /* orderRef: indices into cardRefs ordered front→back. Derived from
+     STACK_COUNT rather than a literal, so adding or removing a slot
+     above needs no matching edit here. */
+  const orderRef = useRef(Array.from({ length: STACK_COUNT }, (_, i) => i))
   const frames   = getFrames(p)
 
   useEffect(() => {
     const els = cardRefs.current.filter((el): el is HTMLDivElement => el !== null)
-    if (els.length < 3) return
+    if (els.length < STACK_COUNT) return
 
     /* Set initial stack positions */
     els.forEach((el, i) => {
@@ -94,43 +115,51 @@ function CardStack({ p }: { p: Project }) {
     })
 
     const interval = setInterval(() => {
-      const [front, mid, back] = orderRef.current
-      const frontEl = els[front]
-      const midEl   = els[mid]
-      const backEl  = els[back]
+      const order    = orderRef.current
+      const front    = order[0]
+      const frontEl  = els[front]
+      const backSlot = STACK[STACK_COUNT - 1]
 
       /*
-       * Sequence designed so 2 back cards are always clearly visible:
+       * Timing is unchanged from the original three-card version, just
+       * expressed for N slots:
        *
        * t=0.00  front fades out fast (0.10s)
-       * t=0.00  mid begins zooming to front (0.62s expo.out)
-       * t=0.08  back begins stepping to mid — stays at STACK[2] a bit longer
-       *          so the back position looks occupied while front is leaving
-       * t=0.10  front is invisible → snap to STACK[2], fade in (0.36s)
+       * t=0.00  the card behind it begins zooming to front (0.62s expo.out)
+       * t=0.08  every card further back steps forward — lagging slightly
+       *          so the slot each one is leaving still looks occupied
+       *          while the front card is on its way out
+       * t=0.10  front is invisible → snap to the back slot, fade in (0.36s)
        *
-       * Gap where STACK[2] has no card = t(0.08 → 0.10) = only ~20ms,
-       * and back has barely moved by then so visually undetectable.
+       * Gap where the back slot has no card = t(0.08 → 0.10) ≈ 20ms, and
+       * the card heading there has barely moved by then, so it reads as
+       * continuous.
        */
 
-      /* 1. Front disappears quickly */
+      /* 1. Front disappears quickly, then re-enters at the back */
       gsap.to(frontEl, {
         opacity:  0,
         duration: 0.10,
         ease:     'power1.in',
         onComplete() {
-          /* Snap to back, fade in smoothly */
-          gsap.set(frontEl, { ...STACK[2], opacity: 0 })
-          gsap.to(frontEl,  { opacity: STACK[2].opacity, duration: 0.36, ease: 'power2.out' })
+          gsap.set(frontEl, { ...backSlot, opacity: 0 })
+          gsap.to(frontEl,  { opacity: backSlot.opacity, duration: 0.36, ease: 'power2.out' })
         },
       })
 
-      /* 2. Mid zooms forward — the hero move */
-      gsap.to(midEl, { ...STACK[0], duration: 0.62, ease: 'expo.out' })
+      /* 2. Everyone behind steps forward one slot. The card taking the
+         front slot gets the longer, undelayed "hero" move; the rest lag
+         by 0.08s, exactly as the three-card version had it. */
+      for (let i = 1; i < order.length; i++) {
+        gsap.to(els[order[i]], {
+          ...STACK[i - 1],
+          duration: i === 1 ? 0.62 : 0.55,
+          ease:     'expo.out',
+          delay:    i === 1 ? 0 : 0.08,
+        })
+      }
 
-      /* 3. Back steps up with a tiny delay — keeps STACK[2] occupied longer */
-      gsap.to(backEl, { ...STACK[1], duration: 0.55, ease: 'expo.out', delay: 0.08 })
-
-      orderRef.current = [mid, back, front]
+      orderRef.current = [...order.slice(1), front]
     }, 1100)
 
     return () => clearInterval(interval)
