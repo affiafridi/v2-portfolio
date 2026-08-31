@@ -39,6 +39,35 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       }),
     ],
     content,
+    editorProps: {
+      /* StarterKit above allows only h2/h3 (the post page supplies the
+         single h1 itself). ProseMirror doesn't warn when pasted content
+         falls outside the schema — it silently downgrades it — so an
+         h1 or an h4 came through as a plain paragraph and the document's
+         whole heading structure was lost on paste, which is exactly what
+         made pasted articles arrive as one flat wall of text.
+
+         Remapping into the allowed range keeps the structure rather than
+         discarding it: h1 becomes the top in-content level, and h4-h6
+         collapse to h3 (the deepest level this editor offers). Parsed
+         via DOMParser rather than regex so attributes and nesting can't
+         be mangled by a greedy match. Lists, bold and links already
+         survived paste and are deliberately untouched. */
+      transformPastedHTML(html: string) {
+        if (typeof window === 'undefined') return html
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        const remap = (selector: string, tag: string) => {
+          doc.querySelectorAll(selector).forEach((el) => {
+            const replacement = doc.createElement(tag)
+            replacement.innerHTML = el.innerHTML
+            el.replaceWith(replacement)
+          })
+        }
+        remap('h1', 'h2')
+        remap('h4, h5, h6', 'h3')
+        return doc.body.innerHTML
+      },
+    },
     onUpdate: ({ editor: e }) => {
       onChange(e.getHTML())
     },
