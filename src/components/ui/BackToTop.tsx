@@ -22,7 +22,17 @@ type LenisInstance = {
    the same bottom-right corner. Offsets are derived from that button's
    own geometry (its clamp() inset + 58px height) so the two stay
    aligned on a shared centre axis at every viewport width, rather than
-   being eyeballed at one breakpoint. */
+   being eyeballed at one breakpoint.
+
+   FAB_INSET is the exact value WhatsAppWidget sets on its own container,
+   and is now what this button uses when the FAB ISN'T present too. That
+   unshifted case previously hardcoded 2rem, which is a fixed 32px at
+   every width — fine on desktop (close to the clamp's 28px ceiling) but
+   noticeably far in from the edge on a 375px phone, where the clamp
+   resolves to 16px. Sharing one inset means both widgets sit the same
+   distance from the corner instead of two different hardcoded ideas of
+   it, and the value scales with viewport the way the rest of the site's
+   spacing does. */
 const FAB_INSET  = 'clamp(16px,3vw,28px)'
 const FAB_SIZE   = 58
 const STACK_GAP  = 14
@@ -117,10 +127,16 @@ export default function BackToTop({ shiftedForWidget = false }: { shiftedForWidg
              needs inset + 29 - 22 to match. */
           bottom:       shiftedForWidget
             ? `calc(${FAB_INSET} + ${FAB_SIZE + STACK_GAP}px)`
-            : '2rem',
+            : FAB_INSET,
+          /* Shifted adds (58-44)/2 = 7px so this narrower button's centre
+             lines up with the wider FAB's directly below it. Unshifted
+             has no FAB to align to, so it sits at the plain corner inset
+             — 7px closer to the edge, which is correct rather than
+             inconsistent: in both cases the visible gap from the corner
+             is the same, it's only the centre axis that moves. */
           right:        shiftedForWidget
             ? `calc(${FAB_INSET} + ${(FAB_SIZE - SIZE) / 2}px)`
-            : '2rem',
+            : FAB_INSET,
           width:        `${SIZE}px`,
           height:       `${SIZE}px`,
           borderRadius: '50%',
