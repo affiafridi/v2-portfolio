@@ -404,7 +404,7 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
      once shown they just stay visible for the rest of the session. */
   const aboutIntroShown = useRef(false)
   /* The word statement's own scrub timeline — separate from the main
-     panel-stack tl below (which drives yPercent/scale for the whole
+     panel-stack tl below (which drives xPercent/scale for the whole
      card stack). Kept as its own paused timeline instead of a second
      ScrollTrigger with its own scrub value: two independent scrubbed
      ScrollTriggers reading the same Lenis-driven scroll each apply
@@ -585,7 +585,13 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
 
       panels.forEach((_, i) => {
         if (i > 0) {
-          gsap.set(`.wk-panel-${i}`, { yPercent:100, scale:0.94 })
+          /* xPercent, not yPercent — project panels wait off-screen to the
+             RIGHT and slide in sideways (see the timeline below). Only the
+             axis changed; the 100%-of-own-width offset and the 0.94 scale
+             are the same values the vertical version used, and .wk-sticky's
+             overflow:hidden clips them exactly the same way off the right
+             edge as it did off the bottom. */
+          gsap.set(`.wk-panel-${i}`, { xPercent:100, scale:0.94 })
         }
         /* All panels — content starts hidden so there's no flash on load */
         gsap.set(`.wk-panel-${i} .wk-content`, { opacity:0, y:16 })
@@ -634,11 +640,20 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
          is just a brief pause to actually see it, not scroll distance
          for a scrub to complete). Every project-to-project transition
          after that is 1 slot each, unchanged from before. */
+      /* Horizontal, not vertical: each panel slides in from the right and
+         covers the one before it, rather than rising up over it. Only the
+         axis differs — the outgoing panel's -3 drift, its 0.92 scale-down
+         and fade, the 1-unit duration and the easing are all the values
+         the vertical version used, so the motion reads the same, just
+         sideways. About (panel 0) exits the same way as any project panel,
+         since it's panels[0] in this same loop. Everything driven off
+         self.progress below (ring fill, progress dots, per-panel content
+         reveals) is direction-agnostic and needed no change. */
       const tl = gsap.timeline()
       for (let i = 1; i <= P; i++) {
         const t = ABOUT_HOLD_UNITS + (i - 1)
-        tl.to(panels[i-1], { scale:0.92, yPercent:-3, opacity:0, duration:1, ease:'power2.inOut' }, t)
-        tl.to(panels[i],   { yPercent:0, scale:1, duration:1, ease:'power2.inOut' }, t)
+        tl.to(panels[i-1], { scale:0.92, xPercent:-3, opacity:0, duration:1, ease:'power2.inOut' }, t)
+        tl.to(panels[i],   { xPercent:0, scale:1, duration:1, ease:'power2.inOut' }, t)
       }
 
       /* scrub lag layers on top of Lenis's own smoothing — on touch,
