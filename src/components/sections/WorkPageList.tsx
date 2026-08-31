@@ -16,6 +16,7 @@ interface WorkProject { slug: string; title: string; type: string; year: number;
 export default function WorkPageList({ projects = [] }: { projects?: WorkProject[] }) {
   const sectionRef  = useRef<HTMLElement>(null)
   const floatRef    = useRef<HTMLDivElement>(null)
+  const rowRefs     = useRef<(HTMLAnchorElement | null)[]>([])
   const imgRefs     = useRef<(HTMLDivElement | null)[]>([])
   const lineRefs    = useRef<(HTMLDivElement | null)[]>([])
   const nameRefs    = useRef<(HTMLSpanElement | null)[]>([])
@@ -153,6 +154,61 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
     return () => { ctx.revert(); st.kill() }
   }, [handleLeave])
 
+  /* ── Pointer-driven hover, decoupled from each row's own DOM box ──
+     Same fix as ServiceSection's row list, for the same reason: a plain
+     onMouseEnter on each row only fires when the mouse itself moves into
+     that exact element — hovering into empty space on the same line (the
+     gap around the number/type text) fell outside the row's box and
+     dropped the hover, and scrolling under a stationary cursor left the
+     preview stuck on whatever was last actively hovered, since nothing
+     re-fires without real mouse movement. Tracking the raw pointer Y and
+     re-matching it against each row's current bounding rect — on both
+     mousemove and Lenis's own scroll event — fixes both. X is never
+     checked, only Y, so hovering anywhere across a row's full height
+     counts regardless of how far from the title text the cursor is. */
+  useEffect(() => {
+    let lastY = -1
+
+    const updateHover = () => {
+      if (lastY < 0) return
+      let matchedIdx = -1
+      for (let i = 0; i < rowRefs.current.length; i++) {
+        const row = rowRefs.current[i]
+        if (!row) continue
+        const rect = row.getBoundingClientRect()
+        if (lastY >= rect.top && lastY <= rect.bottom) { matchedIdx = i; break }
+      }
+      if (matchedIdx === -1) {
+        if (floatVisible.current) handleLeave()
+      } else if (matchedIdx !== prevIdx.current) {
+        handleEnter(matchedIdx)
+      }
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      lastY = e.clientY
+      updateHover()
+    }
+    window.addEventListener('mousemove', onMouseMove)
+
+    /* Same StrictMode/ordering hazard as ServiceSection: SmoothScrollProvider
+       sets window.__lenis in its own effect, and effects run child-before-
+       parent, so this component's effect body runs before that one has had
+       a chance to set it. A setTimeout(0) defers past that window. */
+    type LenisLike = { on: (evt: string, cb: () => void) => void; off: (evt: string, cb: () => void) => void }
+    let lenis: LenisLike | undefined
+    const lenisId = setTimeout(() => {
+      lenis = (window as unknown as Record<string, unknown>).__lenis as LenisLike | undefined
+      lenis?.on('scroll', updateHover)
+    }, 0)
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      clearTimeout(lenisId)
+      lenis?.off('scroll', updateHover)
+    }
+  }, [handleEnter, handleLeave])
+
   return (
     <section
       ref={sectionRef}
@@ -186,9 +242,9 @@ export default function WorkPageList({ projects = [] }: { projects?: WorkProject
               <Link
                 href={`/work/${project.slug}`}
                 className="wpl-row"
+                ref={el => { rowRefs.current[i] = el }}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: 'clamp(16px,2vw,28px) 0', textDecoration: 'none', cursor: 'none' }}
-                onMouseEnter={() => handleEnter(i)}
               >
                 {/* Number + Name */}
                 <div className="wpl-row-inner" style={{ display: 'flex', alignItems: 'baseline', gap: 'clamp(16px,2vw,28px)', flex: 1, minWidth: 0 }}>
