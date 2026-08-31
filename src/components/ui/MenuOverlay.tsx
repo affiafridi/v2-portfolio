@@ -374,8 +374,8 @@ export default function MenuOverlay() {
                   height:       '0.16em',
                   borderRadius: '50%',
                   background:   ACCENT,
-                  marginLeft:   '0.06em',
-                  marginBottom: '0.02em',
+                  marginLeft:   '0.08em',
+                  marginBottom: '0em',
                 }}
               />
             </span>

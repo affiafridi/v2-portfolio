@@ -385,7 +385,12 @@ export default function Header() {
           style={{
             position:      'fixed',
             left:          dotPos.left + 4,
-            top:           dotPos.bottom - 5,
+            /* Fixed, unlike `left` which stays measured. The measured
+               equivalent (dotPos.bottom - 5) tracked the logo's clamped
+               font-size and so drifted from 51px at 820px wide to 59px
+               at 1440px; pinning it keeps the dot at one height across
+               the whole desktop range. */
+            top:           52,
             zIndex:        60,
             width:         '5px',
             height:        '5px',
