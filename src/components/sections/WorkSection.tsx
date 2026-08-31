@@ -361,21 +361,26 @@ function Panel({ p, panelIdx, ringIdx, ringTotal }: { p: Project; panelIdx: numb
                 the existing blur-in stagger keeps working exactly as
                 before — only the dot spacer (which was also picking up
                 that same animation, redundantly) is gone. */}
-            <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', gap:'8px' }}>
+            <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', gap:'7px' }}>
               {p.stack.map((tech) => (
                 <span key={tech} className="wk-tag" style={{
                   display:        'inline-flex',
-                  fontSize:       'clamp(10px,0.85vw,13px)',
+                  fontSize:       'clamp(9px,0.7vw,11px)',
                   fontWeight:     500,
-                  letterSpacing:  '0.12em',
+                  letterSpacing:  '0.1em',
                   textTransform:  'uppercase',
-                  color:          'rgba(255,255,255,0.75)',
-                  background:     'rgba(255,255,255,0.10)',
-                  backdropFilter:       'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  border:         '1px solid rgba(255,255,255,0.14)',
+                  color:          'rgba(255,255,255,0.78)',
+                  /* Heavier blur plus a touch of saturation, matching the
+                     frosted treatment used elsewhere on the site (the
+                     header pill, the page-transition overlay) — at 12px
+                     and no saturate these read as flat translucent chips
+                     rather than glass. */
+                  background:     'rgba(255,255,255,0.08)',
+                  backdropFilter:       'blur(20px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+                  border:         '1px solid rgba(255,255,255,0.16)',
                   borderRadius:   '999px',
-                  padding:        '6px 14px',
+                  padding:        '5px 11px',
                   lineHeight:     1,
                 } as React.CSSProperties}>
                   {tech}
@@ -426,6 +431,10 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
   const progressRef    = useRef<(HTMLDivElement | null)[]>([])
   const progressWrapRef = useRef<HTMLDivElement>(null)
   const prevActiveIdx  = useRef<number>(-1)
+  /* Tracked separately from prevActiveIdx because content reveals fire on
+     a deliberately later threshold than the progress dots — see the
+     revealIdx comment in onUpdate below. */
+  const prevRevealIdx  = useRef<number>(-1)
   const animatedPanels = useRef<Set<number>>(new Set())
   /* About's title/bio/stats/CTA should only ever reveal once per page
      load — unlike animatedPanels (which resetPanels() clears whenever
@@ -558,10 +567,18 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
           { scaleX: 1, duration: 0.55, ease: 'power3.out' },
           '-=0.10'
         )
-        // 3. Tags blur in one by one
+        /* 3. Tags blur in one by one. clearProps drops `filter` entirely
+           once each pill lands rather than leaving filter:blur(0px) on it
+           — a filter (even a zero one) creates a containing block, which
+           is exactly the kind of thing that stops the pill's own
+           backdrop-filter from sampling the panel behind it. */
         .fromTo(`.wk-panel-${idx} .wk-tag`,
-          { opacity: 0, filter: 'blur(10px)', x: 6 },
-          { opacity: 1, filter: 'blur(0px)', x: 0, duration: 0.42, stagger: { each: 0.09 }, ease: 'power2.out' },
+          { opacity: 0, filter: 'blur(14px)', y: 10, scale: 0.94 },
+          {
+            opacity: 1, filter: 'blur(0px)', y: 0, scale: 1,
+            duration: 0.5, stagger: { each: 0.07 }, ease: 'power3.out',
+            clearProps: 'filter',
+          },
           '-=0.05'
         )
         // 4. Second line wipes in after last tag
@@ -575,6 +592,7 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
       function resetPanels() {
         animatedPanels.current.clear()
         prevActiveIdx.current = -1
+        prevRevealIdx.current = -1
         /* .ab-title/.ab-left-item/.ab-stat/.ab-cta are deliberately NOT
            reset here — they're gated by aboutIntroShown instead, which
            never clears, so hiding them again on every onLeaveBack would
@@ -584,7 +602,7 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
         panels.forEach((_, i) => {
           gsap.set(`.wk-panel-${i} .wk-content`, { opacity: 0, y: 16 })
           gsap.set(`.wk-panel-${i} .wk-type`,    { opacity: 0, filter: 'blur(8px)', y: 8 })
-          gsap.set(`.wk-panel-${i} .wk-tag`,     { opacity: 0, filter: 'blur(10px)', x: 6 })
+          gsap.set(`.wk-panel-${i} .wk-tag`,     { opacity: 0, filter: 'blur(14px)', y: 10, scale: 0.94 })
           gsap.set(`.wk-panel-${i} .wk-left`,    { opacity: 0, filter: 'blur(10px)', y: 10 })
           gsap.set(`.wk-panel-${i} .wk-line`,    { scaleX: 0 })
         })
@@ -625,7 +643,7 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
         /* All panels — content starts hidden so there's no flash on load */
         gsap.set(`.wk-panel-${i} .wk-content`, { opacity:0, y:16 })
         gsap.set(`.wk-panel-${i} .wk-type`,    { opacity:0, filter:'blur(8px)', y:8 })
-        gsap.set(`.wk-panel-${i} .wk-tag`,     { opacity:0, filter:'blur(10px)', x:6 })
+        gsap.set(`.wk-panel-${i} .wk-tag`,     { opacity:0, filter:'blur(14px)', y:10, scale:0.94 })
         gsap.set(`.wk-panel-${i} .wk-left`,    { opacity:0, filter:'blur(10px)', y:10 })
         gsap.set(`.wk-panel-${i} .wk-line`,    { scaleX:0 })
       })
@@ -710,6 +728,23 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
             activeIdx = Math.min(Math.floor(transitionUnit + 0.06) + 1, P)
           }
 
+          /* Content reveals (heading, description, tags, CTA) fire on a
+             LATER threshold than activeIdx above, which drives the
+             progress dots. activeIdx flips at transitionUnit -0.06 —
+             effectively the instant a panel begins sliding in — so the
+             tag stagger ran and finished while the card was still mostly
+             off-screen, and nobody ever saw it.
+
+             A panel's entrance spans transitionUnit (i-1)..i, so +0.3
+             fires it at raw progress 0.7 of its own tween. The tween uses
+             power2.inOut, so 0.7 raw is 1 - 2*(0.3^2) = 0.82 of the
+             distance actually travelled — i.e. the card is ~80% onto the
+             screen, which is where this should start. */
+          let revealIdx = 0
+          if (currentUnit >= ABOUT_HOLD_UNITS) {
+            revealIdx = Math.min(Math.floor(currentUnit - ABOUT_HOLD_UNITS + 0.3), P)
+          }
+
           /* Scrub the word statement directly off scroll position —
              bidirectional by construction, since it's just reading
              currentUnit each frame rather than replaying a one-shot
@@ -765,7 +800,11 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
 
           if (activeIdx !== prevActiveIdx.current) {
             prevActiveIdx.current = activeIdx
-            setTimeout(() => revealPanel(activeIdx), 100)
+          }
+
+          if (revealIdx !== prevRevealIdx.current) {
+            prevRevealIdx.current = revealIdx
+            setTimeout(() => revealPanel(revealIdx), 100)
           }
         },
       })
