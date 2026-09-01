@@ -51,20 +51,23 @@ interface Project {
 
 
 /* ─── Per-project preview frames — real gallery screenshots ─────────
-   Cycles through the project's cover image followed by its gallery
-   (falling back to a plain "no preview" placeholder if it has neither)
-   to fill the rotating stack. Always returns exactly STACK_COUNT frames
-   regardless of how many images exist — a project with fewer images
-   than slots cycles them (i % imgs.length) rather than leaving gaps in
-   the stack. Cover always comes first — it
-   was previously gallery-OR-cover (cover only showed at all when the
-   gallery was completely empty), so the image chosen as the project's
-   "main" one in admin wasn't guaranteed to be what a visitor saw
-   first here. Deduplicated in case the same image was ever set as
-   both the cover and part of the gallery. */
+   Cover image first, then gallery — cover always leads (it wasn't
+   previously: gallery-OR-cover meant the image chosen as the project's
+   "main" one in admin wasn't guaranteed to be what a visitor saw first
+   here). Deduplicated in case the same image was ever set as both the
+   cover and part of the gallery.
+
+   Returns min(imgs.length, STACK_COUNT) frames — up to 5, but never
+   padded out to 5 by repeating an image. A project with 4 images used
+   to get a 5th card that was just its cover image again (i % imgs.length
+   wrapping back to 0), which read as a real duplicate, not a preview of
+   a 5th thing. A project with 0 images still gets exactly one "No
+   preview" card — never zero, since CardStack needs at least one frame
+   to render at all. */
 function getFrames(p: Project): React.ReactNode[] {
   const imgs = Array.from(new Set([p.image, ...p.gallery].filter(Boolean)))
-  return Array.from({ length: STACK_COUNT }).map((_, i) => (
+  const frameCount = Math.max(1, Math.min(imgs.length, STACK_COUNT))
+  return Array.from({ length: frameCount }).map((_, i) => (
     <div key={i} style={{ position: 'relative', width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)' }}>
       {imgs.length > 0 ? (
         // eslint-disable-next-line @next/next/no-img-element -- gallery
@@ -73,7 +76,7 @@ function getFrames(p: Project): React.ReactNode[] {
         // would reject unless every possible host were pre-whitelisted
         // in next.config.js. A plain img works for any host immediately.
         <img
-          src={imgs[i % imgs.length]}
+          src={imgs[i]}
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />
@@ -96,15 +99,20 @@ function getFrames(p: Project): React.ReactNode[] {
    ─────────────────────────────────────────────────────────────────── */
 function CardStack({ p }: { p: Project }) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  /* orderRef: indices into cardRefs ordered front→back. Derived from
-     STACK_COUNT rather than a literal, so adding or removing a slot
-     above needs no matching edit here. */
-  const orderRef = useRef(Array.from({ length: STACK_COUNT }, (_, i) => i))
   const frames   = getFrames(p)
+  /* Real frame count for THIS project, not always STACK_COUNT — a
+     project with fewer images than slots gets a shorter stack (see
+     getFrames), so the rotation below has to use only as many STACK
+     positions as there are actual cards. Using STACK[STACK_COUNT-1] as
+     "the back slot" regardless would reset a 3-card stack's exiting
+     card to the 5-deep position, disconnected from its own 3-card
+     group. orderRef sizes to match for the same reason. */
+  const count    = frames.length
+  const orderRef = useRef(Array.from({ length: count }, (_, i) => i))
 
   useEffect(() => {
     const els = cardRefs.current.filter((el): el is HTMLDivElement => el !== null)
-    if (els.length < STACK_COUNT) return
+    if (els.length < count) return
 
     /* Set initial stack positions */
     els.forEach((el, i) => {
@@ -114,11 +122,14 @@ function CardStack({ p }: { p: Project }) {
       })
     })
 
+    /* A single image has nothing to rotate with — one static card. */
+    if (count < 2) return
+
     const interval = setInterval(() => {
       const order    = orderRef.current
       const front    = order[0]
       const frontEl  = els[front]
-      const backSlot = STACK[STACK_COUNT - 1]
+      const backSlot = STACK[count - 1]
 
       /*
        * Timing is unchanged from the original three-card version, just
@@ -163,7 +174,11 @@ function CardStack({ p }: { p: Project }) {
     }, 1100)
 
     return () => clearInterval(interval)
-  }, [])
+    // count only changes if this project's own image count changes —
+    // effectively never for an already-mounted card stack, so this
+    // doesn't introduce spurious re-runs, just correctly re-derives the
+    // rotation if it ever did.
+  }, [count])
 
   return (
     /* aspectRatio, not a fixed height clamp — the old clamp(220px,30vw,
