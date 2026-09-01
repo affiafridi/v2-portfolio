@@ -28,6 +28,14 @@ interface PostData {
 export default function BlogPostClient({ post, next }: { post: PostData; next: PostData }) {
   const { setCursorType } = useCursorStore()
   const [copied, setCopied] = useState(false)
+  /* Same fix as the blog listing thumbnails: a fixed aspectRatio cropped
+     into whatever the real cover image's actual shape was. GSAP below
+     only ever animates this element's `width` (the scroll-driven grow-
+     from-300px reveal) — height is left to the CSS aspect-ratio to
+     derive automatically, so making the ratio itself dynamic doesn't
+     conflict with that animation at all. Starts at the old 16/9 so
+     there's no layout jump before the image reports its real size. */
+  const [imgRatio, setImgRatio] = useState(16 / 9)
 
   const imgWrapRef  = useRef<HTMLDivElement>(null)
   const imgInnerRef = useRef<HTMLDivElement>(null)
@@ -58,6 +66,11 @@ export default function BlogPostClient({ post, next }: { post: PostData; next: P
     gsap.set('.bpg-label', { autoAlpha: 0, y: 14 })
     gsap.set('.bpg-title', { autoAlpha: 0, y: 48, clipPath: 'inset(0 0 100% 0)' })
     if (imgInnerRef.current) gsap.set(imgInnerRef.current, { width: 300, borderRadius: '8px' })
+    // Reset to the neutral default on every post change — otherwise
+    // navigating between two posts with very different cover shapes
+    // would carry over the previous post's ratio for the brief moment
+    // before the new image's onLoad fires.
+    setImgRatio(16 / 9)
   }, [post.slug])
 
   useEffect(() => {
@@ -126,9 +139,17 @@ export default function BlogPostClient({ post, next }: { post: PostData; next: P
       </section>
 
       <div ref={imgWrapRef} style={{ paddingTop: '32px', display: 'flex', justifyContent: 'center' }}>
-        <div ref={imgInnerRef} style={{ overflow: 'hidden', aspectRatio: '16 / 9', flexShrink: 0 }}>
+        <div ref={imgInnerRef} style={{ overflow: 'hidden', aspectRatio: imgRatio, flexShrink: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.image || ''} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img
+            src={post.image || ''}
+            alt={post.title}
+            onLoad={(e) => {
+              const { naturalWidth: w, naturalHeight: h } = e.currentTarget
+              if (w && h) setImgRatio(w / h)
+            }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from '@/components/ui/TransitionLink'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -30,6 +30,16 @@ function PostRow({ post }: { post: PostItem }) {
   const contentRef  = useRef<HTMLAnchorElement>(null)
   const revealedRef = useRef(false)
   const { setCursorType } = useCursorStore()
+  /* aspectRatio:'4/3' cropped into any cover image that wasn't 4:3 —
+     real post covers here run closer to 16:9/wider (a "how I built X"
+     screenshot-style cover, not a portrait/square photo), so the fixed
+     box was cutting text off both edges of the image. Same fix already
+     used for service cards and project cards elsewhere on the site:
+     size the box from the image's own real dimensions instead of
+     guessing one ratio for every post. Starts at the old 4/3 so there's
+     no layout jump before the image has actually loaded and reported
+     its real size. */
+  const [imgRatio, setImgRatio] = useState(4 / 3)
 
   useLayoutEffect(() => {
     gsap.set(dividerRef.current,  { clipPath: 'inset(0 100% 0 0)' })
@@ -67,9 +77,18 @@ function PostRow({ post }: { post: PostItem }) {
             <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: `${INK}28` }}>{post.readTime} read</span>
           </div>
         </div>
-        <div className="bl-thumb" style={{ borderRadius: 'clamp(8px, 1vw, 12px)', overflow: 'hidden', aspectRatio: '4/3', border: `1px solid ${INK}0d`, flexShrink: 0 }}>
+        <div className="bl-thumb" style={{ borderRadius: 'clamp(8px, 1vw, 12px)', overflow: 'hidden', aspectRatio: imgRatio, border: `1px solid ${INK}0d`, flexShrink: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.image || ''} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.50s ease' }} className="bl-img" />
+          <img
+            src={post.image || ''}
+            alt={post.title}
+            onLoad={(e) => {
+              const { naturalWidth: w, naturalHeight: h } = e.currentTarget
+              if (w && h) setImgRatio(w / h)
+            }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.50s ease' }}
+            className="bl-img"
+          />
         </div>
       </Link>
     </div>
