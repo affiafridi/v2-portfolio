@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getServices, getServiceBySlug, getSiteSettings } from '@/lib/data'
-import { getSeoSettings, buildMetadata, serviceJsonLd, breadcrumbJsonLd } from '@/lib/seo'
+import { getSeoSettings, buildMetadata, serviceJsonLd, breadcrumbJsonLd, serializeJsonLd } from '@/lib/seo'
 import ServiceDetailClient from './ServiceDetailClient'
 
 export async function generateStaticParams() {
@@ -73,7 +73,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <ServiceDetailClient service={mapService(service)} next={mapService(nextService)} />
     </>
   )

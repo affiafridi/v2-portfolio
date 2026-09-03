@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getProjects, getProjectBySlug, getSiteSettings } from '@/lib/data'
-import { getSeoSettings, buildMetadata, creativeWorkJsonLd } from '@/lib/seo'
+import { getSeoSettings, buildMetadata, creativeWorkJsonLd, serializeJsonLd } from '@/lib/seo'
 import ProjectDetail from '@/components/sections/ProjectDetail'
 
 export async function generateStaticParams() {
@@ -53,7 +53,7 @@ export default async function WorkDetailPage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <ProjectDetail
         project={{
           ...project,

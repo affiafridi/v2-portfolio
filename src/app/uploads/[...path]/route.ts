@@ -43,7 +43,8 @@ export async function GET(request: Request, { params }: { params: { path: string
   }
 
   const ext = path.extname(filePath).toLowerCase()
-  const contentType = CONTENT_TYPES[ext] || 'application/octet-stream'
+  const known = Object.prototype.hasOwnProperty.call(CONTENT_TYPES, ext)
+  const contentType = known ? CONTENT_TYPES[ext] : 'application/octet-stream'
 
   // Uploaded filenames are timestamp-prefixed and never rewritten in
   // place (editing uploads a new file under a new name) — that makes
@@ -51,10 +52,28 @@ export async function GET(request: Request, { params }: { params: { path: string
   // Matches the intent of the equivalent rule in next.config.js, set
   // explicitly here since this is a route handler response, not a
   // static file Next applies that config rule to automatically.
-  const baseHeaders = {
+  /* This directory is the one place on the site whose contents came from
+     an upload rather than from the codebase, so its responses say
+     explicitly how they may be treated instead of relying on the global
+     rules in next.config.js.
+       nosniff  — without it a browser may disregard the Content-Type and
+                  guess from the bytes, which is exactly how a file served
+                  as application/octet-stream ends up being rendered as
+                  HTML on this origin.
+       attachment for anything whose extension is not one of the nine
+                  media types above — it gets downloaded, never rendered
+                  in a tab that would share this site's origin. Uploads
+                  can no longer be created under any other extension (see
+                  the upload route), but files written before that fix
+                  kept whatever extension their original filename had, so
+                  this covers what is already sitting on disk. Known media
+                  types are untouched and still render inline as before. */
+  const baseHeaders: Record<string, string> = {
     'Content-Type': contentType,
     'Cache-Control': 'public, max-age=31536000, immutable',
     'Accept-Ranges': 'bytes',
+    'X-Content-Type-Options': 'nosniff',
+    ...(known ? {} : { 'Content-Disposition': 'attachment' }),
   }
 
   const range = request.headers.get('range')

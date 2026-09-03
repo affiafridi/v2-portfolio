@@ -266,3 +266,34 @@ export function buildMetadata({ title, description, image, path, noindex, seo }:
     },
   }
 }
+
+/* Serialises a JSON-LD object for embedding in a <script> tag.
+ *
+ * Plain JSON.stringify is NOT safe here. It escapes what JSON requires
+ * — quotes, backslashes, control characters — but "<" and ">" are
+ * perfectly legal inside a JSON string, so it passes them through
+ * untouched. The HTML parser reaches the tag before any JSON parser
+ * does, so a value containing the literal characters "</script>" ends
+ * the script element early and everything after it is parsed as markup.
+ * Every field embedded this way (post titles, excerpts, SEO
+ * descriptions, project names) is admin-entered content coming back out
+ * of the database, so this was a stored-XSS path onto public pages:
+ * whatever followed that sequence would run as first-party script for
+ * every visitor, on the same origin as the admin session cookie.
+ *
+ * Escaping to \u003c / \u003e keeps the output valid JSON — a JSON
+ * parser decodes those back to the original characters, so the
+ * structured data a crawler sees is unchanged — while leaving nothing
+ * the HTML parser can interpret as a tag. & is escaped for the same
+ * class of reason (HTML entity handling), and U+2028/U+2029 because
+ * they are valid in JSON but are line terminators in JavaScript, which
+ * breaks parsing when the JSON is read as a script body.
+ */
+export function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\u003c')
+    .replace(/>/g, '\u003e')
+    .replace(/&/g, '\u0026')
+    .replace(/\u2028/g, '\u2028')
+    .replace(/\u2029/g, '\u2029')
+}

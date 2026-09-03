@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getPublishedPosts, getPostBySlug, getSiteSettings } from '@/lib/data'
-import { getSeoSettings, buildMetadata, blogPostingJsonLd } from '@/lib/seo'
+import { getSeoSettings, buildMetadata, blogPostingJsonLd, serializeJsonLd } from '@/lib/seo'
 import BlogPostClient from './BlogPostClient'
 
 export async function generateStaticParams() {
@@ -62,7 +62,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <BlogPostClient post={mapPost(post)} next={mapPost(nextPost)} />
     </>
   )

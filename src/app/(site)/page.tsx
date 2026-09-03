@@ -5,7 +5,7 @@ import ServiceSection from '@/components/sections/ServiceSection'
 import StackSection   from '@/components/sections/StackSection'
 import FooterSection  from '@/components/sections/FooterSection'
 import { getFeaturedProjects, getFeaturedServices, getStackCategories, getSiteSettings } from '@/lib/data'
-import { getSeoSettings, buildMetadata, personJsonLd, webSiteJsonLd } from '@/lib/seo'
+import { getSeoSettings, buildMetadata, personJsonLd, webSiteJsonLd, serializeJsonLd } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings()
@@ -64,7 +64,7 @@ export default async function Home() {
     <main>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([person, website]) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd([person, website]) }}
       />
       <HeroSection settings={hero} />
       <WorkSection
