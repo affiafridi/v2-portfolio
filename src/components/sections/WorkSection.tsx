@@ -99,6 +99,7 @@ function getFrames(p: Project): React.ReactNode[] {
    ─────────────────────────────────────────────────────────────────── */
 function CardStack({ p }: { p: Project }) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const rootRef  = useRef<HTMLDivElement | null>(null)
   const frames   = getFrames(p)
   /* Real frame count for THIS project, not always STACK_COUNT — a
      project with fewer images than slots gets a shorter stack (see
@@ -126,6 +127,43 @@ function CardStack({ p }: { p: Project }) {
     if (count < 2) return
 
     const interval = setInterval(() => {
+      /* Nothing below is worth doing for a stack nobody can see, and
+         "nobody can see it" is the normal case: one of these stacks
+         exists per project panel, they all mount at page load, and the
+         timer previously ran for the lifetime of the page regardless.
+         So while the visitor is reading the hero, services or footer —
+         with this whole section off-screen — every stack was still
+         waking up every 1.1s to start a handful of transform tweens on
+         boxes carrying a border-radius, overflow:hidden, a box-shadow
+         and an image, all of which have to be re-rastered. Four stacks
+         doing that at once is a periodic burst of compositing work
+         landing on whatever scroll happens to be in progress, which is
+         what made scrolling stutter intermittently rather than
+         uniformly.
+
+         Bailing out (rather than clearing the timer) keeps this
+         self-correcting: the stack picks the rotation straight back up
+         when it comes into view, with no observer to wire up or tear
+         down, and orderRef is left untouched so it resumes exactly
+         where it left off instead of jumping a slot.
+
+         Both checks are needed. The rect covers a panel parked off-
+         screen (the waiting panels sit a full viewport away) and the
+         whole section being scrolled past. The opacity covers the
+         panel that has already slid out and faded to 0 but is still
+         geometrically over the viewport — visually gone, yet passing a
+         rect test. Cost is one rect read and one style read per stack
+         per 1.1s, which is nothing next to what it skips. */
+      const root = rootRef.current
+      if (!root) return
+      const r = root.getBoundingClientRect()
+      const onScreen =
+        r.bottom > 0 && r.top < window.innerHeight &&
+        r.right > 0 && r.left < window.innerWidth
+      if (!onScreen) return
+      const panel = root.closest('.wk-panel')
+      if (panel && parseFloat(getComputedStyle(panel).opacity) < 0.05) return
+
       const order    = orderRef.current
       const front    = order[0]
       const frontEl  = els[front]
@@ -189,7 +227,7 @@ function CardStack({ p }: { p: Project }) {
        what object-fit:cover was cropping into the sides to compensate
        for. Deriving height from width instead keeps the card's own
        shape matched to what's actually being shown. */
-    <div className="wk-cardstack" style={{ position:'relative', width:'100%', aspectRatio:'2/1' }}>
+    <div ref={rootRef} className="wk-cardstack" style={{ position:'relative', width:'100%', aspectRatio:'2/1' }}>
       {frames.map((frame, i) => (
         <div
           key={i}
@@ -457,8 +495,8 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
      once shown they just stay visible for the rest of the session. */
   const aboutIntroShown = useRef(false)
   /* The word statement's own scrub timeline — separate from the main
-     panel-stack tl below (which drives xPercent/scale for the whole
-     card stack). Kept as its own paused timeline instead of a second
+     panel-stack tl below (which drives the panels' slide axis and scale
+     for the whole card stack). Kept as its own paused timeline instead of a second
      ScrollTrigger with its own scrub value: two independent scrubbed
      ScrollTriggers reading the same Lenis-driven scroll each apply
      their own lag/smoothing, and they don't reconcile with each other
@@ -647,13 +685,18 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
 
       panels.forEach((_, i) => {
         if (i > 0) {
-          /* xPercent, not yPercent — project panels wait off-screen to the
-             RIGHT and slide in sideways (see the timeline below). Only the
-             axis changed; the 100%-of-own-width offset and the 0.94 scale
-             are the same values the vertical version used, and .wk-sticky's
-             overflow:hidden clips them exactly the same way off the right
-             edge as it did off the bottom. */
-          gsap.set(`.wk-panel-${i}`, { xPercent:100, scale:0.94 })
+          /* Panels wait off-screen and slide in — sideways on desktop,
+             upward on mobile. Only the axis differs between the two; the
+             100%-of-own-size offset and the 0.94 scale are identical
+             either way, and .wk-sticky's overflow:hidden clips off the
+             right edge exactly as it does off the bottom.
+
+             Mobile stays vertical because a sideways slide fights the
+             direction the finger is actually moving on a touch screen —
+             the scroll gesture is vertical, so the content should travel
+             vertically with it. On desktop, where the wheel is a more
+             abstract input, the horizontal sweep reads as intentional. */
+          gsap.set(`.wk-panel-${i}`, isMobile ? { yPercent:100, scale:0.94 } : { xPercent:100, scale:0.94 })
         }
         /* All panels — content starts hidden so there's no flash on load */
         gsap.set(`.wk-panel-${i} .wk-content`, { opacity:0, y:16 })
@@ -702,20 +745,24 @@ export default function WorkSection({ aboutSettings, projects }: { aboutSettings
          is just a brief pause to actually see it, not scroll distance
          for a scrub to complete). Every project-to-project transition
          after that is 1 slot each, unchanged from before. */
-      /* Horizontal, not vertical: each panel slides in from the right and
-         covers the one before it, rather than rising up over it. Only the
-         axis differs — the outgoing panel's -3 drift, its 0.92 scale-down
-         and fade, the 1-unit duration and the easing are all the values
-         the vertical version used, so the motion reads the same, just
-         sideways. About (panel 0) exits the same way as any project panel,
-         since it's panels[0] in this same loop. Everything driven off
-         self.progress below (ring fill, progress dots, per-panel content
-         reveals) is direction-agnostic and needed no change. */
+      /* Each panel slides in and covers the one before it — sideways on
+         desktop, upward on mobile (see the matching gsap.set above; the
+         two MUST use the same axis or a panel would be parked off one
+         edge while animating along the other, and never arrive).
+
+         Only the axis differs between breakpoints. The outgoing panel's
+         -3 drift, its 0.92 scale-down and fade, the 1-unit duration and
+         the easing are identical either way, so the motion reads the
+         same in both. About (panel 0) exits the same way as any project
+         panel, since it's panels[0] in this same loop. Everything driven
+         off self.progress below (ring fill, progress dots, per-panel
+         content reveals) is direction-agnostic and needed no change. */
+      const axis = isMobile ? 'yPercent' : 'xPercent'
       const tl = gsap.timeline()
       for (let i = 1; i <= P; i++) {
         const t = ABOUT_HOLD_UNITS + (i - 1)
-        tl.to(panels[i-1], { scale:0.92, xPercent:-3, opacity:0, duration:1, ease:'power2.inOut' }, t)
-        tl.to(panels[i],   { xPercent:0, scale:1, duration:1, ease:'power2.inOut' }, t)
+        tl.to(panels[i-1], { scale:0.92, [axis]:-3, opacity:0, duration:1, ease:'power2.inOut' }, t)
+        tl.to(panels[i],   { [axis]:0, scale:1, duration:1, ease:'power2.inOut' }, t)
       }
 
       /* scrub lag layers on top of Lenis's own smoothing — on touch,
