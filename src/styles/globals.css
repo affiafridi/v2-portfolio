@@ -365,7 +365,13 @@ section, footer, header, main, div {
        correct calc() value. */
     max-width: none !important; max-height: none !important;
   }
-  .hj-headline       { bottom: auto !important; top: 56dvh !important; }
+  /* 59dvh, not 56dvh — at 56 the marquee's top edge sat 8px ABOVE the
+     portrait's bottom (measured), so the moving text ran into the photo,
+     and left only 10px before the heading below it. The three elements
+     read as one connected block rather than three. Moved down to clear
+     the portrait properly; .hj-left moves with it (see below) to keep a
+     real gap on the other side too. */
+  .hj-headline       { bottom: auto !important; top: 59dvh !important; }
   .hj-marquee-span   { font-size: clamp(48px, 13vw, 76px) !important; }
   /* .hj-left can't start any higher than the portrait's own bottom
      edge without overlapping the photo, so shrinking the portrait
@@ -376,13 +382,15 @@ section, footer, header, main, div {
      .hj-left started right at the portrait's own edge with ~5px spare
      below the CTA — hairline enough that it read as the button
      getting cropped on real devices, not just tight. Landed here
-     empirically (live-measured at 375x812): a 47px gap above the
-     heading and 62px spare below the CTA, up from 18px and ~6px
-     respectively. Re-check both numbers at 375x812 if any of these
-     four move again — the portrait height and this offset have to
-     move together, since the gap is the difference between them
-     while the CTA's clearance tracks this offset alone. */
-  .hj-left           { top: 60dvh !important; left: 5% !important; width: 90% !important; }
+     empirically (live-measured at 375x812). Current spacing, with the
+     marquee now sitting between the photo and the heading: 16px from
+     the portrait to the marquee, 18px from the marquee to the heading,
+     29px spare below the CTA. Re-check all three at 375x812 if any of
+     these move again — the portrait height, the marquee offset and this
+     offset all have to move together, since each gap is the difference
+     between two of them while the CTA's clearance tracks this one
+     alone. */
+  .hj-left           { top: 64dvh !important; left: 5% !important; width: 90% !important; }
   .hj-heading         { font-size: clamp(24px, 6.5vw, 32px) !important; margin-bottom: 0.3rem !important; }
   .hj-bio-text        { font-size: 16px !important; line-height: 1.7 !important; }
   .hj-cta             { margin-top: 0.6rem !important; padding: 12px 22px !important; }
@@ -399,12 +407,22 @@ section, footer, header, main, div {
    portrait and shifting .hj-left up recovers that room; the heading/
    bio/CTA trims on top of that add margin so this isn't a hairline fit. */
 @media (max-width: 767px) and (max-height: 620px) {
-  .hj-portrait-outer { height: 48dvh !important; }
-  /* Same approach as the 767px rule above, scaled to this bucket's
+  .hj-portrait-outer { height: 45dvh !important; }
+  /* This block previously set .hj-left but never overrode .hj-headline,
+     so the marquee kept the 767px rule's offset while the heading moved
+     independently — and at this height the heading ended up ABOVE the
+     marquee's bottom edge, overlapping it by 39px (measured). Since
+     .hj-headline uses mix-blend-mode:difference, that wasn't a subtle
+     near-miss: the two were drawn through each other. The marquee now
+     gets its own offset here so the portrait → marquee → heading order
+     actually holds at this size.
+
+     Same approach as the 767px rule above, scaled to this bucket's
      tighter budget — landed here empirically (live-measured at
-     375x568): a 34px gap above the heading and ~50px spare below the
-     CTA, up from 9px and 14px respectively. */
-  .hj-left            { top: 53dvh !important; }
+     375x568): 18px from the portrait to the marquee, 12px from the
+     marquee to the heading, 27px spare below the CTA. */
+  .hj-headline        { top: 51dvh !important; }
+  .hj-left            { top: 57dvh !important; }
   .hj-heading         { font-size: clamp(18px, 5vw, 22px) !important; margin-bottom: 0.15rem !important; }
   .hj-bio-text        { font-size: 16px !important; line-height: 1.7 !important; }
   .hj-cta             { margin-top: 0.2rem !important; padding: 9px 18px !important; }
@@ -741,12 +759,25 @@ section, footer, header, main, div {
   /* Top stays flush with the fixed nav bar above it (14px, matching
      desktop) — a bigger top inset read as an unwanted gap under the
      nav. Bottom keeps extra room so the card stack isn't flush with
-     the edge. */
-  .wk-panel { inset: 14px 14px 24px 14px !important; }
+     the edge. Left/right are deliberately wider than the top: the
+     panel carries a 32px border-radius, and at 14px the corner curve
+     was wider than the gutter holding it off the screen edge, so the
+     card read as pressed against the sides. 20px is still measurably
+     safe — at 375px wide the longest project title stays on 2 lines
+     and the content grid has zero overflow (measured). */
+  .wk-panel { inset: 14px 20px 24px 20px !important; }
   .wk-content-grid {
     grid-template-columns: 1fr !important;
     grid-auto-rows: min-content !important;
-    padding: 1.25rem !important;
+    /* 24px, not 20px, to match .ab-title's own 24px horizontal padding
+       on panel 0. All five panels share this one stack and slide over
+       each other, so a difference here shows up as the text shifting
+       sideways as About hands off to the first project. With the two
+       equal, every panel's content lands at the same 44px from the
+       screen edge (measured at scale 1 — an inactive panel sits at
+       scale 0.94, which offsets it ~10px and is not the resting
+       value to compare against). */
+    padding: 24px !important;
     /* col-left (title/CTA) and col-right (type/tags) stack directly on
        top of each other here — 6px read as one cramped block since on
        desktop they're side-by-side columns and never actually touch. */
